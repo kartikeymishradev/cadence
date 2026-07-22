@@ -2,9 +2,9 @@
   "name": "cadence-api",
   "version": "1.0.0",
   "private": true,
-  "description": "Azure Functions API for Cadence weekly planner",
+  "description": "API for Cadence weekly planner",
   "dependencies": {
     "@azure/cosmos": "^4.2.0",
-    "web-push": "^3.7.0"
+    "web-push": "^3.6.7"
   }
 }
