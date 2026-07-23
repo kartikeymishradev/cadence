@@ -21,6 +21,8 @@ import ProgressChart from './components/ProgressChart';
 import SummaryCards from './components/SummaryCards';
 import InfoFooter from './components/InfoFooter';
 import NotificationBanner from './components/NotificationBanner';
+import PomodoroTimer from './components/PomodoroTimer';
+import ExcelGoalsSheet from './components/ExcelGoalsSheet';
 
 export default function App() {
   const { weekStart, weekDates, dateKey } = useWeekDates();
@@ -398,11 +400,11 @@ export default function App() {
         </>
       )}
 
-      {/* GOALS VIEW (Placeholder for Tier 3) */}
+      {/* GOALS VIEW (Excel-Style Goal Sheet + Pomodoro Focus Timer) */}
       {viewMode === 'goals' && (
-        <div className="cadence-card goals-placeholder">
-          <h3>Goal Tracking & Streaks</h3>
-          <p>Goals view will allow you to track monthly targets and consecutive streaks.</p>
+        <div className="goals-view-wrapper">
+          <PomodoroTimer />
+          <ExcelGoalsSheet goals={goals} onUpdateGoals={setGoals} />
         </div>
       )}
 
