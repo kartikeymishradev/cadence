@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, BookOpen, Dumbbell, AlertCircle, Image } from 'lucide-react';
+import { Sparkles, BookOpen, GraduationCap, Dumbbell, AlertCircle, Image } from 'lucide-react';
 import TimetablePromptModal from './TimetablePromptModal';
 
 export default function PlanInput({
@@ -18,13 +18,23 @@ export default function PlanInput({
       <div className="plan-input__header">
         <div className="plan-input__tabs">
           <button
-            id="tab-btn-study"
-            className={`plan-input__tab ${tab === 'study' ? 'plan-input__tab--active' : ''}`}
-            onClick={() => setTab('study')}
+            id="tab-btn-skill"
+            className={`plan-input__tab ${tab === 'skill' ? 'plan-input__tab--active' : ''}`}
+            onClick={() => setTab('skill')}
           >
             <BookOpen size={16} />
-            Study
+            Skill Prep
           </button>
+
+          <button
+            id="tab-btn-college"
+            className={`plan-input__tab ${tab === 'college' ? 'plan-input__tab--active' : ''}`}
+            onClick={() => setTab('college')}
+          >
+            <GraduationCap size={16} />
+            College
+          </button>
+
           <button
             id="tab-btn-gym"
             className={`plan-input__tab ${tab === 'gym' ? 'plan-input__tab--active' : ''}`}
@@ -50,8 +60,10 @@ export default function PlanInput({
         className="plan-input__textarea"
         rows={4}
         placeholder={
-          tab === 'study'
-            ? "Paste your study timetable or list tasks, e.g.\nMonday 7pm SQL basics 90m\nTuesday 8pm Python functions 60m..."
+          tab === 'skill'
+            ? "Paste your skill roadmap, e.g. Data Analyst Prep:\nMonday 7pm SQL basics 90m\nTuesday 8pm Python functions 60m..."
+            : tab === 'college'
+            ? "Paste your college class timetable, e.g.\nMonday 10am DAA Lecture 60m\nMonday 11am IoT Lab 90m..."
             : "Paste your workout & meal plan, e.g.\nMon: Leg day 45m at 7am, Meal 1: Oats & eggs\nTue: Upper body 60m at 7am..."
         }
         value={rawText}
@@ -66,7 +78,7 @@ export default function PlanInput({
           disabled={loading || !rawText.trim()}
         >
           <Sparkles size={16} className={loading ? 'spin' : ''} />
-          {loading ? 'Parsing plan...' : 'Parse with AI'}
+          {loading ? 'Parsing plan...' : `Parse ${tab === 'skill' ? 'Skill' : tab === 'college' ? 'College' : 'Gym'} Plan`}
         </button>
 
         {error && (

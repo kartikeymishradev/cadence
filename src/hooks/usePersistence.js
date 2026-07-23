@@ -4,9 +4,9 @@ import { dateKey } from '../utils/dateUtils';
 import { cloudSave, cloudLoad } from '../services/cloudSync';
 
 /**
- * Migration helper: converts legacy `actualMinutes` and `mealsLogged`
- * to unified `taskStatuses` map.
- * Format: { [taskId]: { status: 'done'|'partial'|'skipped'|'pending', actualMinutes: number } }
+ * Migration helper: converts legacy data formats:
+ * 1. Legacy `actualMinutes` / `mealsLogged` -> `taskStatuses` map.
+ * 2. Legacy `study` category -> split into `skill` and `college`.
  */
 export function migrateTaskStatuses(saved) {
   if (!saved) return { taskStatuses: {}, goals: [] };
@@ -31,8 +31,41 @@ export function migrateTaskStatuses(saved) {
     });
   }
 
+  // Migrate 2-category state to 3-category state (skill, college, gym)
+  const rawSchedule = saved.schedule || {};
+  const schedule = {
+    skill: rawSchedule.skill || rawSchedule.study || [],
+    college: rawSchedule.college || [],
+    gym: rawSchedule.gym || [],
+  };
+
+  const rawTextObj = saved.rawText || {};
+  const rawText = {
+    skill: rawTextObj.skill || rawTextObj.study || '',
+    college: rawTextObj.college || '',
+    gym: rawTextObj.gym || '',
+  };
+
+  const rawMW = saved.multiWeekPlan || {};
+  const multiWeekPlan = {
+    skill: rawMW.skill || rawMW.study || null,
+    college: rawMW.college || null,
+    gym: rawMW.gym || null,
+  };
+
+  const rawCWI = saved.currentWeekIndex || {};
+  const currentWeekIndex = {
+    skill: rawCWI.skill || rawCWI.study || 0,
+    college: rawCWI.college || 0,
+    gym: rawCWI.gym || 0,
+  };
+
   return {
     ...saved,
+    schedule,
+    rawText,
+    multiWeekPlan,
+    currentWeekIndex,
     taskStatuses,
     goals: saved.goals || [],
   };
@@ -48,16 +81,16 @@ export function usePersistence(weekStart, user) {
   const cloudLoaded = useRef(false);
   const saveTimer = useRef(null);
 
-  const [rawText, setRawText] = useState({ study: '', gym: '' });
-  const [schedule, setSchedule] = useState({ study: [], gym: [] });
+  const [rawText, setRawText] = useState({ skill: '', college: '', gym: '' });
+  const [schedule, setSchedule] = useState({ skill: [], college: [], gym: [] });
   const [meals, setMeals] = useState([]);
   const [dayStatus, setDayStatus] = useState({});
   const [taskStatuses, setTaskStatuses] = useState({});
   const [goals, setGoals] = useState([]);
 
   // Multi-week plan metadata
-  const [multiWeekPlan, setMultiWeekPlan] = useState({ study: null, gym: null });
-  const [currentWeekIndex, setCurrentWeekIndex] = useState({ study: 0, gym: 0 });
+  const [multiWeekPlan, setMultiWeekPlan] = useState({ skill: null, college: null, gym: null });
+  const [currentWeekIndex, setCurrentWeekIndex] = useState({ skill: 0, college: 0, gym: 0 });
 
   // ── Apply a saved data object to state (with migration) ──
   const applyData = useCallback((savedData) => {

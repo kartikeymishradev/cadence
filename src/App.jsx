@@ -46,7 +46,7 @@ export default function App() {
   const { isSupported: pushSupported, isSubscribed: pushSubscribed, subscribe: pushSubscribe } =
     usePushNotifications();
 
-  // ── Persisted state (with cloud migration) ──
+  // ── Persisted state (with cloud migration & 3 categories) ──
   const {
     rawText, setRawText,
     schedule, setSchedule,
@@ -58,9 +58,9 @@ export default function App() {
     currentWeekIndex, setCurrentWeekIndex,
   } = usePersistence(weekStart, user);
 
-  // ── Local UI state ──
-  const [tab, setTab] = useState('study');
-  const [clarifications, setClarifications] = useState({ study: [], gym: [] });
+  // ── Local UI state (tab: 'skill' | 'college' | 'gym') ──
+  const [tab, setTab] = useState('skill');
+  const [clarifications, setClarifications] = useState({ skill: [], college: [], gym: [] });
   const [clarificationAnswers, setClarificationAnswers] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -82,11 +82,11 @@ export default function App() {
 
     const weekData = parsedPlan.weeks[targetWeekIdx] || parsedPlan.weeks[0];
 
-    if (activeTab === 'study') {
-      setSchedule((prev) => ({ ...prev, study: weekData.tasks || [] }));
-    } else {
+    if (activeTab === 'gym') {
       setSchedule((prev) => ({ ...prev, gym: weekData.workouts || [] }));
       setMeals(weekData.meals || []);
+    } else {
+      setSchedule((prev) => ({ ...prev, [activeTab]: weekData.tasks || [] }));
     }
   }, [setSchedule, setMeals]);
 
@@ -98,17 +98,19 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
-      const parsed = await parsePlan(tab, text);
+      // For skill/college parsing, treat prompt as study format
+      const parseTab = tab === 'gym' ? 'gym' : 'study';
+      const parsed = await parsePlan(parseTab, text);
 
       if (parsed.weeks && parsed.weeks.length > 0) {
         setMultiWeekPlan((prev) => ({ ...prev, [tab]: parsed }));
         setCurrentWeekIndex((prev) => ({ ...prev, [tab]: 0 }));
         applyMultiWeekData(parsed, 0, tab);
-      } else if (tab === 'study') {
-        setSchedule((prev) => ({ ...prev, study: parsed.tasks || [] }));
-      } else {
+      } else if (tab === 'gym') {
         setSchedule((prev) => ({ ...prev, gym: parsed.workouts || [] }));
         setMeals(parsed.meals || []);
+      } else {
+        setSchedule((prev) => ({ ...prev, [tab]: parsed.tasks || [] }));
       }
 
       setClarifications((prev) => ({
@@ -130,8 +132,9 @@ export default function App() {
     setLoading(true);
     setError('');
     try {
+      const parseTab = tab === 'gym' ? 'gym' : 'study';
       const parsed = await refinePlan(
-        tab,
+        parseTab,
         rawText[tab],
         qs,
         clarificationAnswers
@@ -141,11 +144,11 @@ export default function App() {
         setMultiWeekPlan((prev) => ({ ...prev, [tab]: parsed }));
         setCurrentWeekIndex((prev) => ({ ...prev, [tab]: 0 }));
         applyMultiWeekData(parsed, 0, tab);
-      } else if (tab === 'study') {
-        setSchedule((prev) => ({ ...prev, study: parsed.tasks || [] }));
-      } else {
+      } else if (tab === 'gym') {
         setSchedule((prev) => ({ ...prev, gym: parsed.workouts || [] }));
         setMeals(parsed.meals || []);
+      } else {
+        setSchedule((prev) => ({ ...prev, [tab]: parsed.tasks || [] }));
       }
 
       setClarifications((prev) => ({
@@ -221,8 +224,9 @@ export default function App() {
   // ── Derived Task Data ──
   const allTasks = useMemo(
     () => [
-      ...schedule.study.map((t, i) => ({ ...t, kind: 'study', id: `study-${i}` })),
-      ...schedule.gym.map((t, i) => ({ ...t, kind: 'gym', id: `gym-${i}` })),
+      ...(schedule.skill || []).map((t, i) => ({ ...t, kind: 'skill', id: `skill-${i}` })),
+      ...(schedule.college || []).map((t, i) => ({ ...t, kind: 'college', id: `college-${i}` })),
+      ...(schedule.gym || []).map((t, i) => ({ ...t, kind: 'gym', id: `gym-${i}` })),
     ],
     [schedule]
   );
@@ -257,7 +261,7 @@ export default function App() {
       ? Math.round((totalDoneMin / totalPlannedMin) * 100)
       : 0;
 
-  const activeTasks = schedule[tab].map((t, i) => ({
+  const activeTasks = (schedule[tab] || []).map((t, i) => ({
     ...t,
     kind: tab,
     id: `${tab}-${i}`,
@@ -272,7 +276,7 @@ export default function App() {
         : [],
   })).filter((g) => g.items.length > 0 || g.meals.length > 0);
 
-  const hasParsed = schedule.study.length > 0 || schedule.gym.length > 0 || totalWeeks > 0;
+  const hasParsed = (schedule.skill?.length || 0) > 0 || (schedule.college?.length || 0) > 0 || (schedule.gym?.length || 0) > 0 || totalWeeks > 0;
 
   // Render compatibility helper for TaskList
   const legacyActualMinutes = useMemo(() => {
@@ -326,7 +330,7 @@ export default function App() {
           <PlanInput
             tab={tab}
             setTab={setTab}
-            rawText={rawText[tab]}
+            rawText={rawText[tab] || ''}
             onRawTextChange={handleRawTextChange}
             onParse={handleParse}
             loading={loading}
@@ -334,7 +338,7 @@ export default function App() {
           />
 
           <Clarifications
-            clarifications={clarifications[tab]}
+            clarifications={clarifications[tab] || []}
             answers={clarificationAnswers}
             onAnswerChange={handleAnswerChange}
             onRefine={handleRefine}

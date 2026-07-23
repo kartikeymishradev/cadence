@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, Clock, CalendarOff, Coffee, BookOpen, Dumbbell, GraduationCap, Check, Minus, X } from 'lucide-react';
+import { Clock, CalendarOff, Coffee, BookOpen, GraduationCap, Dumbbell, Check, Minus, X } from 'lucide-react';
 import { WEEKDAYS } from '../utils/constants';
 
 export default function TodayView({
@@ -25,13 +25,18 @@ export default function TodayView({
   const dayStatusKey = `study-${todayName}`;
   const statusType = dayStatus[dayStatusKey] || 'study';
 
-  // Gather tasks for today
-  const studyTasks = schedule.study
+  // Gather tasks across all 3 categories for today
+  const collegeTasks = (schedule.college || [])
     .filter((t) => t.day === todayName)
-    .map((t, i) => ({ ...t, kind: 'study', id: `study-${i}` }))
+    .map((t, i) => ({ ...t, kind: 'college', id: `college-${i}` }))
     .sort((a, b) => (a.start || '00:00').localeCompare(b.start || '00:00'));
 
-  const gymTasks = schedule.gym
+  const skillTasks = (schedule.skill || schedule.study || [])
+    .filter((t) => t.day === todayName)
+    .map((t, i) => ({ ...t, kind: 'skill', id: `skill-${i}` }))
+    .sort((a, b) => (a.start || '00:00').localeCompare(b.start || '00:00'));
+
+  const gymTasks = (schedule.gym || [])
     .filter((t) => t.day === todayName)
     .map((t, i) => ({ ...t, kind: 'gym', id: `gym-${i}` }))
     .sort((a, b) => (a.start || '00:00').localeCompare(b.start || '00:00'));
@@ -49,10 +54,10 @@ export default function TodayView({
     }))
     .sort((a, b) => (a.start || '00:00').localeCompare(b.start || '00:00'));
 
-  const totalTasks = studyTasks.length + gymTasks.length + todayMeals.length;
+  const allToday = [...collegeTasks, ...skillTasks, ...gymTasks, ...todayMeals];
+  const totalTasks = allToday.length;
 
   // Calculate metrics
-  const allToday = [...studyTasks, ...gymTasks, ...todayMeals];
   const completedTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'done').length;
   const partialTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'partial').length;
   const skippedTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'skipped').length;
@@ -159,21 +164,35 @@ export default function TodayView({
         </div>
       )}
 
-      {/* Section 1: Skill & Study Prep Tasks */}
-      {studyTasks.length > 0 && (
+      {/* Section 1: College Timetable */}
+      {collegeTasks.length > 0 && (
         <div className="today-view__section">
           <div className="today-view__section-header">
-            <BookOpen size={16} className="section-icon section-icon--study" />
-            <h3>Study & Skill Roadmap</h3>
-            <span className="section-count">{studyTasks.length} tasks</span>
+            <GraduationCap size={16} className="section-icon section-icon--college" />
+            <h3>College Timetable</h3>
+            <span className="section-count">{collegeTasks.length} classes</span>
           </div>
           <div className="today-view__task-list">
-            {studyTasks.map(renderTaskCard)}
+            {collegeTasks.map(renderTaskCard)}
           </div>
         </div>
       )}
 
-      {/* Section 2: Gym, Fitness & Meals */}
+      {/* Section 2: Skill & Study Prep Tasks */}
+      {skillTasks.length > 0 && (
+        <div className="today-view__section">
+          <div className="today-view__section-header">
+            <BookOpen size={16} className="section-icon section-icon--study" />
+            <h3>Skill Roadmap</h3>
+            <span className="section-count">{skillTasks.length} tasks</span>
+          </div>
+          <div className="today-view__task-list">
+            {skillTasks.map(renderTaskCard)}
+          </div>
+        </div>
+      )}
+
+      {/* Section 3: Gym, Fitness & Meals */}
       {(gymTasks.length > 0 || todayMeals.length > 0) && (
         <div className="today-view__section">
           <div className="today-view__section-header">
