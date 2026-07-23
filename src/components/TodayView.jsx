@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, CalendarOff, Coffee, Check, Minus, X, Hourglass, Zap, FileText, GraduationCap, LayoutGrid, CheckCircle2, Edit2, Eye, EyeOff } from 'lucide-react';
-import { WEEKDAYS } from '../utils/constants';
+import { Clock, CalendarOff, Coffee, Check, Minus, X, Hourglass, Zap, FileText, GraduationCap, LayoutGrid, CheckCircle2, Edit2, Eye, EyeOff, RotateCw } from 'lucide-react';
+import { WEEKDAYS, STATUS_STYLE } from '../utils/constants';
 import { dateKey } from '../utils/dateUtils';
 import CollegeOverviewModal from './CollegeOverviewModal';
 
@@ -14,6 +14,7 @@ export default function TodayView({
   onUpdateTaskStatus,
   onUpdateTaskNote,
   onUpdateTaskTime,
+  onCycleStatus,
   onNavigateToWeek,
 }) {
   // Live Clock State
@@ -53,7 +54,11 @@ export default function TodayView({
     dayStatus[dk] ||
     dayStatus[todayName] ||
     dayStatus[`study-${todayName}`] ||
+    dayStatus[`skill-${todayName}`] ||
+    dayStatus[`college-${todayName}`] ||
     'study';
+
+  const statusStyle = STATUS_STYLE[statusType] || STATUS_STYLE.study;
 
   // Group tasks dynamically by custom categories
   const categorySections = categories.map((cat) => {
@@ -281,7 +286,20 @@ export default function TodayView({
       {/* Header Banner */}
       <div className="today-view__header">
         <div>
-          <span className="today-view__date-badge">{dateFormatted} • {timeFormatted}</span>
+          <div className="today-date-stamp-row">
+            <span className="today-view__date-badge">{dateFormatted} • {timeFormatted}</span>
+            {onCycleStatus && (
+              <button
+                className="today-day-stamp-btn"
+                style={{ backgroundColor: statusStyle.bg, color: statusStyle.fg }}
+                onClick={() => onCycleStatus(dk, todayName)}
+                title="Tap to cycle today's status: Study -> Off -> Holiday"
+              >
+                <span>Day Mode: {statusStyle.label}</span>
+                <RotateCw size={10} />
+              </button>
+            )}
+          </div>
           <h2 className="today-view__title">Today's Focus</h2>
         </div>
 

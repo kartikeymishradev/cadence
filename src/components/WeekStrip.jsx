@@ -8,17 +8,18 @@ export default function WeekStrip({ weekDates, dayStatus, onCycleStatus }) {
       <div className="week-strip__days">
         {weekDates.map((d, i) => {
           const dk = dateKey(d);
-          const status = dayStatus[dk] || 'study';
+          const dayName = WEEKDAYS[i];
+          const status = dayStatus[dk] || dayStatus[dayName] || dayStatus[`study-${dayName}`] || 'study';
           const style = STATUS_STYLE[status];
 
           return (
             <button
               key={dk}
               className="cadence-btn week-strip__day"
-              onClick={() => onCycleStatus(dk)}
+              onClick={() => onCycleStatus(dk, dayName)}
             >
               <div className="week-strip__weekday">
-                {WEEKDAYS[i].slice(0, 3)}
+                {dayName.slice(0, 3)}
               </div>
               <div className="week-strip__date">{d.getDate()}</div>
               <span
@@ -33,8 +34,7 @@ export default function WeekStrip({ weekDates, dayStatus, onCycleStatus }) {
         })}
       </div>
       <p className="week-strip__hint">
-        Tap a day to cycle it: studying, a day off, or a holiday (extra room to
-        study).
+        Tap a day to cycle it: studying, a day off, or a holiday (extra room to study).
       </p>
     </div>
   );

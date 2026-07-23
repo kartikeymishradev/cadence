@@ -228,11 +228,20 @@ export default function App() {
   }, [multiWeekPlan, currentWeekIndex, tab, setCurrentWeekIndex, applyMultiWeekData]);
 
   const cycleStatus = useCallback(
-    (key) => {
+    (key, dayName) => {
       setDayStatus((prev) => {
-        const cur = prev[key] || 'study';
+        const cur = prev[key] || (dayName ? prev[dayName] : 'study') || 'study';
         const next = cur === 'study' ? 'off' : cur === 'off' ? 'holiday' : 'study';
-        return { ...prev, [key]: next };
+
+        const updated = { ...prev, [key]: next };
+        if (dayName) {
+          updated[dayName] = next;
+          updated[`study-${dayName}`] = next;
+          updated[`skill-${dayName}`] = next;
+          updated[`college-${dayName}`] = next;
+          updated[`gym-${dayName}`] = next;
+        }
+        return updated;
       });
     },
     [setDayStatus]
@@ -373,6 +382,7 @@ export default function App() {
           onUpdateTaskStatus={handleUpdateTaskStatus}
           onUpdateTaskNote={handleUpdateTaskNote}
           onUpdateTaskTime={handleUpdateTaskTime}
+          onCycleStatus={cycleStatus}
           onNavigateToWeek={() => setViewMode('setup')}
         />
       )}

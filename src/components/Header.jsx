@@ -1,12 +1,19 @@
-import React from 'react';
-import { HelpCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { HelpCircle, Beaker } from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
+import GuidedTour from './GuidedTour';
 
 export default function Header({ weekStart, activeTheme, onSelectTheme, onStartTour }) {
   return (
     <header className="cadence-header">
       <div className="cadence-header__left">
-        <h1 className="cadence-header__title">Cadence</h1>
+        <div className="title-row">
+          <h1 className="cadence-header__title">Cadence</h1>
+          <span className="beta-version-badge">
+            <Beaker size={12} />
+            v2.4-BETA (Live)
+          </span>
+        </div>
         <p className="cadence-header__subtitle">
           Paste a plan, get a schedule you can actually keep.
         </p>
