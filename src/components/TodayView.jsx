@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Clock, CalendarOff, Coffee, Check, Minus, X, Hourglass, Zap, FileText, GraduationCap, LayoutGrid, CheckCircle2, Edit2, Eye, EyeOff } from 'lucide-react';
 import { WEEKDAYS } from '../utils/constants';
+import { dateKey } from '../utils/dateUtils';
 import CollegeOverviewModal from './CollegeOverviewModal';
 
 export default function TodayView({
@@ -46,8 +47,13 @@ export default function TodayView({
     hour12: true,
   });
 
-  const dayStatusKey = `study-${todayName}`;
-  const statusType = dayStatus[dayStatusKey] || 'study';
+  // Robust Status Lookup (checks YYYY-MM-DD dateKey, weekday name, and legacy study-weekday)
+  const dk = dateKey(dateObj);
+  const statusType =
+    dayStatus[dk] ||
+    dayStatus[todayName] ||
+    dayStatus[`study-${todayName}`] ||
+    'study';
 
   // Group tasks dynamically by custom categories
   const categorySections = categories.map((cat) => {
