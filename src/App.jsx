@@ -464,7 +464,7 @@ export default function App() {
         </>
       )}
 
-      <InfoFooter />
+      <InfoFooter viewMode={viewMode} />
 
       {hasParsed && (
         <NotificationBanner
