@@ -970,6 +970,50 @@ body {
   margin-top: 2px;
 }
 
+/* Today View Section Headers */
+.today-view__section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.today-view__section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(31, 58, 52, 0.08);
+}
+
+.today-view__section-header h3 {
+  font-family: var(--font-voice);
+  font-size: 16px;
+  color: var(--ink);
+  flex: 1;
+}
+
+.section-icon {
+  color: var(--slate);
+}
+
+.section-icon--study {
+  color: var(--sage);
+}
+
+.section-icon--gym {
+  color: var(--gold);
+}
+
+.section-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--slate);
+  background: var(--paper-raised);
+  padding: 2px 6px;
+  border-radius: var(--radius-pill);
+}
+
+
 /* ═══════════════════════════════════════════
    3-Tier Navbar
    ═══════════════════════════════════════════ */
