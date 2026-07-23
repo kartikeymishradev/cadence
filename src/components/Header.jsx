@@ -1,6 +1,7 @@
 import React from 'react';
+import ThemeSelector from './ThemeSelector';
 
-export default function Header({ weekStart }) {
+export default function Header({ weekStart, activeTheme, onSelectTheme }) {
   return (
     <header className="cadence-header">
       <div className="cadence-header__left">
@@ -9,13 +10,17 @@ export default function Header({ weekStart }) {
           Paste a plan, get a schedule you can actually keep.
         </p>
       </div>
-      <span className="cadence-header__week">
-        week of{' '}
-        {weekStart.toLocaleDateString(undefined, {
-          month: 'short',
-          day: 'numeric',
-        })}
-      </span>
+
+      <div className="cadence-header__right">
+        <ThemeSelector activeTheme={activeTheme} onSelectTheme={onSelectTheme} />
+        <span className="cadence-header__week">
+          week of{' '}
+          {weekStart.toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric',
+          })}
+        </span>
+      </div>
     </header>
   );
 }

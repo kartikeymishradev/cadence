@@ -1,5 +1,5 @@
-import React from 'react';
-import { Palette } from 'lucide-react';
+import React, { useState } from 'react';
+import { Palette, Check } from 'lucide-react';
 
 export const THEMES = [
   { id: 'paper', label: 'Sage & Paper', color: '#1F3A34', bg: '#EDEFEA' },
@@ -10,29 +10,41 @@ export const THEMES = [
 ];
 
 export default function ThemeSelector({ activeTheme, onSelectTheme }) {
-  return (
-    <div className="theme-selector">
-      <div className="theme-selector__title">
-        <Palette size={14} />
-        <span>Theme:</span>
-      </div>
+  const [isOpen, setIsOpen] = useState(false);
+  const currentTheme = THEMES.find((t) => t.id === activeTheme) || THEMES[0];
 
-      <div className="theme-selector__pills">
-        {THEMES.map((th) => (
-          <button
-            key={th.id}
-            className={`theme-pill ${activeTheme === th.id ? 'theme-pill--active' : ''}`}
-            onClick={() => onSelectTheme(th.id)}
-            title={th.label}
-          >
-            <span
-              className="theme-pill__swatch"
-              style={{ background: th.bg, borderColor: th.color }}
-            />
-            <span className="theme-pill__label">{th.label}</span>
-          </button>
-        ))}
-      </div>
+  return (
+    <div className="theme-dropdown-container">
+      <button
+        className="theme-dropdown-trigger"
+        onClick={() => setIsOpen(!isOpen)}
+        title="Change Theme"
+      >
+        <Palette size={15} />
+        <span>{currentTheme.label}</span>
+      </button>
+
+      {isOpen && (
+        <div className="theme-dropdown-menu">
+          {THEMES.map((th) => (
+            <button
+              key={th.id}
+              className={`theme-dropdown-item ${activeTheme === th.id ? 'theme-dropdown-item--active' : ''}`}
+              onClick={() => {
+                onSelectTheme(th.id);
+                setIsOpen(false);
+              }}
+            >
+              <span
+                className="theme-swatch"
+                style={{ background: th.bg, borderColor: th.color }}
+              />
+              <span>{th.label}</span>
+              {activeTheme === th.id && <Check size={14} className="theme-check" />}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

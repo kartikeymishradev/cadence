@@ -328,8 +328,7 @@ export default function App() {
   return (
     <div className="cadence-app">
       <AuthBar user={user} />
-      <Header weekStart={weekStart} />
-      <ThemeSelector activeTheme={theme} onSelectTheme={setTheme} />
+      <Header weekStart={weekStart} activeTheme={theme} onSelectTheme={setTheme} />
       <Navbar activeView={viewMode} onViewChange={setViewMode} />
 
       {/* 1. TODAY VIEW (Landing Screen) */}
