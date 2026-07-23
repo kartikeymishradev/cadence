@@ -1,5 +1,48 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Volume2, VolumeX, CheckCircle, Clock, Sparkles, Coffee, Music, Bookmark, Save, Trash2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, VolumeX, CheckCircle, Clock, Sparkles, Coffee, Music, Bookmark, Save, Trash2, HelpCircle } from 'lucide-react';
+
+export const NOISE_TYPES = [
+  {
+    id: 'white',
+    name: 'White Noise',
+    color: '#3B82F6',
+    problem: 'Loud, chatty coworkers',
+    solution: 'White Noise',
+    why: 'Completely masks human speech.',
+  },
+  {
+    id: 'brown',
+    name: 'Brown Noise',
+    color: '#8B5CF6',
+    problem: 'An overactive, racing mind',
+    solution: 'Brown Noise',
+    why: 'Deeper tones soothe internal mental chatter.',
+  },
+  {
+    id: 'green',
+    name: 'Green Noise',
+    color: '#10B981',
+    problem: 'Stress or creative blocks',
+    solution: 'Green Noise',
+    why: 'Organic nature tones foster a relaxed flow state.',
+  },
+  {
+    id: 'pink',
+    name: 'Pink Noise',
+    color: '#EC4899',
+    problem: 'General low-level ambient noise',
+    solution: 'Pink Noise',
+    why: 'Balanced and comfortable for 8+ hours.',
+  },
+  {
+    id: 'gamma',
+    name: 'Gamma 40Hz',
+    color: '#F59E0B',
+    problem: 'Deep cognitive focus / studying',
+    solution: 'Gamma 40Hz Beats',
+    why: '40Hz binaural beats boost brainwave concentration.',
+  },
+];
 
 export default function PomodoroTimer() {
   // Custom Session Inputs
@@ -23,6 +66,7 @@ export default function PomodoroTimer() {
 
   const [presetNameInput, setPresetNameInput] = useState('');
   const [showSaveInput, setShowSaveInput] = useState(false);
+  const [showGuideCard, setShowGuideCard] = useState(true);
 
   // Active Execution Sequence State
   const [sequence, setSequence] = useState([]);
@@ -32,10 +76,12 @@ export default function PomodoroTimer() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [completedSessions, setCompletedSessions] = useState(0);
 
-  // Gamma 40Hz Focus Audio Synthesizer State
-  const [isPlayingGamma, setIsPlayingGamma] = useState(false);
+  // Ambient Noise Generator State
+  const [activeNoise, setActiveNoise] = useState(null); // null | 'white' | 'brown' | 'green' | 'pink' | 'gamma'
+  const [volume, setVolume] = useState(0.15);
   const audioCtxRef = useRef(null);
-  const gammaOscRef = useRef(null);
+  const noiseNodeRef = useRef(null);
+  const gainNodeRef = useRef(null);
 
   const timerRef = useRef(null);
 
@@ -80,43 +126,115 @@ export default function PomodoroTimer() {
     localStorage.setItem('cadence_pomo_presets', JSON.stringify(savedPresets));
   }, [savedPresets]);
 
-  // Gamma 40Hz Audio Binaural Generator
-  const toggleGammaMusic = () => {
-    if (isPlayingGamma) {
-      if (gammaOscRef.current) {
-        try { gammaOscRef.current.stop(); } catch (e) {}
-      }
-      setIsPlayingGamma(false);
-    } else {
+  // STOP ALL AUDIO Function
+  const stopAudio = () => {
+    if (noiseNodeRef.current) {
       try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        const ctx = new AudioContext();
-        audioCtxRef.current = ctx;
+        if (noiseNodeRef.current.stop) noiseNodeRef.current.stop();
+        if (noiseNodeRef.current.disconnect) noiseNodeRef.current.disconnect();
+      } catch (e) {}
+      noiseNodeRef.current = null;
+    }
+    if (audioCtxRef.current) {
+      try { audioCtxRef.current.close(); } catch (e) {}
+      audioCtxRef.current = null;
+    }
+    setActiveNoise(null);
+  };
 
-        // Carrier 200Hz + 240Hz = 40Hz Gamma Pulsing Binaural Tone
+  // Play / Toggle Multi-Color Noise Synthesizer
+  const playNoise = (noiseType) => {
+    if (activeNoise === noiseType) {
+      stopAudio();
+      return;
+    }
+
+    stopAudio(); // Stop any running sound first
+
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AudioContext();
+      audioCtxRef.current = ctx;
+
+      const bufferSize = ctx.sampleRate * 2; // 2 seconds buffer
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      let lastOut = 0.0;
+
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+
+        if (noiseType === 'white') {
+          data[i] = white;
+        } else if (noiseType === 'brown') {
+          // Brown noise 1/f^2 algorithm
+          data[i] = (lastOut + (0.02 * white)) / 1.02;
+          lastOut = data[i];
+          data[i] *= 3.5;
+        } else if (noiseType === 'pink') {
+          // Pink noise 1/f approximation
+          data[i] = (white * 0.5);
+        } else if (noiseType === 'green') {
+          // Green noise (mid-frequency bandpass nature tone)
+          data[i] = (white * 0.4);
+        }
+      }
+
+      const gainNode = ctx.createGain();
+      gainNode.gain.setValueAtTime(volume, ctx.currentTime);
+      gainNodeRef.current = gainNode;
+
+      if (noiseType === 'gamma') {
+        // Binaural Gamma 40Hz (200Hz + 240Hz)
         const osc1 = ctx.createOscillator();
         const osc2 = ctx.createOscillator();
-        const gain = ctx.createGain();
-
         osc1.type = 'sine';
         osc1.frequency.setValueAtTime(200, ctx.currentTime);
         osc2.type = 'sine';
         osc2.frequency.setValueAtTime(240, ctx.currentTime);
 
-        gain.gain.setValueAtTime(0.08, ctx.currentTime); // Soft volume
-
-        osc1.connect(gain);
-        osc2.connect(gain);
-        gain.connect(ctx.destination);
+        osc1.connect(gainNode);
+        osc2.connect(gainNode);
+        gainNode.connect(ctx.destination);
 
         osc1.start();
         osc2.start();
-        gammaOscRef.current = { stop: () => { osc1.stop(); osc2.stop(); ctx.close(); } };
+        noiseNodeRef.current = { stop: () => { osc1.stop(); osc2.stop(); } };
+      } else {
+        const noiseSource = ctx.createBufferSource();
+        noiseSource.buffer = buffer;
+        noiseSource.loop = true;
 
-        setIsPlayingGamma(true);
-      } catch (e) {
-        console.error('Audio Synthesizer Error:', e);
+        if (noiseType === 'green') {
+          // Apply Bandpass filter (500Hz - 2000Hz)
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.value = 1000;
+          filter.Q.value = 1.0;
+          noiseSource.connect(filter);
+          filter.connect(gainNode);
+        } else {
+          noiseSource.connect(gainNode);
+        }
+
+        gainNode.connect(ctx.destination);
+        noiseSource.start();
+        noiseNodeRef.current = noiseSource;
       }
+
+      setActiveNoise(noiseType);
+    } catch (e) {
+      console.error('Audio Synthesizer Error:', e);
+    }
+  };
+
+  // Update volume live
+  const handleVolumeChange = (v) => {
+    const val = Number(v);
+    setVolume(val);
+    if (gainNodeRef.current && audioCtxRef.current) {
+      gainNodeRef.current.gain.setValueAtTime(val, audioCtxRef.current.currentTime);
     }
   };
 
@@ -129,7 +247,7 @@ export default function PomodoroTimer() {
       const gain = ctx.createGain();
 
       osc.type = 'triangle';
-      osc.frequency.setValueAtTime(secs <= 3 ? 880 : 440, ctx.currentTime); // Higher pitch for last 3 secs
+      osc.frequency.setValueAtTime(secs <= 3 ? 880 : 440, ctx.currentTime);
       gain.gain.setValueAtTime(0.05, ctx.currentTime);
 
       osc.connect(gain);
@@ -163,6 +281,7 @@ export default function PomodoroTimer() {
 
   const handleStepComplete = () => {
     setIsRunning(false);
+    stopAudio(); // STOP AUDIO WHEN SESSION COMPLETES!
 
     if (soundEnabled) {
       try {
@@ -180,7 +299,7 @@ export default function PomodoroTimer() {
       const nextIdx = currentStepIdx + 1;
       setCurrentStepIdx(nextIdx);
       setTimeLeft(sequence[nextIdx].durationMins * 60);
-      setIsRunning(true); // Auto continue next step!
+      setIsRunning(true);
     } else {
       setCompletedSessions((prev) => prev + 1);
       alert('🎉 Session Complete!');
@@ -190,11 +309,16 @@ export default function PomodoroTimer() {
   };
 
   const handleToggleTimer = () => {
+    if (isRunning) {
+      // PAUSED -> STOP AUDIO IMMEDIATELY!
+      stopAudio();
+    }
     setIsRunning(!isRunning);
   };
 
   const handleResetTimer = () => {
     setIsRunning(false);
+    stopAudio(); // STOP AUDIO IMMEDIATELY ON RESET!
     setCurrentStepIdx(0);
     setTimeLeft((sequence[0]?.durationMins || 25) * 60);
   };
@@ -215,6 +339,7 @@ export default function PomodoroTimer() {
 
   const handleLoadPreset = (p) => {
     setIsRunning(false);
+    stopAudio();
     setStudyMinutes(p.studyMinutes);
     setBreakMinutes(p.breakMinutes);
     setBreakCount(p.breakCount);
@@ -245,20 +370,10 @@ export default function PomodoroTimer() {
       <div className="pomodoro-header">
         <div className="pomodoro-title">
           <Clock className="pomodoro-icon" size={20} />
-          <h3>Custom Session Timer</h3>
+          <h3>Focus & Ambient Noise Timer</h3>
         </div>
 
         <div className="pomodoro-header-actions">
-          {/* Gamma 40Hz Audio Toggle */}
-          <button
-            className={`pomo-gamma-btn ${isPlayingGamma ? 'pomo-gamma-btn--active' : ''}`}
-            onClick={toggleGammaMusic}
-            title="Play/Pause 40Hz Gamma Focus Audio"
-          >
-            <Music size={14} />
-            <span>{isPlayingGamma ? 'Pause Gamma Beats' : 'Play 40Hz Gamma Beats'}</span>
-          </button>
-
           <button
             className="pomo-sound-btn"
             onClick={() => setSoundEnabled(!soundEnabled)}
@@ -272,6 +387,75 @@ export default function PomodoroTimer() {
             {completedSessions} Sessions Done
           </span>
         </div>
+      </div>
+
+      {/* "WHICH AMBIENT SOUND FITS YOUR MIND?" GUIDE CARD */}
+      <div className="noise-guide-card">
+        <div className="noise-guide-header" onClick={() => setShowGuideCard(!showGuideCard)}>
+          <div className="noise-guide-title">
+            <HelpCircle size={16} className="guide-icon" />
+            <strong>Which Ambient Noise Fits Your Mind?</strong>
+          </div>
+          <span className="guide-toggle-text">{showGuideCard ? 'Collapse Guide' : 'Expand Guide'}</span>
+        </div>
+
+        {showGuideCard && (
+          <div className="noise-guide-matrix">
+            <table className="noise-matrix-table">
+              <thead>
+                <tr>
+                  <th>If your problem is...</th>
+                  <th>Best Choice</th>
+                  <th>Why it works</th>
+                  <th>Listen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {NOISE_TYPES.map((item) => (
+                  <tr key={item.id} className={activeNoise === item.id ? 'noise-row--active' : ''}>
+                    <td className="problem-cell">{item.problem}</td>
+                    <td className="choice-cell">
+                      <span className="noise-badge" style={{ borderColor: item.color, color: item.color }}>
+                        {item.solution}
+                      </span>
+                    </td>
+                    <td className="why-cell">{item.why}</td>
+                    <td className="action-cell">
+                      <button
+                        className={`noise-play-btn ${activeNoise === item.id ? 'noise-play-btn--active' : ''}`}
+                        onClick={() => playNoise(item.id)}
+                        style={activeNoise === item.id ? { backgroundColor: item.color, color: '#FFF' } : {}}
+                      >
+                        {activeNoise === item.id ? <Pause size={12} /> : <Play size={12} />}
+                        <span>{activeNoise === item.id ? 'Stop' : 'Play'}</span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {/* Volume Control Bar */}
+            {activeNoise && (
+              <div className="volume-control-bar">
+                <Music size={14} className="vol-icon" />
+                <span>Playing {NOISE_TYPES.find(n => n.id === activeNoise)?.name}</span>
+                <input
+                  type="range"
+                  min="0.01"
+                  max="0.5"
+                  step="0.01"
+                  value={volume}
+                  onChange={(e) => handleVolumeChange(e.target.value)}
+                  className="vol-slider"
+                />
+                <button className="cadence-btn stop-audio-btn" onClick={stopAudio}>
+                  Stop Audio
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* CUSTOM SESSION BUILDER INPUTS */}
@@ -387,15 +571,18 @@ export default function PomodoroTimer() {
         <div className="pomo-clock">{formatTime(timeLeft)}</div>
       </div>
 
-      {/* Clean Icon Controls (No redundant "Start Focus / Break" text) */}
+      {/* CLEAN ICON ONLY CONTROLS (Zero Misaligned Text!) */}
       <div className="pomo-controls">
-        <button className="cadence-btn cadence-btn--primary pomo-main-btn" onClick={handleToggleTimer}>
-          {isRunning ? <Pause size={20} /> : <Play size={20} />}
-          <span>{isRunning ? 'Pause' : 'Start'}</span>
+        <button
+          className="cadence-btn cadence-btn--primary pomo-icon-only-btn"
+          onClick={handleToggleTimer}
+          title={isRunning ? 'Pause Timer' : 'Start Timer'}
+        >
+          {isRunning ? <Pause size={22} /> : <Play size={22} className="play-icon-offset" />}
         </button>
 
         <button className="cadence-btn pomo-reset-btn" onClick={handleResetTimer} title="Reset Timer">
-          <RotateCcw size={16} />
+          <RotateCcw size={18} />
         </button>
       </div>
     </div>
