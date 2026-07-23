@@ -493,14 +493,64 @@ export default function TodayView({
             </div>
           ))}
 
-          {/* Meals Section */}
+          {/* Meals & Macro Diet Section */}
           {todayMeals.length > 0 && (
             <div className="today-view__section">
               <div className="today-view__section-header">
                 <Coffee size={16} className="section-icon" />
-                <h3>Meals & Diet</h3>
+                <h3>Meals & Macro Diet</h3>
                 <span className="section-count">{todayMeals.length} items</span>
               </div>
+
+              {/* Macro Nutrition Summary Grid (Expected vs Taken) */}
+              <div className="macro-tracker-card">
+                <div className="macro-tracker-header">
+                  <strong>🥗 Macro Nutrition Summary (Target vs Actual)</strong>
+                </div>
+
+                <div className="macro-grid">
+                  <div className="macro-col macro-col--protein">
+                    <span className="macro-label">PROTEIN</span>
+                    <div className="macro-values">
+                      <span className="macro-taken">120g</span> / <span className="macro-target">150g</span>
+                    </div>
+                    <div className="macro-progress-bar">
+                      <div className="macro-progress-fill" style={{ width: '80%', background: '#3B82F6' }} />
+                    </div>
+                  </div>
+
+                  <div className="macro-col macro-col--carbs">
+                    <span className="macro-label">CARBS</span>
+                    <div className="macro-values">
+                      <span className="macro-taken">180g</span> / <span className="macro-target">220g</span>
+                    </div>
+                    <div className="macro-progress-bar">
+                      <div className="macro-progress-fill" style={{ width: '81%', background: '#10B981' }} />
+                    </div>
+                  </div>
+
+                  <div className="macro-col macro-col--fats">
+                    <span className="macro-label">FATS</span>
+                    <div className="macro-values">
+                      <span className="macro-taken">45g</span> / <span className="macro-target">60g</span>
+                    </div>
+                    <div className="macro-progress-bar">
+                      <div className="macro-progress-fill" style={{ width: '75%', background: '#F59E0B' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Workout Muscle Focus Pills */}
+                <div className="workout-muscle-tags">
+                  <span className="muscle-tag-label">Today's Muscle Focus:</span>
+                  {['Chest', 'Back', 'Shoulders', 'Legs', 'Arms', 'Core', 'Cardio'].map((muscle) => (
+                    <span key={muscle} className={`muscle-tag-pill ${muscle === 'Chest' || muscle === 'Arms' ? 'muscle-tag-pill--active' : ''}`}>
+                      {muscle}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
               <div className="today-view__task-list">
                 {todayMeals.map((meal) => renderTaskCard(meal, '#C9922B'))}
               </div>

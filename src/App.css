@@ -1015,6 +1015,135 @@ body {
   margin-top: 2px;
 }
 
+/* Success Confirmation Toast */
+.parse-confirmation-toast--success {
+  background: #10B981;
+  border-color: #059669;
+  color: #FFFFFF;
+  font-size: 13px;
+  animation: slideDown 0.3s ease-out;
+}
+
+.parse-confirmation-toast--success strong,
+.parse-confirmation-toast--success span {
+  color: #FFFFFF !important;
+}
+
+
+/* Macro Nutrition Tracker Card & Muscle Tags */
+.macro-tracker-card {
+  background: var(--paper-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-bottom: 1rem;
+}
+
+.macro-tracker-header {
+  font-size: 12px;
+  color: var(--ink);
+  margin-bottom: 8px;
+}
+
+.macro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.macro-col {
+  background: var(--paper);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.macro-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--slate);
+  letter-spacing: 0.5px;
+}
+
+.macro-values {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.macro-target {
+  font-size: 11px;
+  color: var(--slate);
+  font-weight: 400;
+}
+
+.macro-progress-bar {
+  height: 4px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.macro-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  transition: width 0.3s ease;
+}
+
+.workout-muscle-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px solid var(--hairline);
+}
+
+.muscle-tag-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--slate);
+}
+
+.muscle-tag-pill {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  font-size: 11px;
+  color: var(--slate);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.muscle-tag-pill--active {
+  background: rgba(95, 132, 103, 0.18);
+  border-color: var(--sage);
+  color: var(--sage);
+  font-weight: 600;
+}
+
+
+/* YouTube Audio Player Bar */
+.active-yt-player-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  border-radius: var(--radius-md);
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+
 /* Ambient Noise Matrix & Guide Card */
 .noise-guide-card {
   background: var(--paper-raised);
@@ -1414,14 +1543,26 @@ body {
 
 /* Notification Banner Alignment & Active Confirmation */
 .notif-banner {
+  display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  background: var(--paper-raised);
+  border: 1px solid var(--hairline);
+  margin-top: 1.5rem;
 }
 
 .notif-banner--active {
-  background: rgba(95, 132, 103, 0.15);
-  border-color: var(--sage);
-  color: var(--sage);
+  background: #10B981;
+  border-color: #059669;
+  color: #FFFFFF;
+}
+
+.notif-banner--active .notif-banner__content p,
+.notif-banner--active .notif-banner__content strong,
+.notif-banner--active .notif-banner__icon {
+  color: #FFFFFF !important;
 }
 
 .notif-banner__actions {
@@ -1430,10 +1571,30 @@ body {
   gap: 8px;
 }
 
+.notif-banner__dismiss {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.75;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.notif-banner__dismiss:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.1);
+}
+
 .notif-enable-btn {
-  padding: 6px 12px;
+  padding: 6px 14px;
   font-size: 12px;
 }
+
 
 
 /* LeetCode-Style Streak Badge */

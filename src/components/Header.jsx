@@ -10,7 +10,7 @@ export default function Header({ weekStart, activeTheme, onSelectTheme, onStartT
           <h1 className="cadence-header__title">Cadence</h1>
           <span className="beta-version-badge">
             <Beaker size={12} />
-            v3.0-BETA (Live)
+            v3.4-BETA (Live)
           </span>
 
           <div className="streak-badge" title={`${streak} Day Completion Streak!`}>

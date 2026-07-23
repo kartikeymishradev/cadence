@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, AlertCircle, Image, Settings, Plus, Wrench, Bot, Copy, Check, Info } from 'lucide-react';
+import { Sparkles, AlertCircle, Image, Settings, Plus, Wrench, Bot, Copy, Check, Info, CheckCircle2 } from 'lucide-react';
 import TimetablePromptModal from './TimetablePromptModal';
 import CategorySettingsModal from './CategorySettingsModal';
 
@@ -25,7 +25,8 @@ export default function PlanInput({
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
-  const [parseInitiated, setParseInitiated] = useState(false);
+
+  const [parseStatus, setParseStatus] = useState('idle'); // 'idle' | 'parsing' | 'success' | 'error'
 
   // Manual task form state
   const [manualDay, setManualDay] = useState('Monday');
@@ -42,15 +43,20 @@ export default function PlanInput({
   };
 
   const handleSafeParse = async () => {
-    if (loading || parseInitiated || !rawText.trim()) return;
+    if (loading || parseStatus === 'parsing' || !rawText.trim() || rawText.trim().length < 3) return;
 
-    setParseInitiated(true);
+    setParseStatus('parsing');
     try {
       if (onParse) {
         await onParse();
       }
-    } finally {
-      setParseInitiated(false);
+      setParseStatus('success');
+      // Hide success toast after 5 seconds
+      setTimeout(() => {
+        setParseStatus('idle');
+      }, 5000);
+    } catch (err) {
+      setParseStatus('error');
     }
   };
 
@@ -65,9 +71,11 @@ export default function PlanInput({
       });
     }
     setManualTitle('');
+    setParseStatus('success');
+    setTimeout(() => setParseStatus('idle'), 4000);
   };
 
-  const isBtnDisabled = loading || parseInitiated || !rawText.trim();
+  const isBtnDisabled = loading || parseStatus === 'parsing' || !rawText.trim();
 
   return (
     <section className="cadence-card plan-input">
@@ -79,7 +87,7 @@ export default function PlanInput({
               key={cat.id}
               id={`tab-btn-${cat.id}`}
               className={`plan-input__tab ${tab === cat.id ? 'plan-input__tab--active' : ''}`}
-              onClick={() => setTab(cat.id)}
+              onClick={() => { setTab(cat.id); setParseStatus('idle'); }}
             >
               <span className="tab-color-indicator" style={{ background: cat.color }} />
               {cat.label}
@@ -143,13 +151,22 @@ export default function PlanInput({
             rows={4}
             placeholder={`Paste your ${activeCategory.label} timetable or list tasks, e.g.\nMonday 10am Task 1 60m\nTuesday 7pm Task 2 90m...`}
             value={rawText}
-            onChange={(e) => onRawTextChange(e.target.value)}
+            onChange={(e) => { onRawTextChange(e.target.value); if (parseStatus === 'success') setParseStatus('idle'); }}
           />
 
-          {parseInitiated && (
-            <div className="parse-confirmation-toast">
-              <Info size={14} className="spin" />
-              <span>Parsing initiated! Please wait 2-3 seconds for AI to format your schedule...</span>
+          {/* 1. PARSING IN PROGRESS TOAST */}
+          {(parseStatus === 'parsing' || loading) && (
+            <div className="parse-confirmation-toast parse-confirmation-toast--flashing">
+              <Sparkles size={16} className="spin" />
+              <span><strong>✨ AI Parsing Initiated!</strong> Formatting your {activeCategory.label} schedule (2-3 sec)...</span>
+            </div>
+          )}
+
+          {/* 2. SUCCESS CONFIRMATION TOAST */}
+          {parseStatus === 'success' && !loading && (
+            <div className="parse-confirmation-toast parse-confirmation-toast--success">
+              <CheckCircle2 size={18} />
+              <span><strong>🎉 Schedule Successfully Created!</strong> Check your {activeCategory.label} tasks in the Today or Week view.</span>
             </div>
           )}
 
