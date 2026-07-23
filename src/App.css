@@ -970,6 +970,138 @@ body {
   margin-top: 2px;
 }
 
+/* Category Customization Styles */
+.plan-input__tab-manage {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--hairline);
+  background: transparent;
+  color: var(--slate);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.plan-input__tab-manage:hover {
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+
+.tab-color-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  display: inline-block;
+}
+
+.cat-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.cat-manage-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 1.25rem;
+}
+
+.cat-manage-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--paper-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+}
+
+.cat-manage-item__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cat-manage-item__label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cat-delete-btn {
+  background: none;
+  border: none;
+  color: var(--rose);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: opacity 0.2s ease;
+}
+
+.cat-delete-btn:hover {
+  opacity: 0.8;
+}
+
+.cat-add-form {
+  border-top: 1px solid var(--hairline);
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cat-add-form h4 {
+  font-size: 13px;
+  font-family: var(--font-voice);
+  color: var(--ink);
+}
+
+.cat-add-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cat-input {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: var(--paper-raised);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.cat-color-picker {
+  display: flex;
+  gap: 8px;
+}
+
+.color-pick-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.color-pick-dot--active {
+  border-color: var(--ink);
+  transform: scale(1.15);
+}
+
+.cat-add-btn {
+  gap: 6px;
+  align-self: flex-start;
+  font-size: 12px;
+}
+
+
 /* Today View Section Headers */
 .today-view__section {
   display: flex;

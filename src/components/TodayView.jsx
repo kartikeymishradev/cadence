@@ -1,10 +1,11 @@
 import React from 'react';
-import { Clock, CalendarOff, Coffee, BookOpen, GraduationCap, Dumbbell, Check, Minus, X } from 'lucide-react';
+import { Clock, CalendarOff, Coffee, BookOpen, Check, Minus, X, Tag } from 'lucide-react';
 import { WEEKDAYS } from '../utils/constants';
 
 export default function TodayView({
   weekDates,
   dayStatus,
+  categories,
   schedule,
   meals,
   taskStatuses,
@@ -25,22 +26,20 @@ export default function TodayView({
   const dayStatusKey = `study-${todayName}`;
   const statusType = dayStatus[dayStatusKey] || 'study';
 
-  // Gather tasks across all 3 categories for today
-  const collegeTasks = (schedule.college || [])
-    .filter((t) => t.day === todayName)
-    .map((t, i) => ({ ...t, kind: 'college', id: `college-${i}` }))
-    .sort((a, b) => (a.start || '00:00').localeCompare(b.start || '00:00'));
+  // Group tasks dynamically by custom categories
+  const categorySections = categories.map((cat) => {
+    const tasks = (schedule[cat.id] || [])
+      .filter((t) => t.day === todayName)
+      .map((t, i) => ({ ...t, kind: cat.id, id: `${cat.id}-${i}` }))
+      .sort((a, b) => (a.start || '00:00').localeCompare(b.start || '00:00'));
 
-  const skillTasks = (schedule.skill || schedule.study || [])
-    .filter((t) => t.day === todayName)
-    .map((t, i) => ({ ...t, kind: 'skill', id: `skill-${i}` }))
-    .sort((a, b) => (a.start || '00:00').localeCompare(b.start || '00:00'));
+    return {
+      ...cat,
+      tasks,
+    };
+  }).filter((section) => section.tasks.length > 0);
 
-  const gymTasks = (schedule.gym || [])
-    .filter((t) => t.day === todayName)
-    .map((t, i) => ({ ...t, kind: 'gym', id: `gym-${i}` }))
-    .sort((a, b) => (a.start || '00:00').localeCompare(b.start || '00:00'));
-
+  // Today Meals
   const todayMeals = meals
     .filter((m) => m.day === todayName)
     .map((m, i) => ({
@@ -54,10 +53,13 @@ export default function TodayView({
     }))
     .sort((a, b) => (a.start || '00:00').localeCompare(b.start || '00:00'));
 
-  const allToday = [...collegeTasks, ...skillTasks, ...gymTasks, ...todayMeals];
-  const totalTasks = allToday.length;
+  const totalTasks = categorySections.reduce((s, sec) => s + sec.tasks.length, 0) + todayMeals.length;
 
   // Calculate metrics
+  const allToday = [
+    ...categorySections.flatMap((sec) => sec.tasks),
+    ...todayMeals,
+  ];
   const completedTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'done').length;
   const partialTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'partial').length;
   const skippedTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'skipped').length;
@@ -77,14 +79,15 @@ export default function TodayView({
     onUpdateTaskStatus(id, nextStatus);
   };
 
-  const renderTaskCard = (task) => {
+  const renderTaskCard = (task, catColor) => {
     const taskState = taskStatuses[task.id] || { status: 'pending' };
     const curStatus = taskState.status;
 
     return (
       <div
         key={task.id}
-        className={`today-task-card today-task-card--${curStatus} today-task-card--${task.kind}`}
+        className={`today-task-card today-task-card--${curStatus}`}
+        style={catColor ? { borderLeftColor: curStatus === 'pending' ? catColor : undefined } : {}}
       >
         <div className="today-task-card__time">
           <Clock size={14} />
@@ -164,45 +167,30 @@ export default function TodayView({
         </div>
       )}
 
-      {/* Section 1: College Timetable */}
-      {collegeTasks.length > 0 && (
-        <div className="today-view__section">
+      {/* Dynamic Sections by Category */}
+      {categorySections.map((sec) => (
+        <div key={sec.id} className="today-view__section">
           <div className="today-view__section-header">
-            <GraduationCap size={16} className="section-icon section-icon--college" />
-            <h3>College Timetable</h3>
-            <span className="section-count">{collegeTasks.length} classes</span>
+            <span className="cat-color-dot" style={{ background: sec.color }} />
+            <h3>{sec.label}</h3>
+            <span className="section-count">{sec.tasks.length} tasks</span>
           </div>
           <div className="today-view__task-list">
-            {collegeTasks.map(renderTaskCard)}
+            {sec.tasks.map((task) => renderTaskCard(task, sec.color))}
           </div>
         </div>
-      )}
+      ))}
 
-      {/* Section 2: Skill & Study Prep Tasks */}
-      {skillTasks.length > 0 && (
+      {/* Meals Section */}
+      {todayMeals.length > 0 && (
         <div className="today-view__section">
           <div className="today-view__section-header">
-            <BookOpen size={16} className="section-icon section-icon--study" />
-            <h3>Skill Roadmap</h3>
-            <span className="section-count">{skillTasks.length} tasks</span>
+            <Coffee size={16} className="section-icon" />
+            <h3>Meals & Diet</h3>
+            <span className="section-count">{todayMeals.length} items</span>
           </div>
           <div className="today-view__task-list">
-            {skillTasks.map(renderTaskCard)}
-          </div>
-        </div>
-      )}
-
-      {/* Section 3: Gym, Fitness & Meals */}
-      {(gymTasks.length > 0 || todayMeals.length > 0) && (
-        <div className="today-view__section">
-          <div className="today-view__section-header">
-            <Dumbbell size={16} className="section-icon section-icon--gym" />
-            <h3>Fitness & Diet</h3>
-            <span className="section-count">{gymTasks.length + todayMeals.length} items</span>
-          </div>
-          <div className="today-view__task-list">
-            {gymTasks.map(renderTaskCard)}
-            {todayMeals.map(renderTaskCard)}
+            {todayMeals.map((meal) => renderTaskCard(meal, '#C9922B'))}
           </div>
         </div>
       )}

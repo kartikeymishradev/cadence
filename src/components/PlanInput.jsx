@@ -1,53 +1,52 @@
 import React, { useState } from 'react';
-import { Sparkles, BookOpen, GraduationCap, Dumbbell, AlertCircle, Image } from 'lucide-react';
+import { Sparkles, AlertCircle, Image, Settings, Plus } from 'lucide-react';
 import TimetablePromptModal from './TimetablePromptModal';
+import CategorySettingsModal from './CategorySettingsModal';
 
 export default function PlanInput({
   tab,
   setTab,
+  categories,
+  onSaveCategories,
   rawText,
   onRawTextChange,
   onParse,
   loading,
   error,
 }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+
+  const activeCategory = categories.find((c) => c.id === tab) || categories[0] || { label: 'Plan' };
 
   return (
     <section className="cadence-card plan-input">
       <div className="plan-input__header">
         <div className="plan-input__tabs">
-          <button
-            id="tab-btn-skill"
-            className={`plan-input__tab ${tab === 'skill' ? 'plan-input__tab--active' : ''}`}
-            onClick={() => setTab('skill')}
-          >
-            <BookOpen size={16} />
-            Skill Prep
-          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              id={`tab-btn-${cat.id}`}
+              className={`plan-input__tab ${tab === cat.id ? 'plan-input__tab--active' : ''}`}
+              onClick={() => setTab(cat.id)}
+            >
+              <span className="tab-color-indicator" style={{ background: cat.color }} />
+              {cat.label}
+            </button>
+          ))}
 
           <button
-            id="tab-btn-college"
-            className={`plan-input__tab ${tab === 'college' ? 'plan-input__tab--active' : ''}`}
-            onClick={() => setTab('college')}
+            className="plan-input__tab-manage"
+            onClick={() => setIsSettingsModalOpen(true)}
+            title="Manage Categories"
           >
-            <GraduationCap size={16} />
-            College
-          </button>
-
-          <button
-            id="tab-btn-gym"
-            className={`plan-input__tab ${tab === 'gym' ? 'plan-input__tab--active' : ''}`}
-            onClick={() => setTab('gym')}
-          >
-            <Dumbbell size={16} />
-            Gym and diet
+            <Settings size={14} />
           </button>
         </div>
 
         <button
           className="timetable-prompt-trigger"
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => setIsPromptModalOpen(true)}
           title="Get prompt for timetable image"
         >
           <Image size={14} />
@@ -59,13 +58,7 @@ export default function PlanInput({
         id="plan-textarea"
         className="plan-input__textarea"
         rows={4}
-        placeholder={
-          tab === 'skill'
-            ? "Paste your skill roadmap, e.g. Data Analyst Prep:\nMonday 7pm SQL basics 90m\nTuesday 8pm Python functions 60m..."
-            : tab === 'college'
-            ? "Paste your college class timetable, e.g.\nMonday 10am DAA Lecture 60m\nMonday 11am IoT Lab 90m..."
-            : "Paste your workout & meal plan, e.g.\nMon: Leg day 45m at 7am, Meal 1: Oats & eggs\nTue: Upper body 60m at 7am..."
-        }
+        placeholder={`Paste your ${activeCategory.label} timetable or list tasks, e.g.\nMonday 10am Task 1 60m\nTuesday 7pm Task 2 90m...`}
         value={rawText}
         onChange={(e) => onRawTextChange(e.target.value)}
       />
@@ -78,7 +71,7 @@ export default function PlanInput({
           disabled={loading || !rawText.trim()}
         >
           <Sparkles size={16} className={loading ? 'spin' : ''} />
-          {loading ? 'Parsing plan...' : `Parse ${tab === 'skill' ? 'Skill' : tab === 'college' ? 'College' : 'Gym'} Plan`}
+          {loading ? 'Parsing plan...' : `Parse ${activeCategory.label} Plan`}
         </button>
 
         {error && (
@@ -90,8 +83,15 @@ export default function PlanInput({
       </div>
 
       <TimetablePromptModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isPromptModalOpen}
+        onClose={() => setIsPromptModalOpen(false)}
+      />
+
+      <CategorySettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        categories={categories}
+        onSaveCategories={onSaveCategories}
       />
     </section>
   );

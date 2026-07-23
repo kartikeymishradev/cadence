@@ -3,13 +3,17 @@ import { saveWeekData, loadWeekData } from '../services/storage';
 import { dateKey } from '../utils/dateUtils';
 import { cloudSave, cloudLoad } from '../services/cloudSync';
 
+export const DEFAULT_CATEGORIES = [
+  { id: 'skill', label: 'Skill Prep', icon: 'BookOpen', color: '#5F8467' },
+  { id: 'college', label: 'College', icon: 'GraduationCap', color: '#33414A' },
+  { id: 'gym', label: 'Gym & Diet', icon: 'Dumbbell', color: '#C9922B' },
+];
+
 /**
- * Migration helper: converts legacy data formats:
- * 1. Legacy `actualMinutes` / `mealsLogged` -> `taskStatuses` map.
- * 2. Legacy `study` category -> split into `skill` and `college`.
+ * Migration helper for taskStatuses, custom categories, and dynamic schedule maps.
  */
 export function migrateTaskStatuses(saved) {
-  if (!saved) return { taskStatuses: {}, goals: [] };
+  if (!saved) return { taskStatuses: {}, goals: [], categories: DEFAULT_CATEGORIES };
 
   const taskStatuses = saved.taskStatuses ? { ...saved.taskStatuses } : {};
 
@@ -22,58 +26,44 @@ export function migrateTaskStatuses(saved) {
     });
   }
 
-  // Migrate legacy mealsLogged
-  if (saved.mealsLogged) {
-    Object.entries(saved.mealsLogged).forEach(([id, isLogged]) => {
-      if (isLogged && !taskStatuses[id]) {
-        taskStatuses[id] = { status: 'done', actualMinutes: 0 };
-      }
-    });
+  // Migrate legacy categories
+  const categories = saved.categories && saved.categories.length > 0
+    ? saved.categories
+    : DEFAULT_CATEGORIES;
+
+  // Migrate schedule map
+  const rawSchedule = saved.schedule || {};
+  const schedule = { ...rawSchedule };
+  if (rawSchedule.study && !schedule.skill) {
+    schedule.skill = rawSchedule.study;
   }
 
-  // Migrate 2-category state to 3-category state (skill, college, gym)
-  const rawSchedule = saved.schedule || {};
-  const schedule = {
-    skill: rawSchedule.skill || rawSchedule.study || [],
-    college: rawSchedule.college || [],
-    gym: rawSchedule.gym || [],
-  };
+  categories.forEach((cat) => {
+    if (!schedule[cat.id]) schedule[cat.id] = [];
+  });
 
+  // Migrate rawText map
   const rawTextObj = saved.rawText || {};
-  const rawText = {
-    skill: rawTextObj.skill || rawTextObj.study || '',
-    college: rawTextObj.college || '',
-    gym: rawTextObj.gym || '',
-  };
-
-  const rawMW = saved.multiWeekPlan || {};
-  const multiWeekPlan = {
-    skill: rawMW.skill || rawMW.study || null,
-    college: rawMW.college || null,
-    gym: rawMW.gym || null,
-  };
-
-  const rawCWI = saved.currentWeekIndex || {};
-  const currentWeekIndex = {
-    skill: rawCWI.skill || rawCWI.study || 0,
-    college: rawCWI.college || 0,
-    gym: rawCWI.gym || 0,
-  };
+  const rawText = { ...rawTextObj };
+  if (rawTextObj.study && !rawText.skill) {
+    rawText.skill = rawTextObj.study;
+  }
+  categories.forEach((cat) => {
+    if (!rawText[cat.id]) rawText[cat.id] = '';
+  });
 
   return {
     ...saved,
     schedule,
     rawText,
-    multiWeekPlan,
-    currentWeekIndex,
+    categories,
     taskStatuses,
     goals: saved.goals || [],
   };
 }
 
 /**
- * Hook that syncs schedule state with localStorage (always)
- * and Supabase cloud (when user is logged in).
+ * Hook that syncs schedule state & custom categories with localStorage + Supabase cloud.
  */
 export function usePersistence(weekStart, user) {
   const weekKey = dateKey(weekStart);
@@ -81,6 +71,7 @@ export function usePersistence(weekStart, user) {
   const cloudLoaded = useRef(false);
   const saveTimer = useRef(null);
 
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [rawText, setRawText] = useState({ skill: '', college: '', gym: '' });
   const [schedule, setSchedule] = useState({ skill: [], college: [], gym: [] });
   const [meals, setMeals] = useState([]);
@@ -89,14 +80,15 @@ export function usePersistence(weekStart, user) {
   const [goals, setGoals] = useState([]);
 
   // Multi-week plan metadata
-  const [multiWeekPlan, setMultiWeekPlan] = useState({ skill: null, college: null, gym: null });
-  const [currentWeekIndex, setCurrentWeekIndex] = useState({ skill: 0, college: 0, gym: 0 });
+  const [multiWeekPlan, setMultiWeekPlan] = useState({});
+  const [currentWeekIndex, setCurrentWeekIndex] = useState({});
 
-  // ── Apply a saved data object to state (with migration) ──
+  // ── Apply a saved data object to state ──
   const applyData = useCallback((savedData) => {
     if (!savedData) return;
     const migrated = migrateTaskStatuses(savedData);
 
+    if (migrated.categories) setCategories(migrated.categories);
     if (migrated.schedule) setSchedule(migrated.schedule);
     if (migrated.meals) setMeals(migrated.meals);
     if (migrated.dayStatus) setDayStatus(migrated.dayStatus);
@@ -128,7 +120,6 @@ export function usePersistence(weekStart, user) {
     });
   }, [user, weekKey, applyData]);
 
-  // Reset cloud load flag when user changes (logout/login)
   useEffect(() => {
     cloudLoaded.current = false;
   }, [user?.id]);
@@ -140,6 +131,7 @@ export function usePersistence(weekStart, user) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       const payload = {
+        categories,
         schedule,
         meals,
         dayStatus,
@@ -150,10 +142,8 @@ export function usePersistence(weekStart, user) {
         currentWeekIndex,
       };
 
-      // Always save locally
       saveWeekData(weekKey, payload);
 
-      // Save to cloud if signed in
       if (user) {
         cloudSave(`week_${weekKey}`, payload);
       }
@@ -162,9 +152,10 @@ export function usePersistence(weekStart, user) {
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-  }, [weekKey, user, schedule, meals, dayStatus, taskStatuses, goals, rawText, multiWeekPlan, currentWeekIndex]);
+  }, [weekKey, user, categories, schedule, meals, dayStatus, taskStatuses, goals, rawText, multiWeekPlan, currentWeekIndex]);
 
   return {
+    categories, setCategories,
     rawText, setRawText,
     schedule, setSchedule,
     meals, setMeals,

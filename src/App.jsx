@@ -46,8 +46,9 @@ export default function App() {
   const { isSupported: pushSupported, isSubscribed: pushSubscribed, subscribe: pushSubscribe } =
     usePushNotifications();
 
-  // ── Persisted state (with cloud migration & 3 categories) ──
+  // ── Persisted state (with cloud migration & custom categories) ──
   const {
+    categories, setCategories,
     rawText, setRawText,
     schedule, setSchedule,
     meals, setMeals,
@@ -58,9 +59,9 @@ export default function App() {
     currentWeekIndex, setCurrentWeekIndex,
   } = usePersistence(weekStart, user);
 
-  // ── Local UI state (tab: 'skill' | 'college' | 'gym') ──
-  const [tab, setTab] = useState('skill');
-  const [clarifications, setClarifications] = useState({ skill: [], college: [], gym: [] });
+  // ── Local UI state ──
+  const [tab, setTab] = useState(categories[0]?.id || 'skill');
+  const [clarifications, setClarifications] = useState({});
   const [clarificationAnswers, setClarificationAnswers] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -93,12 +94,11 @@ export default function App() {
   // ── Actions ──
   const handleParse = useCallback(async () => {
     const text = rawText[tab];
-    if (!text.trim()) return;
+    if (!text || !text.trim()) return;
 
     setLoading(true);
     setError('');
     try {
-      // For skill/college parsing, treat prompt as study format
       const parseTab = tab === 'gym' ? 'gym' : 'study';
       const parsed = await parsePlan(parseTab, text);
 
@@ -222,14 +222,15 @@ export default function App() {
   }, [activePlan, activeWeek, activeWeekIdx]);
 
   // ── Derived Task Data ──
-  const allTasks = useMemo(
-    () => [
-      ...(schedule.skill || []).map((t, i) => ({ ...t, kind: 'skill', id: `skill-${i}` })),
-      ...(schedule.college || []).map((t, i) => ({ ...t, kind: 'college', id: `college-${i}` })),
-      ...(schedule.gym || []).map((t, i) => ({ ...t, kind: 'gym', id: `gym-${i}` })),
-    ],
-    [schedule]
-  );
+  const allTasks = useMemo(() => {
+    const result = [];
+    categories.forEach((cat) => {
+      (schedule[cat.id] || []).forEach((t, i) => {
+        result.push({ ...t, kind: cat.id, id: `${cat.id}-${i}` });
+      });
+    });
+    return result;
+  }, [categories, schedule]);
 
   const chartData = useMemo(
     () =>
@@ -276,7 +277,7 @@ export default function App() {
         : [],
   })).filter((g) => g.items.length > 0 || g.meals.length > 0);
 
-  const hasParsed = (schedule.skill?.length || 0) > 0 || (schedule.college?.length || 0) > 0 || (schedule.gym?.length || 0) > 0 || totalWeeks > 0;
+  const hasParsed = allTasks.length > 0 || totalWeeks > 0;
 
   // Render compatibility helper for TaskList
   const legacyActualMinutes = useMemo(() => {
@@ -316,6 +317,7 @@ export default function App() {
         <TodayView
           weekDates={weekDates}
           dayStatus={dayStatus}
+          categories={categories}
           schedule={schedule}
           meals={meals}
           taskStatuses={taskStatuses}
@@ -330,6 +332,8 @@ export default function App() {
           <PlanInput
             tab={tab}
             setTab={setTab}
+            categories={categories}
+            onSaveCategories={setCategories}
             rawText={rawText[tab] || ''}
             onRawTextChange={handleRawTextChange}
             onParse={handleParse}
