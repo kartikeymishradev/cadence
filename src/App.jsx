@@ -84,6 +84,13 @@ export default function App() {
     document.body.setAttribute('data-theme', theme || 'paper');
   }, [theme]);
 
+  // ── Local UI state ──
+  const [tab, setTab] = useState(categories[0]?.id || 'skill');
+  const [clarifications, setClarifications] = useState({});
+  const [clarificationAnswers, setClarificationAnswers] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
   // Auto-increment streak when user marks tasks done
   const handleUpdateTaskStatus = useCallback((id, status) => {
     setTaskStatuses((prev) => ({
@@ -271,13 +278,6 @@ export default function App() {
     },
     []
   );
-
-  // ── Local UI state ──
-  const [tab, setTab] = useState(categories[0]?.id || 'skill');
-  const [clarifications, setClarifications] = useState({});
-  const [clarificationAnswers, setClarificationAnswers] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   // ── Derived Multi-Week Data ──
   const activePlan = multiWeekPlan[tab];
