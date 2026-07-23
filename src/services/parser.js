@@ -1,7 +1,10 @@
 import { STUDY_SYS, GYM_SYS } from '../utils/constants';
 
-const isDev = import.meta.env.DEV;
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || import.meta.env.VITE_GOOGLE_API_KEY || import.meta.env.VITE_FREEMODEL_KEY || '';
+const GEMINI_KEY =
+  import.meta.env.VITE_GEMINI_API_KEY ||
+  import.meta.env.VITE_GOOGLE_API_KEY ||
+  import.meta.env.VITE_FREEMODEL_KEY ||
+  '';
 
 /**
  * Call Google Gemini API directly (gemini-3.6-flash with gemini-flash-latest fallback).
@@ -66,17 +69,14 @@ async function callGemini(system, userText, apiKey) {
 }
 
 /**
- * Internal: call the LLM in development mode.
+ * Internal: call LLM using client-side key if available, otherwise backend proxy.
  */
 async function callLLM(system, userText) {
-  if (isDev) {
-    if (!GEMINI_KEY) {
-      throw new Error('API key missing in .env.local! Please add your key to .env.local.');
-    }
+  if (GEMINI_KEY) {
     return callGemini(system, userText, GEMINI_KEY);
   }
 
-  // Production: call the backend proxy (Azure Function)
+  // Fallback to backend API proxy if GEMINI_KEY is not baked into the frontend
   let res;
   try {
     res = await fetch('/api/parse', {
@@ -85,12 +85,12 @@ async function callLLM(system, userText) {
       body: JSON.stringify({ system, userText }),
     });
   } catch (err) {
-    throw new Error(`Backend API error: ${err.message}`);
+    throw new Error(`Network error: ${err.message}`);
   }
 
   if (!res.ok) {
     const errObj = await res.json().catch(() => ({}));
-    throw new Error(errObj.error || `Parse API error (${res.status})`);
+    throw new Error(errObj.error || `API error (${res.status})`);
   }
 
   return res.json();

@@ -1,63 +1,41 @@
-const { requireAuth } = require('../lib/auth');
+module.exports = async function handler(arg1, arg2) {
+  // Support both Vercel Serverless Functions (req, res) and Azure Functions (context, req)
+  let req, res, isAzure = false;
 
-// Simple in-memory rate limiter (10 requests/min per user)
-const rateMap = new Map();
-const RATE_LIMIT = 10;
-const RATE_WINDOW = 60_000;
-
-function checkRateLimit(userId) {
-  const now = Date.now();
-  const entry = rateMap.get(userId);
-
-  if (!entry || now - entry.start > RATE_WINDOW) {
-    rateMap.set(userId, { start: now, count: 1 });
-    return true;
+  if (arg1 && arg1.req && arg1.res) {
+    // Azure Functions environment
+    req = arg1.req;
+    res = arg1.res;
+    isAzure = true;
+  } else if (arg2 && arg2.status) {
+    // Vercel environment: arg1 is req, arg2 is res
+    req = arg1;
+    res = arg2;
+  } else {
+    // Fallback: arg1 is req
+    req = arg1;
   }
 
-  if (entry.count >= RATE_LIMIT) {
-    return false;
-  }
-
-  entry.count++;
-  return true;
-}
-
-module.exports = async function (context, req) {
-  // Authenticate
-  const user = requireAuth(req, context);
-  if (user.status === 401) {
-    context.res = user;
-    return;
-  }
-
-  // Rate limit
-  if (!checkRateLimit(user.userId)) {
-    context.res = {
-      status: 429,
-      jsonBody: { error: 'Too many requests. Please wait a minute.' },
-    };
-    return;
+  function sendResponse(status, jsonBody) {
+    if (isAzure) {
+      arg1.res = { status, jsonBody };
+    } else if (res && typeof res.status === 'function') {
+      res.status(status).json(jsonBody);
+    }
   }
 
   try {
-    const { system, userText } = req.body || {};
+    const body = req.body || {};
+    const { system, userText } = typeof body === 'string' ? JSON.parse(body) : body;
 
     if (!system || !userText) {
-      context.res = {
-        status: 400,
-        jsonBody: { error: 'Missing system prompt or user text' },
-      };
-      return;
+      return sendResponse(400, { error: 'Missing system prompt or user text' });
     }
 
-    const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.FREEMODEL_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.FREEMODEL_API_KEY;
 
     if (!geminiKey) {
-      context.res = {
-        status: 500,
-        jsonBody: { error: 'LLM API key not configured on backend' },
-      };
-      return;
+      return sendResponse(500, { error: 'LLM API key not configured on backend' });
     }
 
     const modelsToTry = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-2.0-flash'];
@@ -91,22 +69,12 @@ module.exports = async function (context, req) {
       const clean = text.replace(/```json|```/g, '').trim();
       const parsedJSON = JSON.parse(clean);
 
-      context.res = {
-        status: 200,
-        jsonBody: parsedJSON,
-      };
-      return;
+      return sendResponse(200, parsedJSON);
     }
 
-    context.res = {
-      status: 502,
-      jsonBody: { error: lastError || 'Gemini API call failed across all models' },
-    };
+    return sendResponse(502, { error: lastError || 'Gemini API call failed across all models' });
   } catch (err) {
-    context.log.error('Parse function error:', err);
-    context.res = {
-      status: 500,
-      jsonBody: { error: 'Internal server error' },
-    };
+    console.error('Parse function error:', err);
+    return sendResponse(500, { error: 'Internal server error' });
   }
 };
