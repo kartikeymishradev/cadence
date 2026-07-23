@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, CalendarOff, Coffee, Check, Minus, X, Hourglass, Zap, FileText, Plus, MessageSquare } from 'lucide-react';
+import { Clock, CalendarOff, Coffee, Check, Minus, X, Hourglass, Zap, FileText, GraduationCap, LayoutGrid } from 'lucide-react';
 import { WEEKDAYS } from '../utils/constants';
+import CollegeOverviewModal from './CollegeOverviewModal';
 
 export default function TodayView({
   weekDates,
@@ -17,6 +18,7 @@ export default function TodayView({
   const [now, setNow] = useState(new Date());
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [noteInput, setNoteInput] = useState('');
+  const [isOverviewOpen, setIsOverviewOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 10000);
@@ -165,7 +167,6 @@ export default function TodayView({
           {/* Attached Note Pill */}
           {noteText && !isEditingThisNote && (
             <div className="task-note-pill" onClick={() => handleOpenNoteEditor(task.id, noteText)}>
-              <MessageSquare size={11} />
               <span>{noteText}</span>
             </div>
           )}
@@ -287,6 +288,18 @@ export default function TodayView({
           <div className="today-view__section-header">
             <span className="cat-color-dot" style={{ background: sec.color }} />
             <h3>{sec.label}</h3>
+
+            {sec.id === 'college' && (
+              <button
+                className="college-overview-trigger"
+                onClick={() => setIsOverviewOpen(true)}
+                title="View Full College Overview"
+              >
+                <LayoutGrid size={13} />
+                College Overview
+              </button>
+            )}
+
             <span className="section-count">{sec.tasks.length} tasks</span>
           </div>
           <div className="today-view__task-list">
@@ -320,6 +333,14 @@ export default function TodayView({
           <span className="today-view__review-hint">Tap status buttons to log your progress</span>
         </div>
       )}
+
+      {/* College Overview Modal */}
+      <CollegeOverviewModal
+        isOpen={isOverviewOpen}
+        onClose={() => setIsOverviewOpen(false)}
+        collegeSchedule={schedule.college || []}
+        taskStatuses={taskStatuses}
+      />
     </div>
   );
 }
