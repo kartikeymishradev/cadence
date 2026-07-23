@@ -1,5 +1,5 @@
-import React from 'react';
-import { Clock, CalendarOff, Coffee, BookOpen, Check, Minus, X, Tag } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Clock, CalendarOff, Coffee, BookOpen, Check, Minus, X, Hourglass, Zap } from 'lucide-react';
 import { WEEKDAYS } from '../utils/constants';
 
 export default function TodayView({
@@ -12,15 +12,28 @@ export default function TodayView({
   onUpdateTaskStatus,
   onNavigateToWeek,
 }) {
-  const today = new Date();
-  const dayIndex = (today.getDay() + 6) % 7; // Mon=0..Sun=6
+  // Live Clock State
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 10000); // update every 10s
+    return () => clearInterval(timer);
+  }, []);
+
+  const dayIndex = (now.getDay() + 6) % 7; // Mon=0..Sun=6
   const todayName = WEEKDAYS[dayIndex];
-  const dateObj = weekDates[dayIndex] || today;
+  const dateObj = weekDates[dayIndex] || now;
 
   const dateFormatted = dateObj.toLocaleDateString('en-US', {
     weekday: 'long',
     month: 'short',
     day: 'numeric',
+  });
+
+  const timeFormatted = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
   });
 
   const dayStatusKey = `study-${todayName}`;
@@ -53,13 +66,42 @@ export default function TodayView({
     }))
     .sort((a, b) => (a.start || '00:00').localeCompare(b.start || '00:00'));
 
-  const totalTasks = categorySections.reduce((s, sec) => s + sec.tasks.length, 0) + todayMeals.length;
-
-  // Calculate metrics
   const allToday = [
     ...categorySections.flatMap((sec) => sec.tasks),
     ...todayMeals,
-  ];
+  ].sort((a, b) => (a.start || '00:00').localeCompare(b.start || '00:00'));
+
+  const totalTasks = allToday.length;
+
+  // ── Calculate Next / Active Task ──
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+  let activeTask = null;
+  let nextTask = null;
+  let minutesUntilNext = null;
+
+  for (const task of allToday) {
+    if (!task.start) continue;
+    const [h, m] = task.start.split(':').map(Number);
+    const startMins = h * 60 + m;
+    const duration = Number(task.duration) || 30;
+    const endMins = startMins + duration;
+
+    // Check if task is currently happening
+    if (nowMinutes >= startMins && nowMinutes < endMins) {
+      activeTask = { ...task, remainingMins: endMins - nowMinutes };
+      break;
+    }
+
+    // Check for next upcoming task
+    if (startMins > nowMinutes) {
+      nextTask = task;
+      minutesUntilNext = startMins - nowMinutes;
+      break;
+    }
+  }
+
+  // Calculate metrics
   const completedTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'done').length;
   const partialTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'partial').length;
   const skippedTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'skipped').length;
@@ -130,7 +172,7 @@ export default function TodayView({
       {/* Header Banner */}
       <div className="today-view__header">
         <div>
-          <span className="today-view__date-badge">{dateFormatted}</span>
+          <span className="today-view__date-badge">{dateFormatted} • {timeFormatted}</span>
           <h2 className="today-view__title">Today's Focus</h2>
         </div>
 
@@ -143,6 +185,29 @@ export default function TodayView({
           </div>
         )}
       </div>
+
+      {/* Live Next Task Countdown Banner */}
+      {activeTask && (
+        <div className="today-view__countdown-banner today-view__countdown-banner--active">
+          <Zap size={18} className="spin-slow" />
+          <div className="countdown-info">
+            <span className="countdown-label">HAPPENING NOW</span>
+            <strong>{activeTask.title}</strong>
+          </div>
+          <span className="countdown-timer">{activeTask.remainingMins}m remaining</span>
+        </div>
+      )}
+
+      {!activeTask && nextTask && minutesUntilNext !== null && (
+        <div className="today-view__countdown-banner">
+          <Hourglass size={18} />
+          <div className="countdown-info">
+            <span className="countdown-label">NEXT UP AT {nextTask.start}</span>
+            <strong>{nextTask.title}</strong>
+          </div>
+          <span className="countdown-timer">in {minutesUntilNext} mins</span>
+        </div>
+      )}
 
       {/* Rest Day / Holiday Banner */}
       {statusType !== 'study' && (

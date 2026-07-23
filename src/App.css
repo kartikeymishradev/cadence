@@ -970,6 +970,54 @@ body {
   margin-top: 2px;
 }
 
+/* Live Countdown Banner */
+.today-view__countdown-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--paper-raised);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-md);
+  color: var(--ink);
+}
+
+.today-view__countdown-banner--active {
+  border-color: var(--sage);
+  background: rgba(95, 132, 103, 0.08);
+}
+
+.countdown-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.countdown-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0.5px;
+}
+
+.today-view__countdown-banner--active .countdown-label {
+  color: var(--sage);
+}
+
+.countdown-timer {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--paper);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--hairline);
+}
+
+
 /* Category Customization Styles */
 .plan-input__tab-manage {
   display: inline-flex;
