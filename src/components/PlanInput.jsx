@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, AlertCircle, Image, Settings, Plus, Wrench, Bot, Copy, Check } from 'lucide-react';
+import { Sparkles, AlertCircle, Image, Settings, Plus, Wrench, Bot, Copy, Check, Info } from 'lucide-react';
 import TimetablePromptModal from './TimetablePromptModal';
 import CategorySettingsModal from './CategorySettingsModal';
 
@@ -25,6 +25,7 @@ export default function PlanInput({
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [parseInitiated, setParseInitiated] = useState(false);
 
   // Manual task form state
   const [manualDay, setManualDay] = useState('Monday');
@@ -40,6 +41,19 @@ export default function PlanInput({
     setTimeout(() => setCopiedPrompt(false), 2000);
   };
 
+  const handleSafeParse = async () => {
+    if (loading || parseInitiated || !rawText.trim()) return;
+
+    setParseInitiated(true);
+    try {
+      if (onParse) {
+        await onParse();
+      }
+    } finally {
+      setParseInitiated(false);
+    }
+  };
+
   const handleCreateTask = () => {
     if (!manualTitle.trim()) return;
     if (onAddTaskManual) {
@@ -52,6 +66,8 @@ export default function PlanInput({
     }
     setManualTitle('');
   };
+
+  const isBtnDisabled = loading || parseInitiated || !rawText.trim();
 
   return (
     <section className="cadence-card plan-input">
@@ -130,15 +146,22 @@ export default function PlanInput({
             onChange={(e) => onRawTextChange(e.target.value)}
           />
 
+          {parseInitiated && (
+            <div className="parse-confirmation-toast">
+              <Info size={14} className="spin" />
+              <span>Parsing initiated! Please wait 2-3 seconds for AI to format your schedule...</span>
+            </div>
+          )}
+
           <div className="plan-input__actions">
             <button
               id="btn-parse-ai"
               className="cadence-btn cadence-btn--primary"
-              onClick={onParse}
-              disabled={loading || !rawText.trim()}
+              onClick={handleSafeParse}
+              disabled={isBtnDisabled}
             >
-              <Sparkles size={16} className={loading ? 'spin' : ''} />
-              {loading ? 'Parsing plan...' : `Parse ${activeCategory.label} with AI`}
+              <Sparkles size={16} className={isBtnDisabled ? 'spin' : ''} />
+              {isBtnDisabled ? `Parsing ${activeCategory.label} with AI...` : `Parse ${activeCategory.label} with AI`}
             </button>
 
             {error && (

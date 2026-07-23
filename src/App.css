@@ -1015,6 +1015,169 @@ body {
   margin-top: 2px;
 }
 
+/* Parse Confirmation Toast */
+.parse-confirmation-toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: rgba(95, 132, 103, 0.15);
+  border: 1px solid var(--sage);
+  color: var(--sage);
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+}
+
+/* Custom Pomodoro Session Builder Styles */
+.pomo-mode-switcher {
+  display: flex;
+  gap: 6px;
+  background: var(--paper-raised);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  margin-bottom: 1rem;
+}
+
+.pomo-mode-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--slate);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pomo-mode-btn--active {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+}
+
+.custom-pomo-builder {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--paper-raised);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  margin-bottom: 1rem;
+}
+
+.builder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+}
+
+.builder-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.builder-field label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--slate);
+  letter-spacing: 0.5px;
+}
+
+.builder-field input {
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  font-size: 13px;
+  font-family: var(--font-mono);
+  color: var(--ink);
+}
+
+.builder-checkbox-row {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.sequence-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.seq-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-family: var(--font-mono);
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  color: var(--slate);
+}
+
+.seq-pill--active {
+  border-color: var(--gold);
+  box-shadow: 0 0 8px rgba(201, 146, 43, 0.4);
+}
+
+.seq-pill--study { color: var(--sage); background: rgba(95, 132, 103, 0.12); }
+.seq-pill--break { color: var(--gold); background: rgba(201, 146, 43, 0.12); }
+
+.active-step-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--gold);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Notification Banner Alignment & Active Confirmation */
+.notif-banner {
+  align-items: center;
+  justify-content: space-between;
+}
+
+.notif-banner--active {
+  background: rgba(95, 132, 103, 0.15);
+  border-color: var(--sage);
+  color: var(--sage);
+}
+
+.notif-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notif-enable-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+
 /* LeetCode-Style Streak Badge */
 .streak-badge {
   display: inline-flex;

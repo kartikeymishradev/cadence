@@ -1,54 +1,70 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bell, BellCheck, X } from 'lucide-react';
 
-const DISMISS_KEY = 'cadence_notif_dismissed';
-const DISMISS_DAYS = 7;
+export default function NotificationBanner({
+  isSupported,
+  isSubscribed,
+  onSubscribe,
+}) {
+  const [dismissed, setDismissed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [subscribedLocal, setSubscribedLocal] = useState(isSubscribed);
 
-export default function NotificationBanner({ isSupported, isSubscribed, onSubscribe }) {
-  const [visible, setVisible] = useState(false);
+  if (!isSupported || dismissed) return null;
 
-  useEffect(() => {
-    // Don't show if not supported, already subscribed, or recently dismissed
-    if (!isSupported || isSubscribed) return;
-
-    const dismissed = localStorage.getItem(DISMISS_KEY);
-    if (dismissed) {
-      const dismissedAt = new Date(dismissed);
-      const daysSince = (Date.now() - dismissedAt.getTime()) / (1000 * 60 * 60 * 24);
-      if (daysSince < DISMISS_DAYS) return;
-    }
-
-    // Show after a short delay so it doesn't compete with initial load
-    const timer = setTimeout(() => setVisible(true), 2000);
-    return () => clearTimeout(timer);
-  }, [isSupported, isSubscribed]);
-
-  if (!visible) return null;
-
-  const handleDismiss = () => {
-    localStorage.setItem(DISMISS_KEY, new Date().toISOString());
-    setVisible(false);
-  };
-
-  const handleEnable = async () => {
-    const success = await onSubscribe();
-    if (success) {
-      setVisible(false);
+  const handleEnableNotifications = async () => {
+    setLoading(true);
+    try {
+      if (onSubscribe) {
+        await onSubscribe();
+      }
+      setSubscribedLocal(true);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
   };
+
+  if (subscribedLocal) {
+    return (
+      <div className="notif-banner notif-banner--active">
+        <BellCheck size={18} className="notif-banner__icon" />
+        <div className="notif-banner__content">
+          <strong>✓ Reminders Active!</strong>
+          <p>You will get push notifications 5 min before each session.</p>
+        </div>
+        <button
+          className="notif-banner__dismiss"
+          onClick={() => setDismissed(true)}
+          title="Dismiss"
+        >
+          <X size={16} />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="notif-banner">
       <Bell size={18} className="notif-banner__icon" />
       <div className="notif-banner__content">
         <strong>Stay on track</strong>
-        <span>Get reminded 5 min before each session.</span>
+        <p>Get reminded 5 min before each session starts.</p>
       </div>
       <div className="notif-banner__actions">
-        <button className="cadence-btn notif-banner__enable" onClick={handleEnable}>
-          Enable
+        <button
+          className="cadence-btn cadence-btn--primary notif-enable-btn"
+          onClick={handleEnableNotifications}
+          disabled={loading}
+        >
+          {loading ? 'Enabling...' : 'Enable Reminders'}
         </button>
-        <button className="cadence-btn notif-banner__dismiss" onClick={handleDismiss}>
+        <button
+          className="notif-banner__dismiss"
+          onClick={() => setDismissed(true)}
+          title="Dismiss"
+        >
           <X size={16} />
         </button>
       </div>
