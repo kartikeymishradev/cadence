@@ -46,7 +46,7 @@ export default function App() {
   const { isSupported: pushSupported, isSubscribed: pushSubscribed, subscribe: pushSubscribe } =
     usePushNotifications();
 
-  // ── Persisted state (with cloud migration & custom categories) ──
+  // ── Persisted state ──
   const {
     categories, setCategories,
     rawText, setRawText,
@@ -73,6 +73,17 @@ export default function App() {
       [id]: {
         ...(prev[id] || {}),
         status,
+      },
+    }));
+  }, [setTaskStatuses]);
+
+  // Update task note/assignment handler
+  const handleUpdateTaskNote = useCallback((id, note) => {
+    setTaskStatuses((prev) => ({
+      ...prev,
+      [id]: {
+        ...(prev[id] || {}),
+        note,
       },
     }));
   }, [setTaskStatuses]);
@@ -279,7 +290,6 @@ export default function App() {
 
   const hasParsed = allTasks.length > 0 || totalWeeks > 0;
 
-  // Render compatibility helper for TaskList
   const legacyActualMinutes = useMemo(() => {
     const map = {};
     Object.entries(taskStatuses).forEach(([id, st]) => {
@@ -322,6 +332,7 @@ export default function App() {
           meals={meals}
           taskStatuses={taskStatuses}
           onUpdateTaskStatus={handleUpdateTaskStatus}
+          onUpdateTaskNote={handleUpdateTaskNote}
           onNavigateToWeek={() => setViewMode('week')}
         />
       )}

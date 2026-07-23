@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, CalendarOff, Coffee, BookOpen, Check, Minus, X, Hourglass, Zap } from 'lucide-react';
+import { Clock, CalendarOff, Coffee, Check, Minus, X, Hourglass, Zap, FileText, Plus, MessageSquare } from 'lucide-react';
 import { WEEKDAYS } from '../utils/constants';
 
 export default function TodayView({
@@ -10,13 +10,16 @@ export default function TodayView({
   meals,
   taskStatuses,
   onUpdateTaskStatus,
+  onUpdateTaskNote,
   onNavigateToWeek,
 }) {
   // Live Clock State
   const [now, setNow] = useState(new Date());
+  const [editingNoteId, setEditingNoteId] = useState(null);
+  const [noteInput, setNoteInput] = useState('');
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 10000); // update every 10s
+    const timer = setInterval(() => setNow(new Date()), 10000);
     return () => clearInterval(timer);
   }, []);
 
@@ -87,13 +90,11 @@ export default function TodayView({
     const duration = Number(task.duration) || 30;
     const endMins = startMins + duration;
 
-    // Check if task is currently happening
     if (nowMinutes >= startMins && nowMinutes < endMins) {
       activeTask = { ...task, remainingMins: endMins - nowMinutes };
       break;
     }
 
-    // Check for next upcoming task
     if (startMins > nowMinutes) {
       nextTask = task;
       minutesUntilNext = startMins - nowMinutes;
@@ -121,9 +122,21 @@ export default function TodayView({
     onUpdateTaskStatus(id, nextStatus);
   };
 
+  const handleOpenNoteEditor = (id, existingNote) => {
+    setEditingNoteId(id);
+    setNoteInput(existingNote || '');
+  };
+
+  const handleSaveNote = (id) => {
+    onUpdateTaskNote(id, noteInput.trim());
+    setEditingNoteId(null);
+  };
+
   const renderTaskCard = (task, catColor) => {
-    const taskState = taskStatuses[task.id] || { status: 'pending' };
+    const taskState = taskStatuses[task.id] || { status: 'pending', note: '' };
     const curStatus = taskState.status;
+    const noteText = taskState.note || '';
+    const isEditingThisNote = editingNoteId === task.id;
 
     return (
       <div
@@ -140,7 +153,43 @@ export default function TodayView({
         <div className="today-task-card__main">
           <div className="today-task-card__title-row">
             <h4 className="today-task-card__title">{task.title}</h4>
+            <button
+              className={`note-icon-btn ${noteText ? 'note-icon-btn--active' : ''}`}
+              onClick={() => handleOpenNoteEditor(task.id, noteText)}
+              title={noteText ? 'Edit Note' : 'Add Note / Homework'}
+            >
+              <FileText size={13} />
+            </button>
           </div>
+
+          {/* Attached Note Pill */}
+          {noteText && !isEditingThisNote && (
+            <div className="task-note-pill" onClick={() => handleOpenNoteEditor(task.id, noteText)}>
+              <MessageSquare size={11} />
+              <span>{noteText}</span>
+            </div>
+          )}
+
+          {/* Inline Note Editor */}
+          {isEditingThisNote && (
+            <div className="task-note-editor">
+              <input
+                type="text"
+                className="task-note-input"
+                placeholder="e.g. Complete assignment in NCS 453..."
+                value={noteInput}
+                onChange={(e) => setNoteInput(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveNote(task.id);
+                  if (e.key === 'Escape') setEditingNoteId(null);
+                }}
+              />
+              <button className="cadence-btn task-note-save-btn" onClick={() => handleSaveNote(task.id)}>
+                Save
+              </button>
+            </div>
+          )}
 
           {task.kind === 'meal' && (task.calories || task.protein) && (
             <div className="today-task-card__meta">

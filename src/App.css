@@ -970,6 +970,68 @@ body {
   margin-top: 2px;
 }
 
+/* Task Notes & Homework Reminders */
+.note-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--slate);
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.note-icon-btn:hover,
+.note-icon-btn--active {
+  opacity: 1;
+  color: var(--gold);
+}
+
+.task-note-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 3px 8px;
+  background: rgba(201, 146, 43, 0.12);
+  border: 1px solid rgba(201, 146, 43, 0.25);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  color: #7A5710;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.task-note-pill:hover {
+  background: rgba(201, 146, 43, 0.2);
+}
+
+.task-note-editor {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.task-note-input {
+  flex: 1;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  font-size: 12px;
+  font-family: var(--font-sans);
+}
+
+.task-note-save-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+
 /* Live Countdown Banner */
 .today-view__countdown-banner {
   display: flex;
