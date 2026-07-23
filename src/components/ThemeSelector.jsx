@@ -16,6 +16,7 @@ export default function ThemeSelector({ activeTheme, onSelectTheme }) {
   return (
     <div className="theme-dropdown-container">
       <button
+        id="theme-dropdown-btn"
         className="theme-dropdown-trigger"
         onClick={() => setIsOpen(!isOpen)}
         title="Change Theme"

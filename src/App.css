@@ -1015,6 +1015,152 @@ body {
   margin-top: 2px;
 }
 
+/* ═══════════════════════════════════════════
+   Guided Spotlight Tour Styles
+   ═══════════════════════════════════════════ */
+.tour-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(2px);
+  z-index: 9999;
+  pointer-events: auto;
+  transition: all 0.3s ease;
+}
+
+.tour-spotlight-box {
+  position: fixed;
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65), 0 0 15px rgba(255, 255, 255, 0.8);
+  border: 2px solid var(--gold);
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10000;
+}
+
+.tour-tooltip-card {
+  position: fixed;
+  width: 320px;
+  background: var(--paper-raised);
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  padding: 16px;
+  z-index: 10001;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tour-tooltip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tour-step-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--gold);
+  background: rgba(201, 146, 43, 0.15);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.tour-skip-btn {
+  background: none;
+  border: none;
+  color: var(--slate);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.tour-skip-btn:hover {
+  color: var(--rose);
+}
+
+.tour-tooltip-title {
+  font-family: var(--font-voice);
+  font-size: 16px;
+  color: var(--ink);
+}
+
+.tour-tooltip-desc {
+  font-size: 13px;
+  color: var(--slate);
+  line-height: 1.45;
+}
+
+.tour-tooltip-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline);
+}
+
+.tour-nav-arrow-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tour-nav-arrow-btn:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.tour-nav-arrow-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.tour-nav-arrow-btn--next {
+  background: var(--gold);
+  color: #3A2A0A;
+  border-color: var(--gold);
+}
+
+.tour-nav-arrow-btn--next:hover {
+  background: var(--ink) !important;
+  color: var(--paper) !important;
+}
+
+.tour-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.tour-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--hairline);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tour-dot--active {
+  background: var(--gold);
+  width: 16px;
+  border-radius: var(--radius-pill);
+}
+
+
 /* Header Tutorial Button */
 .header-tutorial-btn {
   display: flex;

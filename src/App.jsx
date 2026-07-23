@@ -24,12 +24,14 @@ import InfoFooter from './components/InfoFooter';
 import NotificationBanner from './components/NotificationBanner';
 import PomodoroTimer from './components/PomodoroTimer';
 import ExcelGoalsSheet from './components/ExcelGoalsSheet';
+import GuidedTour from './components/GuidedTour';
 
 export default function App() {
   const { weekStart, weekDates, dateKey } = useWeekDates();
 
   // ── View mode state (defaults to 'today') ──
   const [viewMode, setViewMode] = useState('today');
+  const [isTourOpen, setIsTourOpen] = useState(false);
 
   // ── Auth state (Supabase) ──
   const [user, setUser] = useState(null);
@@ -351,7 +353,12 @@ export default function App() {
   return (
     <div className="cadence-app">
       <AuthBar user={user} />
-      <Header weekStart={weekStart} activeTheme={theme} onSelectTheme={setTheme} />
+      <Header
+        weekStart={weekStart}
+        activeTheme={theme}
+        onSelectTheme={setTheme}
+        onStartTour={() => setIsTourOpen(true)}
+      />
       <Navbar activeView={viewMode} onViewChange={setViewMode} />
 
       {/* 1. TODAY VIEW (Landing Screen) */}
@@ -456,6 +463,13 @@ export default function App() {
           onSubscribe={pushSubscribe}
         />
       )}
+
+      {/* Interactive Spotlight Tour */}
+      <GuidedTour
+        isOpen={isTourOpen}
+        onClose={() => setIsTourOpen(false)}
+        onViewChange={setViewMode}
+      />
     </div>
   );
 }
