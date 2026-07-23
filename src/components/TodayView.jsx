@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, CalendarOff, Coffee, Check, Minus, X, Hourglass, Zap, FileText, GraduationCap, LayoutGrid, CheckCircle2, Edit2, Eye, EyeOff, RotateCw } from 'lucide-react';
+import { Clock, CalendarOff, Coffee, Check, Minus, X, Hourglass, Zap, FileText, GraduationCap, LayoutGrid, CheckCircle2, Edit2, Eye, EyeOff, RotateCw, Moon, Sparkles, BedDouble } from 'lucide-react';
 import { WEEKDAYS, STATUS_STYLE } from '../utils/constants';
 import { dateKey } from '../utils/dateUtils';
 import CollegeOverviewModal from './CollegeOverviewModal';
@@ -11,6 +11,8 @@ export default function TodayView({
   schedule,
   meals,
   taskStatuses,
+  sleepSchedule,
+  onUpdateSleepSchedule,
   onUpdateTaskStatus,
   onUpdateTaskNote,
   onUpdateTaskTime,
@@ -26,6 +28,11 @@ export default function TodayView({
   const [editDuration, setEditDuration] = useState('');
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
   const [showTasksOnRestDay, setShowTasksOnRestDay] = useState(false);
+  const [isEditingSleep, setIsEditingSleep] = useState(false);
+  const [sleepStartInput, setSleepStartInput] = useState(sleepSchedule?.sleepStart || '23:30');
+  const [sleepEndInput, setSleepEndInput] = useState(sleepSchedule?.sleepEnd || '07:00');
+  const [dismissLateNightPopup, setDismissLateNightPopup] = useState(false);
+  const [dismissFreeTimePopup, setDismissFreeTimePopup] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 10000);
@@ -120,6 +127,18 @@ export default function TodayView({
     }
   }
 
+  // Sleep Duration Calculator
+  const [bedH, bedM] = (sleepSchedule?.sleepStart || '23:30').split(':').map(Number);
+  const [wakeH, wakeM] = (sleepSchedule?.sleepEnd || '07:00').split(':').map(Number);
+
+  let sleepMins = (wakeH * 60 + wakeM) - (bedH * 60 + bedM);
+  if (sleepMins <= 0) sleepMins += 24 * 60; // overnight math
+  const sleepHours = (sleepMins / 60).toFixed(1);
+
+  // Late-Night Detector (e.g. past bedtime 23:30 or before 5am)
+  const isLateNight = (now.getHours() >= 23 || now.getHours() < 5) && !dismissLateNightPopup;
+  const isFreeTime = !activeTask && totalTasks > 0 && !dismissFreeTimePopup && !isLateNight;
+
   // Calculate metrics
   const completedTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'done').length;
   const partialTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'partial').length;
@@ -146,6 +165,13 @@ export default function TodayView({
     collegeSec.tasks.forEach((t) => {
       onUpdateTaskStatus(t.id, 'done');
     });
+  };
+
+  const handleSaveSleepSchedule = () => {
+    if (onUpdateSleepSchedule) {
+      onUpdateSleepSchedule({ sleepStart: sleepStartInput, sleepEnd: sleepEndInput });
+    }
+    setIsEditingSleep(false);
   };
 
   const handleOpenNoteEditor = (id, existingNote) => {
@@ -312,6 +338,69 @@ export default function TodayView({
           </div>
         )}
       </div>
+
+      {/* Sleep Schedule Banner */}
+      <div className="sleep-schedule-card">
+        <div className="sleep-schedule-main">
+          <BedDouble size={16} className="sleep-icon" />
+          <div className="sleep-info">
+            <span className="sleep-label">SLEEP SCHEDULE</span>
+            {isEditingSleep ? (
+              <div className="sleep-edit-group">
+                <input
+                  type="time"
+                  className="sleep-time-input"
+                  value={sleepStartInput}
+                  onChange={(e) => setSleepStartInput(e.target.value)}
+                />
+                <span>to</span>
+                <input
+                  type="time"
+                  className="sleep-time-input"
+                  value={sleepEndInput}
+                  onChange={(e) => setSleepEndInput(e.target.value)}
+                />
+                <button className="time-save-btn" onClick={handleSaveSleepSchedule}>
+                  <Check size={12} />
+                </button>
+              </div>
+            ) : (
+              <strong className="sleep-times-display" onClick={() => setIsEditingSleep(true)} title="Click to edit sleep hours">
+                {sleepSchedule?.sleepStart || '23:30'} – {sleepSchedule?.sleepEnd || '07:00'} ({sleepHours} hrs rest)
+                <Edit2 size={10} className="sleep-edit-icon" />
+              </strong>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 🌙 LATE NIGHT AWAKE POPUP */}
+      {isLateNight && (
+        <div className="smart-popup smart-popup--late-night">
+          <Moon size={18} className="popup-icon" />
+          <div className="popup-body">
+            <strong>🌙 You're active late at night!</strong>
+            <p>Your target bedtime is {sleepSchedule?.sleepStart || '23:30'}. Getting your {sleepHours} hrs of sleep is crucial for focus tomorrow!</p>
+          </div>
+          <button className="popup-close-btn" onClick={() => setDismissLateNightPopup(true)}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
+      {/* 🎉 FREE TIME PRODUCTIVITY SUGGESTION POPUP */}
+      {isFreeTime && (
+        <div className="smart-popup smart-popup--free-time">
+          <Sparkles size={18} className="popup-icon" />
+          <div className="popup-body">
+            <strong>🎉 No active task scheduled right now!</strong>
+            <p>You have free time right now. Great opportunity for a quick 25m Pomodoro focus session or a short rest!</p>
+          </div>
+          <button className="popup-close-btn" onClick={() => setDismissFreeTimePopup(true)}>
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       {/* Live Next Task Countdown Banner */}
       {!isRestDay && activeTask && (

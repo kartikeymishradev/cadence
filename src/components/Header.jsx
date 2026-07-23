@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
-import { HelpCircle, Beaker } from 'lucide-react';
+import React from 'react';
+import { HelpCircle, Beaker, Flame } from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
-import GuidedTour from './GuidedTour';
 
-export default function Header({ weekStart, activeTheme, onSelectTheme, onStartTour }) {
+export default function Header({ weekStart, activeTheme, onSelectTheme, onStartTour, streak = 1 }) {
   return (
     <header className="cadence-header">
       <div className="cadence-header__left">
@@ -13,6 +12,11 @@ export default function Header({ weekStart, activeTheme, onSelectTheme, onStartT
             <Beaker size={12} />
             v2.5-BETA (Live)
           </span>
+
+          <div className="streak-badge" title={`${streak} Day Completion Streak!`}>
+            <Flame size={14} className="streak-icon-fire" />
+            <span>{streak} Day Streak</span>
+          </div>
         </div>
         <p className="cadence-header__subtitle">
           Paste a plan, get a schedule you can actually keep.

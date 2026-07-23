@@ -60,6 +60,8 @@ export function migrateTaskStatuses(saved) {
     taskStatuses,
     theme: saved.theme || 'paper',
     goals: saved.goals || [],
+    streak: saved.streak || 1,
+    sleepSchedule: saved.sleepSchedule || { sleepStart: '23:30', sleepEnd: '07:00' },
   };
 }
 
@@ -80,6 +82,8 @@ export function usePersistence(weekStart, user) {
   const [dayStatus, setDayStatus] = useState({});
   const [taskStatuses, setTaskStatuses] = useState({});
   const [goals, setGoals] = useState([]);
+  const [streak, setStreak] = useState(1);
+  const [sleepSchedule, setSleepSchedule] = useState({ sleepStart: '23:30', sleepEnd: '07:00' });
 
   // Multi-week plan metadata
   const [multiWeekPlan, setMultiWeekPlan] = useState({});
@@ -100,6 +104,8 @@ export function usePersistence(weekStart, user) {
     if (migrated.multiWeekPlan) setMultiWeekPlan(migrated.multiWeekPlan);
     if (migrated.currentWeekIndex) setCurrentWeekIndex(migrated.currentWeekIndex);
     if (migrated.goals) setGoals(migrated.goals);
+    if (migrated.streak) setStreak(migrated.streak);
+    if (migrated.sleepSchedule) setSleepSchedule(migrated.sleepSchedule);
   }, []);
 
   // ── Load from localStorage on mount ──
@@ -144,6 +150,8 @@ export function usePersistence(weekStart, user) {
         rawText,
         multiWeekPlan,
         currentWeekIndex,
+        streak,
+        sleepSchedule,
       };
 
       saveWeekData(weekKey, payload);
@@ -156,7 +164,7 @@ export function usePersistence(weekStart, user) {
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-  }, [weekKey, user, categories, schedule, meals, dayStatus, taskStatuses, goals, rawText, multiWeekPlan, currentWeekIndex]);
+  }, [weekKey, user, categories, schedule, meals, dayStatus, taskStatuses, goals, rawText, multiWeekPlan, currentWeekIndex, streak, sleepSchedule]);
 
   return {
     theme, setTheme,
@@ -169,6 +177,7 @@ export function usePersistence(weekStart, user) {
     goals, setGoals,
     multiWeekPlan, setMultiWeekPlan,
     currentWeekIndex, setCurrentWeekIndex,
+    streak, setStreak,
+    sleepSchedule, setSleepSchedule,
   };
 }
-

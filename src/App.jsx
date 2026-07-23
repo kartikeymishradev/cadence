@@ -32,6 +32,19 @@ export default function App() {
   const [viewMode, setViewMode] = useState('today');
   const [isTourOpen, setIsTourOpen] = useState(false);
 
+  // Auto-launch Guided Tour on First Visit
+  useEffect(() => {
+    const hasSeen = localStorage.getItem('hasSeenTour');
+    if (!hasSeen) {
+      setIsTourOpen(true);
+    }
+  }, []);
+
+  const handleCloseTour = useCallback(() => {
+    setIsTourOpen(false);
+    localStorage.setItem('hasSeenTour', 'true');
+  }, []);
+
   // ── Auth state (Supabase) ──
   const [user, setUser] = useState(null);
 
@@ -62,6 +75,8 @@ export default function App() {
     goals, setGoals,
     multiWeekPlan, setMultiWeekPlan,
     currentWeekIndex, setCurrentWeekIndex,
+    streak, setStreak,
+    sleepSchedule, setSleepSchedule,
   } = usePersistence(weekStart, user);
 
   // Sync active theme with document body data-theme attribute
@@ -69,14 +84,7 @@ export default function App() {
     document.body.setAttribute('data-theme', theme || 'paper');
   }, [theme]);
 
-  // ── Local UI state ──
-  const [tab, setTab] = useState(categories[0]?.id || 'skill');
-  const [clarifications, setClarifications] = useState({});
-  const [clarificationAnswers, setClarificationAnswers] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  // Update status handler for TodayView / TaskList
+  // Auto-increment streak when user marks tasks done
   const handleUpdateTaskStatus = useCallback((id, status) => {
     setTaskStatuses((prev) => ({
       ...prev,
@@ -85,7 +93,11 @@ export default function App() {
         status,
       },
     }));
-  }, [setTaskStatuses]);
+
+    if (status === 'done') {
+      setStreak((prev) => Math.max(prev, 1));
+    }
+  }, [setTaskStatuses, setStreak]);
 
   // Update task note/assignment handler
   const handleUpdateTaskNote = useCallback((id, note) => {
@@ -154,7 +166,7 @@ export default function App() {
         setSchedule((prev) => ({ ...prev, gym: parsed.workouts || [] }));
         setMeals(parsed.meals || []);
       } else {
-        setSchedule((prev) => ({ ...prev, [activeTab]: parsed.tasks || [] }));
+        setSchedule((prev) => ({ ...prev, [tab]: parsed.tasks || [] }));
       }
 
       setClarifications((prev) => ({
@@ -192,7 +204,7 @@ export default function App() {
         setSchedule((prev) => ({ ...prev, gym: parsed.workouts || [] }));
         setMeals(parsed.meals || []);
       } else {
-        setSchedule((prev) => ({ ...prev, [activeTab]: parsed.tasks || [] }));
+        setSchedule((prev) => ({ ...prev, [tab]: parsed.tasks || [] }));
       }
 
       setClarifications((prev) => ({
@@ -259,6 +271,13 @@ export default function App() {
     },
     []
   );
+
+  // ── Local UI state ──
+  const [tab, setTab] = useState(categories[0]?.id || 'skill');
+  const [clarifications, setClarifications] = useState({});
+  const [clarificationAnswers, setClarificationAnswers] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   // ── Derived Multi-Week Data ──
   const activePlan = multiWeekPlan[tab];
@@ -366,6 +385,7 @@ export default function App() {
         activeTheme={theme}
         onSelectTheme={setTheme}
         onStartTour={() => setIsTourOpen(true)}
+        streak={streak}
       />
       <Navbar activeView={viewMode} onViewChange={setViewMode} />
 
@@ -378,6 +398,8 @@ export default function App() {
           schedule={schedule}
           meals={meals}
           taskStatuses={taskStatuses}
+          sleepSchedule={sleepSchedule}
+          onUpdateSleepSchedule={setSleepSchedule}
           onUpdateTaskStatus={handleUpdateTaskStatus}
           onUpdateTaskNote={handleUpdateTaskNote}
           onUpdateTaskTime={handleUpdateTaskTime}
@@ -471,7 +493,7 @@ export default function App() {
       {/* Interactive Spotlight Tour */}
       <GuidedTour
         isOpen={isTourOpen}
-        onClose={() => setIsTourOpen(false)}
+        onClose={handleCloseTour}
         onViewChange={setViewMode}
       />
     </div>
