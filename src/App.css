@@ -1015,6 +1015,273 @@ body {
   margin-top: 2px;
 }
 
+/* Header Tutorial Button */
+.header-tutorial-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--hairline);
+  background: var(--paper-raised);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.header-tutorial-btn:hover {
+  background: var(--paper);
+  border-color: var(--ink);
+}
+
+/* Tutorial Modal Styles */
+.tutorial-modal-content {
+  max-width: 520px;
+}
+
+.tutorial-modal-body {
+  padding: 20px;
+}
+
+.tutorial-step-content p {
+  font-size: 14px;
+  color: var(--ink);
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.tutorial-step-content ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tutorial-step-content li {
+  font-size: 13px;
+  color: var(--slate);
+  background: var(--paper-raised);
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  line-height: 1.4;
+}
+
+.tutorial-modal-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tutorial-next-btn {
+  margin-left: auto;
+  gap: 4px;
+}
+
+
+/* Inline Time Editing & Clickable Time */
+.time-display-clickable {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s ease;
+}
+
+.time-display-clickable:hover {
+  background: var(--hairline);
+}
+
+.time-edit-icon {
+  opacity: 0.4;
+}
+
+.time-edit-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-edit-input,
+.dur-edit-input {
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink);
+}
+
+.time-edit-input { width: 75px; }
+.dur-edit-input { width: 42px; }
+
+.time-save-btn {
+  background: var(--sage);
+  color: #EFF5EE;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 3px 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+/* College Completed Quick Action Button */
+.college-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.college-mark-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--sage);
+  background: rgba(95, 132, 103, 0.12);
+  color: var(--sage);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.college-mark-all-btn:hover {
+  background: var(--sage);
+  color: #EFF5EE;
+}
+
+/* Rest Day Task Toggle */
+.rest-banner-content {
+  flex: 1;
+}
+
+.rest-toggle-btn {
+  gap: 4px;
+  font-size: 11px;
+  padding: 4px 10px;
+  background: var(--paper-raised);
+  border: 1px solid var(--hairline);
+}
+
+/* Setup Onboarding Mode Switcher */
+.setup-mode-switcher {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 1rem;
+  background: var(--paper-raised);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+}
+
+.setup-mode-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--slate);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.setup-mode-btn--active {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+}
+
+.prompt-template-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(201, 146, 43, 0.1);
+  border: 1px solid rgba(201, 146, 43, 0.25);
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  font-size: 12px;
+  color: var(--ink);
+}
+
+.prompt-copy-chip {
+  gap: 4px;
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.setup-manual-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--paper-raised);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+}
+
+.setup-manual-container h4 {
+  font-family: var(--font-voice);
+  font-size: 14px;
+}
+
+.manual-task-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.manual-input {
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  font-size: 12px;
+}
+
+.manual-input--title {
+  flex: 2;
+  min-width: 180px;
+}
+
+.manual-dur-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.manual-input--dur {
+  width: 60px;
+}
+
+.dur-unit {
+  font-size: 12px;
+  color: var(--slate);
+}
+
+.manual-add-btn {
+  gap: 4px;
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+
 /* Header & Theme Dropdown Styles */
 .cadence-header {
   display: flex;

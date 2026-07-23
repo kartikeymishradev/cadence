@@ -97,6 +97,29 @@ export default function App() {
     }));
   }, [setTaskStatuses]);
 
+  // Inline edit handler for Start Time & Duration
+  const handleUpdateTaskTime = useCallback((categoryKey, taskIndex, newStart, newDuration) => {
+    setSchedule((prev) => {
+      const list = [...(prev[categoryKey] || [])];
+      if (list[taskIndex]) {
+        list[taskIndex] = {
+          ...list[taskIndex],
+          start: newStart,
+          duration: newDuration,
+        };
+      }
+      return { ...prev, [categoryKey]: list };
+    });
+  }, [setSchedule]);
+
+  // Manual Task Adder Handler
+  const handleAddTaskManual = useCallback((categoryKey, newTask) => {
+    setSchedule((prev) => ({
+      ...prev,
+      [categoryKey]: [...(prev[categoryKey] || []), newTask],
+    }));
+  }, [setSchedule]);
+
   // Apply a specific week from a multi-week plan object to active state
   const applyMultiWeekData = useCallback((parsedPlan, targetWeekIdx, activeTab) => {
     if (!parsedPlan || !parsedPlan.weeks || parsedPlan.weeks.length === 0) return;
@@ -342,7 +365,8 @@ export default function App() {
           taskStatuses={taskStatuses}
           onUpdateTaskStatus={handleUpdateTaskStatus}
           onUpdateTaskNote={handleUpdateTaskNote}
-          onNavigateToWeek={() => setViewMode('week')}
+          onUpdateTaskTime={handleUpdateTaskTime}
+          onNavigateToWeek={() => setViewMode('setup')}
         />
       )}
 
@@ -397,7 +421,7 @@ export default function App() {
         <PomodoroTimer />
       )}
 
-      {/* 5. SETUP VIEW (AI Plan Parser & Custom Categories) */}
+      {/* 5. SETUP VIEW (AI Plan Parser & Manual Task Builder) */}
       {viewMode === 'setup' && (
         <>
           <PlanInput
@@ -408,6 +432,7 @@ export default function App() {
             rawText={rawText[tab] || ''}
             onRawTextChange={handleRawTextChange}
             onParse={handleParse}
+            onAddTaskManual={handleAddTaskManual}
             loading={loading}
             error={error}
           />
