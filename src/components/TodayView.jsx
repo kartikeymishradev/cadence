@@ -656,9 +656,9 @@ export default function TodayView({
                 <div className="weekly-macro-history">
                   <span className="history-label">7-Day Weekly History Log (Mon – Sun):</span>
                   <div className="weekly-history-grid">
-                    {WEEKDAYS.map((day) => {
-                      const dayShort = day.slice(0, 3);
-                      const isToday = day === weekDates.find((w) => w.isToday)?.name;
+                    {(WEEKDAYS || []).map((day) => {
+                      const dayShort = day ? day.slice(0, 3) : '';
+                      const isToday = Array.isArray(weekDates) && weekDates.some((w) => w.dayName === day && w.isToday);
                       return (
                         <div
                           key={day}
