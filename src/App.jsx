@@ -9,6 +9,8 @@ import { supabase } from './services/supabase';
 
 import AuthBar from './components/AuthBar';
 import Header from './components/Header';
+import Navbar from './components/Navbar';
+import TodayView from './components/TodayView';
 import PlanInput from './components/PlanInput';
 import Clarifications from './components/Clarifications';
 import WeekNavigator from './components/WeekNavigator';
@@ -23,16 +25,17 @@ import NotificationBanner from './components/NotificationBanner';
 export default function App() {
   const { weekStart, weekDates, dateKey } = useWeekDates();
 
+  // ── View mode state (defaults to 'today') ──
+  const [viewMode, setViewMode] = useState('today');
+
   // ── Auth state (Supabase) ──
   const [user, setUser] = useState(null);
 
   useEffect(() => {
     if (!supabase) return;
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
-    // Listen for sign-in / sign-out events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -43,14 +46,14 @@ export default function App() {
   const { isSupported: pushSupported, isSubscribed: pushSubscribed, subscribe: pushSubscribe } =
     usePushNotifications();
 
-  // ── Persisted state ──
+  // ── Persisted state (with cloud migration) ──
   const {
     rawText, setRawText,
     schedule, setSchedule,
     meals, setMeals,
     dayStatus, setDayStatus,
-    actualMinutes, setActualMinutes,
-    mealsLogged, setMealsLogged,
+    taskStatuses, setTaskStatuses,
+    goals, setGoals,
     multiWeekPlan, setMultiWeekPlan,
     currentWeekIndex, setCurrentWeekIndex,
   } = usePersistence(weekStart, user);
@@ -61,6 +64,17 @@ export default function App() {
   const [clarificationAnswers, setClarificationAnswers] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Update status handler for TodayView / TaskList
+  const handleUpdateTaskStatus = useCallback((id, status) => {
+    setTaskStatuses((prev) => ({
+      ...prev,
+      [id]: {
+        ...(prev[id] || {}),
+        status,
+      },
+    }));
+  }, [setTaskStatuses]);
 
   // Apply a specific week from a multi-week plan object to active state
   const applyMultiWeekData = useCallback((parsedPlan, targetWeekIdx, activeTab) => {
@@ -87,7 +101,6 @@ export default function App() {
       const parsed = await parsePlan(tab, text);
 
       if (parsed.weeks && parsed.weeks.length > 0) {
-        // Multi-week plan parsed
         setMultiWeekPlan((prev) => ({ ...prev, [tab]: parsed }));
         setCurrentWeekIndex((prev) => ({ ...prev, [tab]: 0 }));
         applyMultiWeekData(parsed, 0, tab);
@@ -146,7 +159,6 @@ export default function App() {
     }
   }, [clarifications, tab, rawText, clarificationAnswers, setSchedule, setMeals, setMultiWeekPlan, setCurrentWeekIndex, applyMultiWeekData]);
 
-  // Week navigation callbacks
   const handlePrevWeek = useCallback(() => {
     const plan = multiWeekPlan[tab];
     const curIdx = currentWeekIndex[tab] || 0;
@@ -171,36 +183,11 @@ export default function App() {
     (key) => {
       setDayStatus((prev) => {
         const cur = prev[key] || 'study';
-        const next =
-          cur === 'study' ? 'off' : cur === 'off' ? 'holiday' : 'study';
+        const next = cur === 'study' ? 'off' : cur === 'off' ? 'holiday' : 'study';
         return { ...prev, [key]: next };
       });
     },
     [setDayStatus]
-  );
-
-  const quickToggle = useCallback(
-    (id, planned) => {
-      setActualMinutes((prev) => {
-        const cur = Number(prev[id]) || 0;
-        return { ...prev, [id]: cur > 0 ? 0 : planned };
-      });
-    },
-    [setActualMinutes]
-  );
-
-  const handleActualChange = useCallback(
-    (id, value) => {
-      setActualMinutes((prev) => ({ ...prev, [id]: value }));
-    },
-    [setActualMinutes]
-  );
-
-  const handleMealToggle = useCallback(
-    (id) => {
-      setMealsLogged((prev) => ({ ...prev, [id]: !prev[id] }));
-    },
-    [setMealsLogged]
   );
 
   const handleRawTextChange = useCallback(
@@ -223,7 +210,6 @@ export default function App() {
   const activeWeek = activePlan && activePlan.weeks ? activePlan.weeks[activeWeekIdx] : null;
   const totalWeeks = activePlan && activePlan.weeks ? activePlan.weeks.length : 0;
 
-  // Determine current phase based on active week number
   const currentPhase = useMemo(() => {
     if (!activePlan || !activePlan.phases || !activeWeek) return null;
     const weekNum = activeWeek.weekNumber || (activeWeekIdx + 1);
@@ -250,12 +236,12 @@ export default function App() {
           0
         );
         const completed = dayTasks.reduce(
-          (s, t) => s + (Number(actualMinutes[t.id]) || 0),
+          (s, t) => s + (taskStatuses[t.id]?.status === 'done' ? Number(t.duration) || 0 : 0),
           0
         );
         return { day: day.slice(0, 3), planned, completed };
       }),
-    [allTasks, actualMinutes]
+    [allTasks, taskStatuses]
   );
 
   const totalPlannedMin = allTasks.reduce(
@@ -263,7 +249,7 @@ export default function App() {
     0
   );
   const totalDoneMin = allTasks.reduce(
-    (s, t) => s + (Number(actualMinutes[t.id]) || 0),
+    (s, t) => s + (taskStatuses[t.id]?.status === 'done' ? Number(t.duration) || 0 : 0),
     0
   );
   const completionPct =
@@ -288,65 +274,118 @@ export default function App() {
 
   const hasParsed = schedule.study.length > 0 || schedule.gym.length > 0 || totalWeeks > 0;
 
-  // ── Render ──
+  // Render compatibility helper for TaskList
+  const legacyActualMinutes = useMemo(() => {
+    const map = {};
+    Object.entries(taskStatuses).forEach(([id, st]) => {
+      if (st.status === 'done') map[id] = 90;
+    });
+    return map;
+  }, [taskStatuses]);
+
+  const quickToggle = useCallback((id, planned) => {
+    setTaskStatuses((prev) => {
+      const cur = prev[id]?.status || 'pending';
+      return { ...prev, [id]: { status: cur === 'done' ? 'pending' : 'done' } };
+    });
+  }, [setTaskStatuses]);
+
+  const handleActualChange = useCallback((id, value) => {
+    setTaskStatuses((prev) => ({ ...prev, [id]: { status: Number(value) > 0 ? 'done' : 'pending' } }));
+  }, [setTaskStatuses]);
+
+  const handleMealToggle = useCallback((id) => {
+    setTaskStatuses((prev) => {
+      const cur = prev[id]?.status || 'pending';
+      return { ...prev, [id]: { status: cur === 'done' ? 'pending' : 'done' } };
+    });
+  }, [setTaskStatuses]);
+
   return (
     <div className="cadence-app">
       <AuthBar user={user} />
       <Header weekStart={weekStart} />
+      <Navbar activeView={viewMode} onViewChange={setViewMode} />
 
-      <PlanInput
-        tab={tab}
-        setTab={setTab}
-        rawText={rawText[tab]}
-        onRawTextChange={handleRawTextChange}
-        onParse={handleParse}
-        loading={loading}
-        error={error}
-      />
-
-      <Clarifications
-        clarifications={clarifications[tab]}
-        answers={clarificationAnswers}
-        onAnswerChange={handleAnswerChange}
-        onRefine={handleRefine}
-        loading={loading}
-      />
-
-      {totalWeeks > 1 && (
-        <WeekNavigator
-          currentWeekIndex={activeWeekIdx}
-          totalWeeks={totalWeeks}
-          currentWeekTitle={activeWeek?.title}
-          onPrevWeek={handlePrevWeek}
-          onNextWeek={handleNextWeek}
+      {/* TODAY VIEW (Landing Screen) */}
+      {viewMode === 'today' && (
+        <TodayView
+          weekDates={weekDates}
+          dayStatus={dayStatus}
+          schedule={schedule}
+          meals={meals}
+          taskStatuses={taskStatuses}
+          onUpdateTaskStatus={handleUpdateTaskStatus}
+          onNavigateToWeek={() => setViewMode('week')}
         />
       )}
 
-      {currentPhase && <PhaseBanner currentPhase={currentPhase} />}
+      {/* WEEK VIEW (Full Schedule + AI Parser) */}
+      {viewMode === 'week' && (
+        <>
+          <PlanInput
+            tab={tab}
+            setTab={setTab}
+            rawText={rawText[tab]}
+            onRawTextChange={handleRawTextChange}
+            onParse={handleParse}
+            loading={loading}
+            error={error}
+          />
 
-      <WeekStrip
-        weekDates={weekDates}
-        dayStatus={dayStatus}
-        onCycleStatus={cycleStatus}
-      />
+          <Clarifications
+            clarifications={clarifications[tab]}
+            answers={clarificationAnswers}
+            onAnswerChange={handleAnswerChange}
+            onRefine={handleRefine}
+            loading={loading}
+          />
 
-      <TaskList
-        tasksByDay={tasksByDay}
-        weekDates={weekDates}
-        dayStatus={dayStatus}
-        actualMinutes={actualMinutes}
-        mealsLogged={mealsLogged}
-        onQuickToggle={quickToggle}
-        onActualChange={handleActualChange}
-        onMealToggle={handleMealToggle}
-      />
+          {totalWeeks > 1 && (
+            <WeekNavigator
+              currentWeekIndex={activeWeekIdx}
+              totalWeeks={totalWeeks}
+              currentWeekTitle={activeWeek?.title}
+              onPrevWeek={handlePrevWeek}
+              onNextWeek={handleNextWeek}
+            />
+          )}
 
-      <SummaryCards
-        totalPlannedMin={totalPlannedMin}
-        completionPct={completionPct}
-      />
+          {currentPhase && <PhaseBanner currentPhase={currentPhase} />}
 
-      <ProgressChart chartData={chartData} />
+          <WeekStrip
+            weekDates={weekDates}
+            dayStatus={dayStatus}
+            onCycleStatus={cycleStatus}
+          />
+
+          <TaskList
+            tasksByDay={tasksByDay}
+            weekDates={weekDates}
+            dayStatus={dayStatus}
+            actualMinutes={legacyActualMinutes}
+            mealsLogged={{}}
+            onQuickToggle={quickToggle}
+            onActualChange={handleActualChange}
+            onMealToggle={handleMealToggle}
+          />
+
+          <SummaryCards
+            totalPlannedMin={totalPlannedMin}
+            completionPct={completionPct}
+          />
+
+          <ProgressChart chartData={chartData} />
+        </>
+      )}
+
+      {/* GOALS VIEW (Placeholder for Tier 3) */}
+      {viewMode === 'goals' && (
+        <div className="cadence-card goals-placeholder">
+          <h3>Goal Tracking & Streaks</h3>
+          <p>Goals view will allow you to track monthly targets and consecutive streaks.</p>
+        </div>
+      )}
 
       <InfoFooter />
 

@@ -1,17 +1,6 @@
-import React from 'react';
-import { BookOpen, Dumbbell, Sparkles, Loader2 } from 'lucide-react';
-
-const TABS = [
-  { key: 'study', label: 'Study', icon: BookOpen },
-  { key: 'gym', label: 'Gym and diet', icon: Dumbbell },
-];
-
-const PLACEHOLDERS = {
-  study:
-    'Paste your study plan, any format \u2014 e.g. "Mon and Wed evenings: 2hrs calculus, Tue: chemistry lab review 1hr\u2026"',
-  gym:
-    'Paste your gym and diet plan \u2014 e.g. "Push day Mon/Thu 6am 1hr, breakfast 8am 400 cal 30g protein, leg day Wed\u2026"',
-};
+import React, { useState } from 'react';
+import { Sparkles, BookOpen, Dumbbell, AlertCircle, Image } from 'lucide-react';
+import TimetablePromptModal from './TimetablePromptModal';
 
 export default function PlanInput({
   tab,
@@ -22,45 +11,76 @@ export default function PlanInput({
   loading,
   error,
 }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
-    <div className="plan-input">
-      <div className="plan-input__tabs">
-        {TABS.map(({ key, label, icon: Icon }) => (
+    <section className="cadence-card plan-input">
+      <div className="plan-input__header">
+        <div className="plan-input__tabs">
           <button
-            key={key}
-            className={`cadence-btn plan-input__tab ${
-              tab === key ? 'plan-input__tab--active' : ''
-            }`}
-            onClick={() => setTab(key)}
+            id="tab-btn-study"
+            className={`plan-input__tab ${tab === 'study' ? 'plan-input__tab--active' : ''}`}
+            onClick={() => setTab('study')}
           >
-            <Icon size={15} /> {label}
+            <BookOpen size={16} />
+            Study
           </button>
-        ))}
+          <button
+            id="tab-btn-gym"
+            className={`plan-input__tab ${tab === 'gym' ? 'plan-input__tab--active' : ''}`}
+            onClick={() => setTab('gym')}
+          >
+            <Dumbbell size={16} />
+            Gym and diet
+          </button>
+        </div>
+
+        <button
+          className="timetable-prompt-trigger"
+          onClick={() => setIsModalOpen(true)}
+          title="Get prompt for timetable image"
+        >
+          <Image size={14} />
+          Have a Timetable Image?
+        </button>
       </div>
 
       <textarea
+        id="plan-textarea"
         className="plan-input__textarea"
+        rows={4}
+        placeholder={
+          tab === 'study'
+            ? "Paste your study timetable or list tasks, e.g.\nMonday 7pm SQL basics 90m\nTuesday 8pm Python functions 60m..."
+            : "Paste your workout & meal plan, e.g.\nMon: Leg day 45m at 7am, Meal 1: Oats & eggs\nTue: Upper body 60m at 7am..."
+        }
         value={rawText}
         onChange={(e) => onRawTextChange(e.target.value)}
-        placeholder={PLACEHOLDERS[tab]}
-        rows={4}
       />
 
       <div className="plan-input__actions">
         <button
-          className="cadence-btn plan-input__parse"
+          id="btn-parse-ai"
+          className="cadence-btn cadence-btn--primary"
           onClick={onParse}
-          disabled={loading}
+          disabled={loading || !rawText.trim()}
         >
-          {loading ? (
-            <Loader2 size={15} className="spin" />
-          ) : (
-            <Sparkles size={15} />
-          )}
-          {loading ? 'Working\u2026' : 'Parse with AI'}
+          <Sparkles size={16} className={loading ? 'spin' : ''} />
+          {loading ? 'Parsing plan...' : 'Parse with AI'}
         </button>
-        {error && <span className="plan-input__error">{error}</span>}
+
+        {error && (
+          <div className="plan-input__error">
+            <AlertCircle size={14} />
+            <span>{error}</span>
+          </div>
+        )}
       </div>
-    </div>
+
+      <TimetablePromptModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+    </section>
   );
 }

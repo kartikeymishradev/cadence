@@ -4,6 +4,41 @@ import { dateKey } from '../utils/dateUtils';
 import { cloudSave, cloudLoad } from '../services/cloudSync';
 
 /**
+ * Migration helper: converts legacy `actualMinutes` and `mealsLogged`
+ * to unified `taskStatuses` map.
+ * Format: { [taskId]: { status: 'done'|'partial'|'skipped'|'pending', actualMinutes: number } }
+ */
+export function migrateTaskStatuses(saved) {
+  if (!saved) return { taskStatuses: {}, goals: [] };
+
+  const taskStatuses = saved.taskStatuses ? { ...saved.taskStatuses } : {};
+
+  // Migrate legacy actualMinutes
+  if (saved.actualMinutes) {
+    Object.entries(saved.actualMinutes).forEach(([id, minutes]) => {
+      if (minutes > 0 && !taskStatuses[id]) {
+        taskStatuses[id] = { status: 'done', actualMinutes: Number(minutes) };
+      }
+    });
+  }
+
+  // Migrate legacy mealsLogged
+  if (saved.mealsLogged) {
+    Object.entries(saved.mealsLogged).forEach(([id, isLogged]) => {
+      if (isLogged && !taskStatuses[id]) {
+        taskStatuses[id] = { status: 'done', actualMinutes: 0 };
+      }
+    });
+  }
+
+  return {
+    ...saved,
+    taskStatuses,
+    goals: saved.goals || [],
+  };
+}
+
+/**
  * Hook that syncs schedule state with localStorage (always)
  * and Supabase cloud (when user is logged in).
  */
@@ -17,22 +52,26 @@ export function usePersistence(weekStart, user) {
   const [schedule, setSchedule] = useState({ study: [], gym: [] });
   const [meals, setMeals] = useState([]);
   const [dayStatus, setDayStatus] = useState({});
-  const [actualMinutes, setActualMinutes] = useState({});
-  const [mealsLogged, setMealsLogged] = useState({});
+  const [taskStatuses, setTaskStatuses] = useState({});
+  const [goals, setGoals] = useState([]);
+
+  // Multi-week plan metadata
   const [multiWeekPlan, setMultiWeekPlan] = useState({ study: null, gym: null });
   const [currentWeekIndex, setCurrentWeekIndex] = useState({ study: 0, gym: 0 });
 
-  // ── Apply a saved data object to state ──
-  const applyData = useCallback((saved) => {
-    if (!saved) return;
-    if (saved.schedule) setSchedule(saved.schedule);
-    if (saved.meals) setMeals(saved.meals);
-    if (saved.dayStatus) setDayStatus(saved.dayStatus);
-    if (saved.actualMinutes) setActualMinutes(saved.actualMinutes);
-    if (saved.mealsLogged) setMealsLogged(saved.mealsLogged);
-    if (saved.rawText) setRawText(saved.rawText);
-    if (saved.multiWeekPlan) setMultiWeekPlan(saved.multiWeekPlan);
-    if (saved.currentWeekIndex) setCurrentWeekIndex(saved.currentWeekIndex);
+  // ── Apply a saved data object to state (with migration) ──
+  const applyData = useCallback((savedData) => {
+    if (!savedData) return;
+    const migrated = migrateTaskStatuses(savedData);
+
+    if (migrated.schedule) setSchedule(migrated.schedule);
+    if (migrated.meals) setMeals(migrated.meals);
+    if (migrated.dayStatus) setDayStatus(migrated.dayStatus);
+    if (migrated.taskStatuses) setTaskStatuses(migrated.taskStatuses);
+    if (migrated.rawText) setRawText(migrated.rawText);
+    if (migrated.multiWeekPlan) setMultiWeekPlan(migrated.multiWeekPlan);
+    if (migrated.currentWeekIndex) setCurrentWeekIndex(migrated.currentWeekIndex);
+    if (migrated.goals) setGoals(migrated.goals);
   }, []);
 
   // ── Load from localStorage on mount ──
@@ -71,8 +110,8 @@ export function usePersistence(weekStart, user) {
         schedule,
         meals,
         dayStatus,
-        actualMinutes,
-        mealsLogged,
+        taskStatuses,
+        goals,
         rawText,
         multiWeekPlan,
         currentWeekIndex,
@@ -90,15 +129,15 @@ export function usePersistence(weekStart, user) {
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-  }, [weekKey, user, schedule, meals, dayStatus, actualMinutes, mealsLogged, rawText, multiWeekPlan, currentWeekIndex]);
+  }, [weekKey, user, schedule, meals, dayStatus, taskStatuses, goals, rawText, multiWeekPlan, currentWeekIndex]);
 
   return {
     rawText, setRawText,
     schedule, setSchedule,
     meals, setMeals,
     dayStatus, setDayStatus,
-    actualMinutes, setActualMinutes,
-    mealsLogged, setMealsLogged,
+    taskStatuses, setTaskStatuses,
+    goals, setGoals,
     multiWeekPlan, setMultiWeekPlan,
     currentWeekIndex, setCurrentWeekIndex,
   };
