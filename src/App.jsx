@@ -157,7 +157,7 @@ export default function App() {
   // ── Actions ──
   const handleParse = useCallback(async () => {
     const text = rawText[tab];
-    if (!text || !text.trim()) return;
+    if (!text || !text.trim() || text.trim().length < 3) return;
 
     setLoading(true);
     setError('');

@@ -243,6 +243,11 @@ export default function TodayView({
         <div className="today-task-card__main">
           <div className="today-task-card__title-row">
             <h4 className="today-task-card__title">{task.title}</h4>
+            {noteText && !isEditingThisNote && (
+              <span className="task-note-inline-badge" onClick={() => handleOpenNoteEditor(task.id, noteText)} title="Click to edit note">
+                📝 {noteText}
+              </span>
+            )}
             <button
               className={`note-icon-btn ${noteText ? 'note-icon-btn--active' : ''}`}
               onClick={() => handleOpenNoteEditor(task.id, noteText)}
@@ -251,13 +256,6 @@ export default function TodayView({
               <FileText size={13} />
             </button>
           </div>
-
-          {/* Attached Note Pill */}
-          {noteText && !isEditingThisNote && (
-            <div className="task-note-pill" onClick={() => handleOpenNoteEditor(task.id, noteText)}>
-              <span>{noteText}</span>
-            </div>
-          )}
 
           {/* Inline Note Editor */}
           {isEditingThisNote && (
