@@ -11,7 +11,7 @@ export default function Header({ weekStart, activeTheme, onSelectTheme, onStartT
           <h1 className="cadence-header__title">Cadence</h1>
           <span className="beta-version-badge">
             <Beaker size={12} />
-            v2.4-BETA (Live)
+            v2.5-BETA (Live)
           </span>
         </div>
         <p className="cadence-header__subtitle">
