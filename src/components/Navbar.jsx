@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarDays, CalendarCheck, Target } from 'lucide-react';
+import { CalendarDays, CalendarCheck, Target, Timer, Settings } from 'lucide-react';
 
 export default function Navbar({ activeView, onViewChange }) {
   return (
@@ -10,7 +10,7 @@ export default function Navbar({ activeView, onViewChange }) {
           className={`cadence-navbar__tab ${activeView === 'today' ? 'cadence-navbar__tab--active' : ''}`}
           onClick={() => onViewChange('today')}
         >
-          <CalendarCheck size={18} />
+          <CalendarCheck size={16} />
           <span>Today</span>
         </button>
 
@@ -19,7 +19,7 @@ export default function Navbar({ activeView, onViewChange }) {
           className={`cadence-navbar__tab ${activeView === 'week' ? 'cadence-navbar__tab--active' : ''}`}
           onClick={() => onViewChange('week')}
         >
-          <CalendarDays size={18} />
+          <CalendarDays size={16} />
           <span>Week</span>
         </button>
 
@@ -28,8 +28,26 @@ export default function Navbar({ activeView, onViewChange }) {
           className={`cadence-navbar__tab ${activeView === 'goals' ? 'cadence-navbar__tab--active' : ''}`}
           onClick={() => onViewChange('goals')}
         >
-          <Target size={18} />
+          <Target size={16} />
           <span>Goals</span>
+        </button>
+
+        <button
+          id="nav-tab-focus"
+          className={`cadence-navbar__tab ${activeView === 'focus' ? 'cadence-navbar__tab--active' : ''}`}
+          onClick={() => onViewChange('focus')}
+        >
+          <Timer size={16} />
+          <span>Focus</span>
+        </button>
+
+        <button
+          id="nav-tab-setup"
+          className={`cadence-navbar__tab ${activeView === 'setup' ? 'cadence-navbar__tab--active' : ''}`}
+          onClick={() => onViewChange('setup')}
+        >
+          <Settings size={16} />
+          <span>Setup</span>
         </button>
       </div>
     </nav>

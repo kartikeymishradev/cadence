@@ -10,6 +10,7 @@ import { supabase } from './services/supabase';
 import AuthBar from './components/AuthBar';
 import Header from './components/Header';
 import Navbar from './components/Navbar';
+import ThemeSelector from './components/ThemeSelector';
 import TodayView from './components/TodayView';
 import PlanInput from './components/PlanInput';
 import Clarifications from './components/Clarifications';
@@ -50,6 +51,7 @@ export default function App() {
 
   // ── Persisted state ──
   const {
+    theme, setTheme,
     categories, setCategories,
     rawText, setRawText,
     schedule, setSchedule,
@@ -60,6 +62,11 @@ export default function App() {
     multiWeekPlan, setMultiWeekPlan,
     currentWeekIndex, setCurrentWeekIndex,
   } = usePersistence(weekStart, user);
+
+  // Sync active theme with document body data-theme attribute
+  useEffect(() => {
+    document.body.setAttribute('data-theme', theme || 'paper');
+  }, [theme]);
 
   // ── Local UI state ──
   const [tab, setTab] = useState(categories[0]?.id || 'skill');
@@ -322,9 +329,10 @@ export default function App() {
     <div className="cadence-app">
       <AuthBar user={user} />
       <Header weekStart={weekStart} />
+      <ThemeSelector activeTheme={theme} onSelectTheme={setTheme} />
       <Navbar activeView={viewMode} onViewChange={setViewMode} />
 
-      {/* TODAY VIEW (Landing Screen) */}
+      {/* 1. TODAY VIEW (Landing Screen) */}
       {viewMode === 'today' && (
         <TodayView
           weekDates={weekDates}
@@ -339,29 +347,9 @@ export default function App() {
         />
       )}
 
-      {/* WEEK VIEW (Full Schedule + AI Parser) */}
+      {/* 2. WEEK VIEW (Full Schedule) */}
       {viewMode === 'week' && (
         <>
-          <PlanInput
-            tab={tab}
-            setTab={setTab}
-            categories={categories}
-            onSaveCategories={setCategories}
-            rawText={rawText[tab] || ''}
-            onRawTextChange={handleRawTextChange}
-            onParse={handleParse}
-            loading={loading}
-            error={error}
-          />
-
-          <Clarifications
-            clarifications={clarifications[tab] || []}
-            answers={clarificationAnswers}
-            onAnswerChange={handleAnswerChange}
-            onRefine={handleRefine}
-            loading={loading}
-          />
-
           {totalWeeks > 1 && (
             <WeekNavigator
               currentWeekIndex={activeWeekIdx}
@@ -400,12 +388,39 @@ export default function App() {
         </>
       )}
 
-      {/* GOALS VIEW (Excel-Style Goal Sheet + Pomodoro Focus Timer) */}
+      {/* 3. GOALS VIEW (Excel-Style Goal Sheet) */}
       {viewMode === 'goals' && (
-        <div className="goals-view-wrapper">
-          <PomodoroTimer />
-          <ExcelGoalsSheet goals={goals} onUpdateGoals={setGoals} />
-        </div>
+        <ExcelGoalsSheet goals={goals} onUpdateGoals={setGoals} />
+      )}
+
+      {/* 4. FOCUS VIEW (Pomodoro Timer) */}
+      {viewMode === 'focus' && (
+        <PomodoroTimer />
+      )}
+
+      {/* 5. SETUP VIEW (AI Plan Parser & Custom Categories) */}
+      {viewMode === 'setup' && (
+        <>
+          <PlanInput
+            tab={tab}
+            setTab={setTab}
+            categories={categories}
+            onSaveCategories={setCategories}
+            rawText={rawText[tab] || ''}
+            onRawTextChange={handleRawTextChange}
+            onParse={handleParse}
+            loading={loading}
+            error={error}
+          />
+
+          <Clarifications
+            clarifications={clarifications[tab] || []}
+            answers={clarificationAnswers}
+            onAnswerChange={handleAnswerChange}
+            onRefine={handleRefine}
+            loading={loading}
+          />
+        </>
       )}
 
       <InfoFooter />

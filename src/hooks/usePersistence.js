@@ -58,6 +58,7 @@ export function migrateTaskStatuses(saved) {
     rawText,
     categories,
     taskStatuses,
+    theme: saved.theme || 'paper',
     goals: saved.goals || [],
   };
 }
@@ -71,6 +72,7 @@ export function usePersistence(weekStart, user) {
   const cloudLoaded = useRef(false);
   const saveTimer = useRef(null);
 
+  const [theme, setTheme] = useState('paper');
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
   const [rawText, setRawText] = useState({ skill: '', college: '', gym: '' });
   const [schedule, setSchedule] = useState({ skill: [], college: [], gym: [] });
@@ -88,6 +90,7 @@ export function usePersistence(weekStart, user) {
     if (!savedData) return;
     const migrated = migrateTaskStatuses(savedData);
 
+    if (migrated.theme) setTheme(migrated.theme);
     if (migrated.categories) setCategories(migrated.categories);
     if (migrated.schedule) setSchedule(migrated.schedule);
     if (migrated.meals) setMeals(migrated.meals);
@@ -131,6 +134,7 @@ export function usePersistence(weekStart, user) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       const payload = {
+        theme,
         categories,
         schedule,
         meals,
@@ -155,6 +159,7 @@ export function usePersistence(weekStart, user) {
   }, [weekKey, user, categories, schedule, meals, dayStatus, taskStatuses, goals, rawText, multiWeekPlan, currentWeekIndex]);
 
   return {
+    theme, setTheme,
     categories, setCategories,
     rawText, setRawText,
     schedule, setSchedule,
@@ -166,3 +171,4 @@ export function usePersistence(weekStart, user) {
     currentWeekIndex, setCurrentWeekIndex,
   };
 }
+
