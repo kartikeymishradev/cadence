@@ -3,14 +3,65 @@ import { STUDY_SYS, GYM_SYS } from '../utils/constants';
 const GEMINI_KEY =
   import.meta.env.VITE_GEMINI_API_KEY ||
   import.meta.env.VITE_GOOGLE_API_KEY ||
-  import.meta.env.VITE_FREEMODEL_KEY ||
   '';
 
+const FREEMODEL_KEY = import.meta.env.VITE_FREEMODEL_KEY || '';
+
 /**
- * Call Google Gemini API directly (gemini-3.6-flash with gemini-flash-latest fallback).
+ * Call FreeModel API (OpenAI-compatible format).
+ * Endpoint: https://freemodel.dev/v1/chat/completions
+ */
+async function callFreeModel(system, userText, apiKey) {
+  const url = 'https://freemodel.dev/v1/chat/completions';
+
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'auto', // FreeModel auto-routes to the best available model
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: userText },
+        ],
+        temperature: 0.2,
+        response_format: { type: 'json_object' },
+      }),
+    });
+  } catch (err) {
+    throw new Error(`Network error connecting to FreeModel API: ${err.message}`);
+  }
+
+  if (!res.ok) {
+    const errObj = await res.json().catch(() => ({}));
+    const message = errObj.error?.message || `HTTP ${res.status}`;
+    throw new Error(`FreeModel API error (${res.status}): ${message}`);
+  }
+
+  const data = await res.json();
+  const text = data.choices?.[0]?.message?.content;
+
+  if (!text) {
+    throw new Error('FreeModel returned an empty response.');
+  }
+
+  const clean = text.replace(/```json|```/g, '').trim();
+  try {
+    return JSON.parse(clean);
+  } catch {
+    throw new Error('AI produced invalid JSON output. Try re-phrasing your plan.');
+  }
+}
+
+/**
+ * Call Google Gemini API directly.
  */
 async function callGemini(system, userText, apiKey) {
-  const modelsToTry = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-2.0-flash'];
+  const modelsToTry = ['gemini-2.0-flash', 'gemini-flash-latest', 'gemini-3.6-flash'];
   let lastError = null;
 
   for (const model of modelsToTry) {
@@ -39,7 +90,7 @@ async function callGemini(system, userText, apiKey) {
       const errObj = await res.json().catch(() => ({}));
       const message = errObj.error?.message || `HTTP ${res.status}`;
       if (res.status === 429) {
-        lastError = new Error(`Gemini Rate Limit (429): Quota exceeded on model ${model}. Retrying next model...`);
+        lastError = new Error(`Gemini Rate Limit (429): Quota exceeded on model ${model}.`);
         continue;
       }
       if (res.status === 400 || res.status === 403) {
@@ -69,14 +120,21 @@ async function callGemini(system, userText, apiKey) {
 }
 
 /**
- * Internal: call LLM using client-side key if available, otherwise backend proxy.
+ * Internal: call LLM.
+ * Priority: FreeModel → Gemini → backend proxy
  */
 async function callLLM(system, userText) {
+  // 1. Prefer FreeModel if key is present
+  if (FREEMODEL_KEY) {
+    return callFreeModel(system, userText, FREEMODEL_KEY);
+  }
+
+  // 2. Fall back to Gemini direct API
   if (GEMINI_KEY) {
     return callGemini(system, userText, GEMINI_KEY);
   }
 
-  // Fallback to backend API proxy if GEMINI_KEY is not baked into the frontend
+  // 3. Last resort: backend proxy
   let res;
   try {
     res = await fetch('/api/parse', {
