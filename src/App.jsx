@@ -5,6 +5,7 @@ import { useWeekDates } from './hooks/useWeekDates';
 import { usePersistence } from './hooks/usePersistence';
 import { usePushNotifications } from './hooks/usePushNotifications';
 import { parsePlan, refinePlan } from './services/parser';
+import { supabase } from './services/supabase';
 
 import AuthBar from './components/AuthBar';
 import Header from './components/Header';
@@ -22,18 +23,20 @@ import NotificationBanner from './components/NotificationBanner';
 export default function App() {
   const { weekStart, weekDates, dateKey } = useWeekDates();
 
-  // ── Auth state ──
+  // ── Auth state (Supabase) ──
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    fetch('/.auth/me')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.clientPrincipal) {
-          setUser(data.clientPrincipal);
-        }
-      })
-      .catch(() => {}); // Not deployed with SWA — auth unavailable
+    if (!supabase) return;
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    // Listen for sign-in / sign-out events
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   // ── Push notifications ──
@@ -50,7 +53,7 @@ export default function App() {
     mealsLogged, setMealsLogged,
     multiWeekPlan, setMultiWeekPlan,
     currentWeekIndex, setCurrentWeekIndex,
-  } = usePersistence(weekStart);
+  } = usePersistence(weekStart, user);
 
   // ── Local UI state ──
   const [tab, setTab] = useState('study');

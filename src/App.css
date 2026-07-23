@@ -779,6 +779,14 @@ body {
   color: var(--slate);
 }
 
+.auth-bar__avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1.5px solid var(--hairline);
+}
+
 .auth-bar__name {
   font-family: var(--font-mono);
   color: var(--ink);
@@ -788,12 +796,17 @@ body {
   color: var(--slate);
   display: flex;
   align-items: center;
-  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .auth-bar__logout:hover {
   color: var(--rose);
 }
+
 
 /* ═══════════════════════════════════════════
    Notification Banner

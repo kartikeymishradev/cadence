@@ -1,67 +1,85 @@
 import { STUDY_SYS, GYM_SYS } from '../utils/constants';
 
+const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY || '';
 const GEMINI_KEY =
   import.meta.env.VITE_GEMINI_API_KEY ||
   import.meta.env.VITE_GOOGLE_API_KEY ||
   '';
 
-const FREEMODEL_KEY = import.meta.env.VITE_FREEMODEL_KEY || '';
-
 /**
- * Call FreeModel API (OpenAI-compatible format).
- * Endpoint: https://freemodel.dev/v1/chat/completions
+ * Call Groq API (OpenAI-compatible, very fast, generous free tier).
+ * Endpoint: https://api.groq.com/openai/v1/chat/completions
  */
-async function callFreeModel(system, userText, apiKey) {
-  const url = 'https://freemodel.dev/v1/chat/completions';
+async function callGroq(system, userText, apiKey) {
+  const modelsToTry = [
+    'llama-3.3-70b-versatile',
+    'llama3-70b-8192',
+    'llama3-8b-8192',
+  ];
+  let lastError = null;
 
-  let res;
-  try {
-    res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'auto', // FreeModel auto-routes to the best available model
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: userText },
-        ],
-        temperature: 0.2,
-        response_format: { type: 'json_object' },
-      }),
-    });
-  } catch (err) {
-    throw new Error(`Network error connecting to FreeModel API: ${err.message}`);
+  for (const model of modelsToTry) {
+    let res;
+    try {
+      res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: system },
+            { role: 'user', content: userText },
+          ],
+          temperature: 0.2,
+          response_format: { type: 'json_object' },
+        }),
+      });
+    } catch (err) {
+      lastError = new Error(`Network error connecting to Groq API: ${err.message}`);
+      continue;
+    }
+
+    if (!res.ok) {
+      const errObj = await res.json().catch(() => ({}));
+      const message = errObj.error?.message || `HTTP ${res.status}`;
+      if (res.status === 429) {
+        lastError = new Error(`Groq rate limit on ${model}, trying next...`);
+        continue;
+      }
+      if (res.status === 401) {
+        throw new Error(`Groq API key invalid (401): Check your VITE_GROQ_API_KEY`);
+      }
+      lastError = new Error(`Groq error (${res.status}): ${message}`);
+      continue;
+    }
+
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content;
+
+    if (!text) {
+      lastError = new Error('Groq returned an empty response.');
+      continue;
+    }
+
+    const clean = text.replace(/```json|```/g, '').trim();
+    try {
+      return JSON.parse(clean);
+    } catch {
+      throw new Error('AI produced invalid JSON. Try re-phrasing your plan.');
+    }
   }
 
-  if (!res.ok) {
-    const errObj = await res.json().catch(() => ({}));
-    const message = errObj.error?.message || `HTTP ${res.status}`;
-    throw new Error(`FreeModel API error (${res.status}): ${message}`);
-  }
-
-  const data = await res.json();
-  const text = data.choices?.[0]?.message?.content;
-
-  if (!text) {
-    throw new Error('FreeModel returned an empty response.');
-  }
-
-  const clean = text.replace(/```json|```/g, '').trim();
-  try {
-    return JSON.parse(clean);
-  } catch {
-    throw new Error('AI produced invalid JSON output. Try re-phrasing your plan.');
-  }
+  throw lastError || new Error('Failed to connect to Groq API.');
 }
 
 /**
- * Call Google Gemini API directly.
+ * Call Google Gemini API directly (fallback).
  */
 async function callGemini(system, userText, apiKey) {
-  const modelsToTry = ['gemini-2.0-flash', 'gemini-flash-latest', 'gemini-3.6-flash'];
+  const modelsToTry = ['gemini-2.0-flash', 'gemini-flash-latest'];
   let lastError = null;
 
   for (const model of modelsToTry) {
@@ -82,7 +100,7 @@ async function callGemini(system, userText, apiKey) {
         }),
       });
     } catch (err) {
-      lastError = new Error(`Network error connecting to Google Gemini API: ${err.message}`);
+      lastError = new Error(`Network error connecting to Gemini: ${err.message}`);
       continue;
     }
 
@@ -90,13 +108,10 @@ async function callGemini(system, userText, apiKey) {
       const errObj = await res.json().catch(() => ({}));
       const message = errObj.error?.message || `HTTP ${res.status}`;
       if (res.status === 429) {
-        lastError = new Error(`Gemini Rate Limit (429): Quota exceeded on model ${model}.`);
+        lastError = new Error(`Gemini rate limit on ${model}.`);
         continue;
       }
-      if (res.status === 400 || res.status === 403) {
-        throw new Error(`Google API Key error (${res.status}): ${message}`);
-      }
-      lastError = new Error(`Google Gemini Error (${res.status}): ${message}`);
+      lastError = new Error(`Gemini error (${res.status}): ${message}`);
       continue;
     }
 
@@ -104,7 +119,7 @@ async function callGemini(system, userText, apiKey) {
     const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!text) {
-      lastError = new Error('Gemini API returned an empty response.');
+      lastError = new Error('Gemini returned an empty response.');
       continue;
     }
 
@@ -112,29 +127,27 @@ async function callGemini(system, userText, apiKey) {
     try {
       return JSON.parse(clean);
     } catch {
-      throw new Error('AI produced invalid JSON output. Try re-phrasing your plan.');
+      throw new Error('AI produced invalid JSON. Try re-phrasing your plan.');
     }
   }
 
-  throw lastError || new Error('Failed to connect to Google Gemini API.');
+  throw lastError || new Error('Failed to connect to Gemini API.');
 }
 
 /**
  * Internal: call LLM.
- * Priority: FreeModel → Gemini → backend proxy
+ * Priority: Groq (fast + high limits) → Gemini → backend proxy
  */
 async function callLLM(system, userText) {
-  // 1. Prefer FreeModel if key is present
-  if (FREEMODEL_KEY) {
-    return callFreeModel(system, userText, FREEMODEL_KEY);
+  if (GROQ_KEY) {
+    return callGroq(system, userText, GROQ_KEY);
   }
 
-  // 2. Fall back to Gemini direct API
   if (GEMINI_KEY) {
     return callGemini(system, userText, GEMINI_KEY);
   }
 
-  // 3. Last resort: backend proxy
+  // Last resort: backend proxy
   let res;
   try {
     res = await fetch('/api/parse', {
@@ -155,7 +168,7 @@ async function callLLM(system, userText) {
 }
 
 /**
- * Parse a pasted plan into a structured multi-week or single-week schedule.
+ * Parse a pasted plan into a structured schedule.
  */
 export async function parsePlan(tab, text) {
   const system = tab === 'study' ? STUDY_SYS : GYM_SYS;
@@ -163,7 +176,7 @@ export async function parsePlan(tab, text) {
 }
 
 /**
- * Re-parse a plan with additional clarification answers.
+ * Re-parse with clarification answers.
  */
 export async function refinePlan(tab, text, clarifications, answers) {
   const qa = clarifications
