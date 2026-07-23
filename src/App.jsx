@@ -399,6 +399,10 @@ export default function App() {
           meals={meals}
           taskStatuses={taskStatuses}
           sleepSchedule={sleepSchedule}
+          macros={macros}
+          onUpdateMacros={setMacros}
+          muscleFocus={muscleFocus}
+          onUpdateMuscleFocus={setMuscleFocus}
           onUpdateSleepSchedule={setSleepSchedule}
           onUpdateTaskStatus={handleUpdateTaskStatus}
           onUpdateTaskNote={handleUpdateTaskNote}

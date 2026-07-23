@@ -62,6 +62,12 @@ export function migrateTaskStatuses(saved) {
     goals: saved.goals || [],
     streak: saved.streak || 1,
     sleepSchedule: saved.sleepSchedule || { sleepStart: '23:30', sleepEnd: '07:00' },
+    macros: saved.macros || {
+      proteinTaken: 120, proteinTarget: 150,
+      carbsTaken: 180, carbsTarget: 220,
+      fatsTaken: 45, fatsTarget: 60,
+    },
+    muscleFocus: saved.muscleFocus || ['Chest', 'Arms'],
   };
 }
 
@@ -84,6 +90,12 @@ export function usePersistence(weekStart, user) {
   const [goals, setGoals] = useState([]);
   const [streak, setStreak] = useState(1);
   const [sleepSchedule, setSleepSchedule] = useState({ sleepStart: '23:30', sleepEnd: '07:00' });
+  const [macros, setMacros] = useState({
+    proteinTaken: 120, proteinTarget: 150,
+    carbsTaken: 180, carbsTarget: 220,
+    fatsTaken: 45, fatsTarget: 60,
+  });
+  const [muscleFocus, setMuscleFocus] = useState(['Chest', 'Arms']);
 
   // Multi-week plan metadata
   const [multiWeekPlan, setMultiWeekPlan] = useState({});
@@ -106,6 +118,8 @@ export function usePersistence(weekStart, user) {
     if (migrated.goals) setGoals(migrated.goals);
     if (migrated.streak) setStreak(migrated.streak);
     if (migrated.sleepSchedule) setSleepSchedule(migrated.sleepSchedule);
+    if (migrated.macros) setMacros(migrated.macros);
+    if (migrated.muscleFocus) setMuscleFocus(migrated.muscleFocus);
   }, []);
 
   // ── Load from localStorage on mount ──
@@ -119,52 +133,61 @@ export function usePersistence(weekStart, user) {
   useEffect(() => {
     if (!user || cloudLoaded.current) return;
 
-    cloudLoad().then((cloudData) => {
-      if (!cloudData) return;
-      const saved = cloudData[`week_${weekKey}`];
-      if (saved) {
-        applyData(saved);
+    cloudLoad(user.id, weekKey).then((cloudData) => {
+      if (cloudData) {
+        applyData(cloudData);
       }
       cloudLoaded.current = true;
     });
   }, [user, weekKey, applyData]);
 
-  useEffect(() => {
-    cloudLoaded.current = false;
-  }, [user?.id]);
-
-  // ── Auto-save (debounced) to localStorage + cloud ──
+  // ── Auto-save to localStorage + Cloud ──
   useEffect(() => {
     if (!initialized.current) return;
 
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      const payload = {
-        theme,
-        categories,
-        schedule,
-        meals,
-        dayStatus,
-        taskStatuses,
-        goals,
-        rawText,
-        multiWeekPlan,
-        currentWeekIndex,
-        streak,
-        sleepSchedule,
-      };
-
-      saveWeekData(weekKey, payload);
-
-      if (user) {
-        cloudSave(`week_${weekKey}`, payload);
-      }
-    }, 500);
-
-    return () => {
-      if (saveTimer.current) clearTimeout(saveTimer.current);
+    const payload = {
+      theme,
+      categories,
+      schedule,
+      meals,
+      dayStatus,
+      taskStatuses,
+      rawText,
+      multiWeekPlan,
+      currentWeekIndex,
+      goals,
+      streak,
+      sleepSchedule,
+      macros,
+      muscleFocus,
     };
-  }, [weekKey, user, categories, schedule, meals, dayStatus, taskStatuses, goals, rawText, multiWeekPlan, currentWeekIndex, streak, sleepSchedule]);
+
+    saveWeekData(weekKey, payload);
+
+    if (user) {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      saveTimer.current = setTimeout(() => {
+        cloudSave(user.id, weekKey, payload);
+      }, 1000);
+    }
+  }, [
+    weekKey,
+    theme,
+    categories,
+    schedule,
+    meals,
+    dayStatus,
+    taskStatuses,
+    rawText,
+    multiWeekPlan,
+    currentWeekIndex,
+    goals,
+    streak,
+    sleepSchedule,
+    macros,
+    muscleFocus,
+    user,
+  ]);
 
   return {
     theme, setTheme,
@@ -179,5 +202,7 @@ export function usePersistence(weekStart, user) {
     currentWeekIndex, setCurrentWeekIndex,
     streak, setStreak,
     sleepSchedule, setSleepSchedule,
+    macros, setMacros,
+    muscleFocus, setMuscleFocus,
   };
 }

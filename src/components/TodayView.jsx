@@ -12,6 +12,10 @@ export default function TodayView({
   meals,
   taskStatuses,
   sleepSchedule,
+  macros,
+  onUpdateMacros,
+  muscleFocus,
+  onUpdateMuscleFocus,
   onUpdateSleepSchedule,
   onUpdateTaskStatus,
   onUpdateTaskNote,
@@ -24,11 +28,36 @@ export default function TodayView({
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [noteInput, setNoteInput] = useState('');
   const [editingTimeId, setEditingTimeId] = useState(null);
-  const [editStart, setEditStart] = useState('');
-  const [editDuration, setEditDuration] = useState('');
+  const [editStart, setEditStart] = useState('10:00');
+  const [editDuration, setEditDuration] = useState('60');
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
   const [showTasksOnRestDay, setShowTasksOnRestDay] = useState(false);
   const [isEditingSleep, setIsEditingSleep] = useState(false);
+
+  // Editing Macros State
+  const [editingMacros, setEditingMacros] = useState(false);
+  const [macroInput, setMacroInput] = useState(macros || {
+    proteinTaken: 120, proteinTarget: 150,
+    carbsTaken: 180, carbsTarget: 220,
+    fatsTaken: 45, fatsTarget: 60,
+  });
+
+  const handleToggleMuscle = (muscle) => {
+    if (!onUpdateMuscleFocus) return;
+    const current = muscleFocus || [];
+    if (current.includes(muscle)) {
+      onUpdateMuscleFocus(current.filter((m) => m !== muscle));
+    } else {
+      onUpdateMuscleFocus([...current, muscle]);
+    }
+  };
+
+  const handleSaveMacros = () => {
+    if (onUpdateMacros) {
+      onUpdateMacros(macroInput);
+    }
+    setEditingMacros(false);
+  };
   const [sleepStartInput, setSleepStartInput] = useState(sleepSchedule?.sleepStart || '23:30');
   const [sleepEndInput, setSleepEndInput] = useState(sleepSchedule?.sleepEnd || '07:00');
   const [dismissLateNightPopup, setDismissLateNightPopup] = useState(false);
@@ -506,48 +535,144 @@ export default function TodayView({
               <div className="macro-tracker-card">
                 <div className="macro-tracker-header">
                   <strong>🥗 Macro Nutrition Summary (Target vs Actual)</strong>
+                  <button
+                    className="macro-edit-btn"
+                    onClick={() => { setMacroInput(macros); setEditingMacros(!editingMacros); }}
+                  >
+                    {editingMacros ? 'Cancel' : 'Edit Targets'}
+                  </button>
                 </div>
 
-                <div className="macro-grid">
-                  <div className="macro-col macro-col--protein">
-                    <span className="macro-label">PROTEIN</span>
-                    <div className="macro-values">
-                      <span className="macro-taken">120g</span> / <span className="macro-target">150g</span>
+                {editingMacros ? (
+                  <div className="macro-edit-form">
+                    <div className="macro-edit-row">
+                      <span>Protein (g):</span>
+                      <input
+                        type="number"
+                        placeholder="Taken"
+                        value={macroInput.proteinTaken}
+                        onChange={(e) => setMacroInput({ ...macroInput, proteinTaken: Number(e.target.value) })}
+                      />
+                      <span>/</span>
+                      <input
+                        type="number"
+                        placeholder="Target"
+                        value={macroInput.proteinTarget}
+                        onChange={(e) => setMacroInput({ ...macroInput, proteinTarget: Number(e.target.value) })}
+                      />
                     </div>
-                    <div className="macro-progress-bar">
-                      <div className="macro-progress-fill" style={{ width: '80%', background: '#3B82F6' }} />
+
+                    <div className="macro-edit-row">
+                      <span>Carbs (g):</span>
+                      <input
+                        type="number"
+                        placeholder="Taken"
+                        value={macroInput.carbsTaken}
+                        onChange={(e) => setMacroInput({ ...macroInput, carbsTaken: Number(e.target.value) })}
+                      />
+                      <span>/</span>
+                      <input
+                        type="number"
+                        placeholder="Target"
+                        value={macroInput.carbsTarget}
+                        onChange={(e) => setMacroInput({ ...macroInput, carbsTarget: Number(e.target.value) })}
+                      />
+                    </div>
+
+                    <div className="macro-edit-row">
+                      <span>Fats (g):</span>
+                      <input
+                        type="number"
+                        placeholder="Taken"
+                        value={macroInput.fatsTaken}
+                        onChange={(e) => setMacroInput({ ...macroInput, fatsTaken: Number(e.target.value) })}
+                      />
+                      <span>/</span>
+                      <input
+                        type="number"
+                        placeholder="Target"
+                        value={macroInput.fatsTarget}
+                        onChange={(e) => setMacroInput({ ...macroInput, fatsTarget: Number(e.target.value) })}
+                      />
+                    </div>
+
+                    <button className="cadence-btn cadence-btn--primary macro-save-btn" onClick={handleSaveMacros}>
+                      Save Macros
+                    </button>
+                  </div>
+                ) : (
+                  <div className="macro-grid">
+                    <div className="macro-col macro-col--protein" onClick={() => setEditingMacros(true)} title="Click to edit Protein">
+                      <span className="macro-label">PROTEIN</span>
+                      <div className="macro-values">
+                        <span className="macro-taken">{macros?.proteinTaken || 120}g</span> / <span className="macro-target">{macros?.proteinTarget || 150}g</span>
+                      </div>
+                      <div className="macro-progress-bar">
+                        <div
+                          className="macro-progress-fill"
+                          style={{
+                            width: `${Math.min(100, Math.round(((macros?.proteinTaken || 120) / (macros?.proteinTarget || 150)) * 100))}%`,
+                            background: '#3B82F6',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="macro-col macro-col--carbs" onClick={() => setEditingMacros(true)} title="Click to edit Carbs">
+                      <span className="macro-label">CARBS</span>
+                      <div className="macro-values">
+                        <span className="macro-taken">{macros?.carbsTaken || 180}g</span> / <span className="macro-target">{macros?.carbsTarget || 220}g</span>
+                      </div>
+                      <div className="macro-progress-bar">
+                        <div
+                          className="macro-progress-fill"
+                          style={{
+                            width: `${Math.min(100, Math.round(((macros?.carbsTaken || 180) / (macros?.carbsTarget || 220)) * 100))}%`,
+                            background: '#10B981',
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="macro-col macro-col--fats" onClick={() => setEditingMacros(true)} title="Click to edit Fats">
+                      <span className="macro-label">FATS</span>
+                      <div className="macro-values">
+                        <span className="macro-taken">{macros?.fatsTaken || 45}g</span> / <span className="macro-target">{macros?.fatsTarget || 60}g</span>
+                      </div>
+                      <div className="macro-progress-bar">
+                        <div
+                          className="macro-progress-fill"
+                          style={{
+                            width: `${Math.min(100, Math.round(((macros?.fatsTaken || 45) / (macros?.fatsTarget || 60)) * 100))}%`,
+                            background: '#F59E0B',
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
+                )}
 
-                  <div className="macro-col macro-col--carbs">
-                    <span className="macro-label">CARBS</span>
-                    <div className="macro-values">
-                      <span className="macro-taken">180g</span> / <span className="macro-target">220g</span>
-                    </div>
-                    <div className="macro-progress-bar">
-                      <div className="macro-progress-fill" style={{ width: '81%', background: '#10B981' }} />
-                    </div>
+                {/* 7-Day Weekly Macro & Workout History Tracker */}
+                <div className="weekly-macro-history">
+                  <span className="history-label">7-Day Weekly History Log (Mon – Sun):</span>
+                  <div className="weekly-history-grid">
+                    {WEEKDAYS.map((day) => {
+                      const dayShort = day.slice(0, 3);
+                      const isToday = day === weekDates.find((w) => w.isToday)?.name;
+                      return (
+                        <div
+                          key={day}
+                          className={`history-day-card ${isToday ? 'history-day-card--today' : ''}`}
+                        >
+                          <span className="history-day-name">{dayShort}</span>
+                          <span className="history-day-protein">{macros?.proteinTaken || 120}g P</span>
+                          <span className="history-day-muscle">
+                            {(muscleFocus || []).length > 0 ? (muscleFocus || []).join(', ') : 'Rest'}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
-
-                  <div className="macro-col macro-col--fats">
-                    <span className="macro-label">FATS</span>
-                    <div className="macro-values">
-                      <span className="macro-taken">45g</span> / <span className="macro-target">60g</span>
-                    </div>
-                    <div className="macro-progress-bar">
-                      <div className="macro-progress-fill" style={{ width: '75%', background: '#F59E0B' }} />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Workout Muscle Focus Pills */}
-                <div className="workout-muscle-tags">
-                  <span className="muscle-tag-label">Today's Muscle Focus:</span>
-                  {['Chest', 'Back', 'Shoulders', 'Legs', 'Arms', 'Core', 'Cardio'].map((muscle) => (
-                    <span key={muscle} className={`muscle-tag-pill ${muscle === 'Chest' || muscle === 'Arms' ? 'muscle-tag-pill--active' : ''}`}>
-                      {muscle}
-                    </span>
-                  ))}
                 </div>
               </div>
 
