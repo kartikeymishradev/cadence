@@ -23,7 +23,6 @@ import SummaryCards from './components/SummaryCards';
 import InfoFooter from './components/InfoFooter';
 import NotificationBanner from './components/NotificationBanner';
 import PomodoroTimer from './components/PomodoroTimer';
-import ExcelGoalsSheet from './components/ExcelGoalsSheet';
 import GuidedTour from './components/GuidedTour';
 
 export default function App() {
@@ -155,7 +154,7 @@ export default function App() {
         setSchedule((prev) => ({ ...prev, gym: parsed.workouts || [] }));
         setMeals(parsed.meals || []);
       } else {
-        setSchedule((prev) => ({ ...prev, [tab]: parsed.tasks || [] }));
+        setSchedule((prev) => ({ ...prev, [activeTab]: parsed.tasks || [] }));
       }
 
       setClarifications((prev) => ({
@@ -193,7 +192,7 @@ export default function App() {
         setSchedule((prev) => ({ ...prev, gym: parsed.workouts || [] }));
         setMeals(parsed.meals || []);
       } else {
-        setSchedule((prev) => ({ ...prev, [tab]: parsed.tasks || [] }));
+        setSchedule((prev) => ({ ...prev, [activeTab]: parsed.tasks || [] }));
       }
 
       setClarifications((prev) => ({
@@ -428,17 +427,12 @@ export default function App() {
         </>
       )}
 
-      {/* 3. GOALS VIEW (Excel-Style Goal Sheet) */}
-      {viewMode === 'goals' && (
-        <ExcelGoalsSheet goals={goals} onUpdateGoals={setGoals} />
-      )}
-
-      {/* 4. FOCUS VIEW (Pomodoro Timer) */}
+      {/* 3. FOCUS VIEW (Pomodoro Timer) */}
       {viewMode === 'focus' && (
         <PomodoroTimer />
       )}
 
-      {/* 5. SETUP VIEW (AI Plan Parser & Manual Task Builder) */}
+      {/* 4. SETUP VIEW (AI Plan Parser & Manual Task Builder) */}
       {viewMode === 'setup' && (
         <>
           <PlanInput

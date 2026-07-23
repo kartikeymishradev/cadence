@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, HelpCircle, Check, ChevronRight, ChevronLeft, Bot, Wrench, CalendarCheck, GraduationCap, Target, Timer, FileText, Sparkles } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Bot, CalendarCheck, GraduationCap, Timer } from 'lucide-react';
 
 export default function TutorialModal({ isOpen, onClose }) {
   const [currentStep, setCurrentStep] = useState(0);
@@ -48,14 +48,13 @@ export default function TutorialModal({ isOpen, onClose }) {
       ),
     },
     {
-      title: '4. Goals, Habits & Pomodoro Timer',
-      icon: <Target size={22} className="modal-icon modal-icon--gym" />,
+      title: '4. Pomodoro Focus Timer',
+      icon: <Timer size={22} className="modal-icon modal-icon--gym" />,
       content: (
         <div className="tutorial-step-content">
-          <p>Track long-term progress & maintain focus:</p>
+          <p>Track focus & study sessions:</p>
           <ul>
-            <li><strong>Excel Goal Sheet:</strong> Switch between Daily, Weekly, and Monthly views to mark habits Completed, In Progress, or Incomplete with auto-calculating % progress bars.</li>
-            <li><strong>Pomodoro Timer:</strong> Use the <strong>⏱️ Focus</strong> tab for 25m study sessions with automatic break reminders.</li>
+            <li><strong>Pomodoro Timer:</strong> Use the <strong>⏱️ Focus</strong> tab for 25m study sessions with automatic break reminders and session counters.</li>
           </ul>
         </div>
       ),

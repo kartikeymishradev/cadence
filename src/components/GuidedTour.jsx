@@ -6,25 +6,19 @@ export const TOUR_STEPS = [
     targetId: 'theme-dropdown-btn',
     tab: null,
     title: '🎨 Color Themes',
-    description: 'Switch between 5 curated themes like Midnight Dark, Nordic Blue, or Matcha Green anytime from here!',
+    description: 'Switch between 5 curated themes like Midnight Dark, Nordic Blue, or Sunset Rose anytime from here!',
   },
   {
     targetId: 'nav-tab-today',
     tab: 'today',
     title: '📅 Today View (Daily Focus)',
-    description: 'Your landing hub! Track today\'s tasks, cycle statuses (Done/Partial/Skipped), click any time (19:00 90m) to edit it inline, and add homework notes.',
+    description: 'Your main dashboard! Track today\'s tasks, cycle status (Done/Partial/Skipped), click time to edit inline, and add homework notes.',
   },
   {
     targetId: 'nav-tab-week',
     tab: 'week',
     title: '📆 Week View (Mon–Sun Schedule)',
     description: 'View your full weekly timetable. Click day headers to stamp Rest Days / Holidays, or view multi-week progression phases.',
-  },
-  {
-    targetId: 'nav-tab-goals',
-    tab: 'goals',
-    title: '🎯 Excel Goals & Habits Sheet',
-    description: 'An interactive Excel-style habit sheet! Switch Daily, Weekly, or Monthly views, mark items Completed/In-Progress, and watch dynamic % progress bars.',
   },
   {
     targetId: 'nav-tab-focus',
