@@ -3,6 +3,7 @@ import { Clock, CalendarOff, Coffee, Check, Minus, X, Hourglass, Zap, FileText, 
 import { WEEKDAYS, STATUS_STYLE } from '../utils/constants';
 import { dateKey } from '../utils/dateUtils';
 import CollegeOverviewModal from './CollegeOverviewModal';
+import BeatStrip from './BeatStrip';
 
 export default function TodayView({
   weekDates,
@@ -365,16 +366,18 @@ export default function TodayView({
           </div>
           <h2 className="today-view__title">Today's Focus</h2>
         </div>
-
-        {totalTasks > 0 && (
-          <div className="today-view__progress-pill">
-            <span className="today-view__progress-text">{progressPct}% Complete</span>
-            <div className="today-view__progress-bar">
-              <div className="today-view__progress-fill" style={{ width: `${progressPct}%` }} />
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Dintaal Rhythm Cycle Card */}
+      {totalTasks > 0 && (
+        <div className="dintaal-cycle-card">
+          <div className="dintaal-cycle-header">
+            <span className="dintaal-mono-label">TODAY'S CYCLE</span>
+            <span className="dintaal-done-count">{doneTasks}/{totalTasks} beats ({progressPct}%)</span>
+          </div>
+          <BeatStrip beats={allToday.map((t) => (taskStatuses[t.id]?.status === 'done'))} size={14} gap={10} />
+        </div>
+      )}
 
       {/* Sleep Schedule Banner */}
       <div className="sleep-schedule-card">
