@@ -9,11 +9,13 @@ const SAGE = '#5F8467';
 const HAIRLINE = 'rgba(31,58,52,0.15)';
 
 export default function ProgressChart({ chartData }) {
+  const safeData = Array.isArray(chartData) ? chartData : [];
+
   return (
     <div className="progress-chart">
       <ResponsiveContainer width="100%" height={200}>
         <BarChart
-          data={chartData}
+          data={safeData}
           margin={{ top: 8, right: 8, left: -20, bottom: 0 }}
         >
           <CartesianGrid

@@ -2,6 +2,7 @@ import React from 'react';
 import { CheckCircle2, Utensils } from 'lucide-react';
 
 export default function MealRow({ meal, logged, onToggle }) {
+  if (!meal) return null;
   return (
     <div className="meal-row" onClick={() => onToggle(meal.id)}>
       <div className="meal-row__icon">

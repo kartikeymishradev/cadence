@@ -5,17 +5,19 @@ import TaskRow from './TaskRow';
 import MealRow from './MealRow';
 
 export default function TaskList({
-  tasksByDay,
-  weekDates,
-  dayStatus,
+  tasksByDay = [],
+  weekDates = [],
+  dayStatus = {},
   taskStatuses = {},
-  actualMinutes,
-  mealsLogged,
+  actualMinutes = {},
+  mealsLogged = {},
   onQuickToggle,
   onActualChange,
   onMealToggle,
 }) {
-  if (tasksByDay.length === 0) {
+  const safeTasksByDay = Array.isArray(tasksByDay) ? tasksByDay : [];
+
+  if (safeTasksByDay.length === 0) {
     return (
       <p className="task-list__empty">
         No schedule yet &mdash; paste a plan above and parse it.
@@ -25,32 +27,32 @@ export default function TaskList({
 
   return (
     <div className="task-list">
-      {tasksByDay.map(({ day, items, meals }) => {
+      {safeTasksByDay.map(({ day, items = [], meals = [] }) => {
         const idx = WEEKDAYS.indexOf(day);
-        const dk = weekDates[idx] ? dateKey(weekDates[idx]) : null;
-        const status = dk ? dayStatus[dk] || 'study' : 'study';
+        const dk = (Array.isArray(weekDates) && weekDates[idx]) ? dateKey(weekDates[idx]) : null;
+        const status = dk ? (dayStatus[dk] || 'study') : 'study';
 
         return (
           <div key={day} className="task-list__day">
             <div className="task-list__day-header">{day.toUpperCase()}</div>
 
-            {items.map((t) => (
+            {(Array.isArray(items) ? items : []).map((t) => (
               <TaskRow
-                key={t.id}
+                key={t.id || Math.random()}
                 task={t}
-                taskStatus={taskStatuses[t.id]}
-                actual={actualMinutes[t.id]}
+                taskStatus={taskStatuses[t?.id]}
+                actual={actualMinutes[t?.id]}
                 status={status}
                 onQuickToggle={onQuickToggle}
                 onActualChange={onActualChange}
               />
             ))}
 
-            {meals.map((m) => (
+            {(Array.isArray(meals) ? meals : []).map((m) => (
               <MealRow
-                key={m.id}
+                key={m.id || Math.random()}
                 meal={m}
-                logged={!!mealsLogged[m.id]}
+                logged={!!mealsLogged[m?.id]}
                 onToggle={onMealToggle}
               />
             ))}

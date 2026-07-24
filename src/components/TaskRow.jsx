@@ -15,6 +15,8 @@ export default function TaskRow({
   onQuickToggle,
   onActualChange,
 }) {
+  if (!task) return null;
+
   const planned = Number(task.duration) || 0;
   const isDone = taskStatus?.status === 'done' || (actual !== undefined && actual !== '' && Number(actual) >= planned);
   const actualNum = actual !== undefined && actual !== '' ? Number(actual) : (isDone ? planned : 0);
