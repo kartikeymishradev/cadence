@@ -172,23 +172,24 @@ export function usePersistence(weekStart, user) {
   useEffect(() => {
     if (!user || cloudLoaded.current) return;
 
-    cloudLoad().then((allCloudData) => {
-      if (allCloudData) {
+    cloudLoad(user.id).then((allCloudData) => {
+      if (allCloudData && Object.keys(allCloudData).length > 0) {
         // allCloudData is a flat map: { "2026-07-20": {...}, "settings": {...}, ... }
-        // First apply global settings key if present
         if (allCloudData['settings']) {
           applyData(allCloudData['settings']);
         }
-        // Then apply current week data (overrides settings for schedule/tasks)
         if (allCloudData[weekKey]) {
           applyData(allCloudData[weekKey]);
-        } else if (!allCloudData['settings']) {
-          // Fallback: if no weekKey match and no settings key, apply the first entry
-          const firstKey = Object.keys(allCloudData)[0];
+        } else {
+          // Fallback: apply the first entry if weekKey is not found
+          const firstKey = Object.keys(allCloudData).find((k) => k !== 'settings') || Object.keys(allCloudData)[0];
           if (firstKey) applyData(allCloudData[firstKey]);
         }
+        cloudLoaded.current = true;
+      } else if (allCloudData) {
+        // Cloud returned empty object (user has no data yet in cloud)
+        cloudLoaded.current = true;
       }
-      cloudLoaded.current = true;
     });
   }, [user, weekKey, applyData]);
 
@@ -216,12 +217,9 @@ export function usePersistence(weekStart, user) {
     saveWeekData(weekKey, payload);
 
     if (user && cloudLoaded.current) {
-      // Only save to cloud AFTER we've finished loading from cloud.
-      // This prevents the race condition where empty local state
-      // overwrites valid cloud data before cloudLoad completes.
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
-        cloudSave(weekKey, payload);
+        cloudSave(weekKey, payload, user.id);
       }, 2000);
     }
   }, [

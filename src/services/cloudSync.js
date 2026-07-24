@@ -4,32 +4,47 @@ import { supabase } from './supabase';
  * Save a key/value pair to the cloud for the current user.
  * Uses upsert so repeated saves don't create duplicates.
  */
-export async function cloudSave(key, data) {
+export async function cloudSave(key, data, explicitUserId = null) {
   if (!supabase) return;
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  let userId = explicitUserId;
+  if (!userId) {
+    const { data: { user } } = await supabase.auth.getUser();
+    userId = user?.id;
+  }
+  if (!userId) return;
 
-  await supabase.from('schedules').upsert(
-    { user_id: user.id, key, data, updated_at: new Date().toISOString() },
+  const { error } = await supabase.from('schedules').upsert(
+    { user_id: userId, key, data, updated_at: new Date().toISOString() },
     { onConflict: 'user_id,key' }
   );
+  if (error) {
+    console.error('Supabase cloudSave error:', error);
+  }
 }
 
 /**
  * Load all saved keys for the current user.
  * Returns a flat object: { key: data, ... }
  */
-export async function cloudLoad() {
+export async function cloudLoad(explicitUserId = null) {
   if (!supabase) return null;
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  let userId = explicitUserId;
+  if (!userId) {
+    const { data: { user } } = await supabase.auth.getUser();
+    userId = user?.id;
+  }
+  if (!userId) return null;
 
   const { data, error } = await supabase
     .from('schedules')
     .select('key, data')
-    .eq('user_id', user.id);
+    .eq('user_id', userId);
 
-  if (error || !data) return null;
+  if (error) {
+    console.error('Supabase cloudLoad error:', error);
+    return null;
+  }
+  if (!data) return null;
 
   return Object.fromEntries(data.map((row) => [row.key, row.data]));
 }

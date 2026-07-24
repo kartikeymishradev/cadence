@@ -19,7 +19,7 @@ export default function InfoFooter({ viewMode }) {
       const dayStatusObj = {};
       const generatedSkill = [];
       const generatedGym = [];
-      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
       
       days.forEach((d, idx) => {
         dayStatusObj[d] = Math.random() > 0.2 ? 'done' : 'partial';

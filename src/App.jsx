@@ -310,7 +310,9 @@ export default function App() {
   const chartData = useMemo(
     () =>
       WEEKDAYS.map((day) => {
-        const dayTasks = allTasks.filter((t) => t.day === day);
+        const dayTasks = allTasks.filter(
+          (t) => t.day === day || (t.day && t.day.toLowerCase().startsWith(day.slice(0, 3).toLowerCase()))
+        );
         const planned = dayTasks.reduce(
           (s, t) => s + (Number(t.duration) || 0),
           0
@@ -337,7 +339,7 @@ export default function App() {
       ? Math.round((totalDoneMin / totalPlannedMin) * 100)
       : 0;
 
-  const activeTasks = (schedule[tab] || []).map((t, i) => ({
+  const activeTasks = (schedule[tab] || schedule['skill'] || schedule['gym'] || []).map((t, i) => ({
     ...t,
     kind: tab,
     id: `${tab}-${i}`,
@@ -345,10 +347,14 @@ export default function App() {
 
   const tasksByDay = WEEKDAYS.map((day) => ({
     day,
-    items: activeTasks.filter((t) => t.day === day),
+    items: activeTasks.filter(
+      (t) => t.day === day || (t.day && t.day.toLowerCase().startsWith(day.slice(0, 3).toLowerCase()))
+    ),
     meals:
       tab === 'gym'
-        ? meals.map((m, i) => ({ ...m, id: `meal-${i}` })).filter((m) => m.day === day)
+        ? meals.map((m, i) => ({ ...m, id: `meal-${i}` })).filter(
+            (m) => m.day === day || (m.day && m.day.toLowerCase().startsWith(day.slice(0, 3).toLowerCase()))
+          )
         : [],
   })).filter((g) => g.items.length > 0 || g.meals.length > 0);
 
