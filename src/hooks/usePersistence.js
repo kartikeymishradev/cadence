@@ -169,9 +169,21 @@ export function usePersistence(weekStart, user) {
   useEffect(() => {
     if (!user || cloudLoaded.current) return;
 
-    cloudLoad(user.id, weekKey).then((cloudData) => {
-      if (cloudData) {
-        applyData(cloudData);
+    cloudLoad().then((allCloudData) => {
+      if (allCloudData) {
+        // allCloudData is a flat map: { "2026-07-20": {...}, "settings": {...}, ... }
+        // First apply global settings key if present
+        if (allCloudData['settings']) {
+          applyData(allCloudData['settings']);
+        }
+        // Then apply current week data (overrides settings for schedule/tasks)
+        if (allCloudData[weekKey]) {
+          applyData(allCloudData[weekKey]);
+        } else if (!allCloudData['settings']) {
+          // Fallback: if no weekKey match and no settings key, apply the first entry
+          const firstKey = Object.keys(allCloudData)[0];
+          if (firstKey) applyData(allCloudData[firstKey]);
+        }
       }
       cloudLoaded.current = true;
     });
