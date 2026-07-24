@@ -172,9 +172,9 @@ body {
    ═══════════════════════════════════════════ */
 .cadence-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.75rem;
   flex-wrap: wrap;
   gap: 8px;
 }
@@ -644,6 +644,32 @@ body {
 
   .cadence-header__week {
     font-size: 11px;
+  }
+
+  .cadence-header__right {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .beta-version-badge,
+  .streak-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .cadence-navbar {
+    margin-bottom: 1rem;
+  }
+
+  .cadence-navbar__tab {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .cadence-navbar__tab span {
+    display: none;
   }
 
   .plan-input__tabs {
@@ -1892,7 +1918,8 @@ body {
 .title-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 8px 10px;
 }
 
 .beta-version-badge {
@@ -2351,17 +2378,11 @@ body {
 
 
 /* Header & Theme Dropdown Styles */
-.cadence-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
-}
-
 .cadence-header__right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .theme-dropdown-container {
@@ -4000,6 +4021,3 @@ body {
   display: flex;
   gap: 8px;
 }
-
-
-
