@@ -23,6 +23,7 @@ import SummaryCards from './components/SummaryCards';
 import InfoFooter from './components/InfoFooter';
 import NotificationBanner from './components/NotificationBanner';
 import PomodoroTimer from './components/PomodoroTimer';
+import NotesVault from './components/NotesVault';
 import GuidedTour from './components/GuidedTour';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -463,7 +464,17 @@ export default function App() {
           </>
         )}
 
-        {/* 3. FOCUS VIEW (Pomodoro Timer) */}
+        {/* 3. NOTES VAULT & MONTHLY ARCHIVE VIEW */}
+        {viewMode === 'notes' && (
+          <NotesVault
+            categories={categories}
+            schedule={schedule}
+            taskStatuses={taskStatuses}
+            onUpdateTaskNote={handleUpdateTaskNote}
+          />
+        )}
+
+        {/* 4. FOCUS VIEW (Pomodoro Timer) */}
         {viewMode === 'focus' && (
           <PomodoroTimer />
         )}

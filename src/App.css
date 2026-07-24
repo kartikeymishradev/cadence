@@ -3757,5 +3757,249 @@ body {
   margin-bottom: 1.5rem;
 }
 
+/* ═══════════════════════════════════════════
+   Notes Vault & Class Archive
+   ═══════════════════════════════════════════ */
+.notes-vault {
+  margin-bottom: 1.5rem;
+}
+
+.notes-vault__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.notes-vault__title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.notes-vault__icon-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(95, 132, 103, 0.15);
+  color: var(--sage);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notes-vault__title {
+  font-family: var(--font-voice);
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.notes-vault__subtitle {
+  font-size: 12px;
+  color: var(--slate);
+  margin: 2px 0 0;
+}
+
+.notes-vault__stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+}
+
+.vault-stat-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--paper-raised);
+  border: 1px solid var(--hairline);
+  color: var(--ink);
+}
+
+.notes-vault__controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.notes-vault__search {
+  flex: 1;
+  min-width: 260px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--paper-raised);
+  border: 1px solid var(--hairline);
+}
+
+.notes-search-icon {
+  color: var(--slate);
+}
+
+.notes-vault__search input {
+  width: 100%;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.notes-vault__search input:focus {
+  outline: none;
+}
+
+.notes-vault__category-pills {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.cat-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  border: 1px solid var(--hairline);
+  font-size: 12px;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cat-pill--active {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+.cat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.notes-vault__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vault-item-card {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--paper-raised);
+  border: 1px solid var(--hairline);
+}
+
+.vault-item__top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.vault-item__tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid;
+}
+
+.vault-item__day-badge {
+  font-size: 12px;
+  color: var(--slate);
+  font-family: var(--font-mono);
+}
+
+.vault-item__status-chip {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.vault-item__status-chip--done {
+  background: rgba(95, 132, 103, 0.15);
+  color: var(--sage);
+}
+
+.vault-item__status-chip--partial {
+  background: rgba(201, 146, 43, 0.15);
+  color: var(--gold);
+}
+
+.vault-item__status-chip--pending {
+  background: rgba(51, 65, 74, 0.1);
+  color: var(--slate);
+}
+
+.vault-item__title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.vault-note-display {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.vault-note-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+  white-space: pre-wrap;
+}
+
+.vault-note-placeholder {
+  margin: 0;
+  font-size: 12px;
+  color: var(--slate);
+  font-style: italic;
+}
+
+.vault-note-edit-btn {
+  background: transparent;
+  border: none;
+  color: var(--sage);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.vault-edit-box textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  margin-bottom: 8px;
+  resize: vertical;
+}
+
+.vault-edit-actions {
+  display: flex;
+  gap: 8px;
+}
+
 
 

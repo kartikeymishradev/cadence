@@ -140,6 +140,11 @@ export function usePersistence(weekStart, user) {
     if (migrated.multiWeekPlan) setMultiWeekPlan(migrated.multiWeekPlan);
     if (migrated.currentWeekIndex) setCurrentWeekIndex(migrated.currentWeekIndex);
     if (migrated.goals) setGoals(migrated.goals);
+    if (migrated.streak) {
+      const val = Number(migrated.streak) || 1;
+      setStreak((curr) => Math.max(curr, val));
+      localStorage.setItem('cadence_user_streak', String(val));
+    }
     if (migrated.sleepSchedule) setSleepSchedule(migrated.sleepSchedule);
     if (migrated.macros) setMacros(migrated.macros);
     if (migrated.muscleFocus) setMuscleFocus(migrated.muscleFocus);
