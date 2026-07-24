@@ -110,7 +110,7 @@ export default function TodayView({
   }).filter((section) => section.tasks.length > 0);
 
   // Today Meals
-  const todayMeals = meals
+  const todayMeals = (Array.isArray(meals) ? meals : [])
     .filter((m) => m.day === todayName)
     .map((m, i) => ({
       id: `meal-${i}`,

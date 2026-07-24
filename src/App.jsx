@@ -348,6 +348,9 @@ export default function App() {
     id: `${tab}-${i}`,
   }));
 
+  const safeMeals = Array.isArray(meals) ? meals : [];
+  const safeCategories = Array.isArray(categories) ? categories : [];
+
   const tasksByDay = WEEKDAYS.map((day) => ({
     day,
     items: activeTasks.filter(
@@ -355,7 +358,7 @@ export default function App() {
     ),
     meals:
       tab === 'gym'
-        ? meals.map((m, i) => ({ ...m, id: `meal-${i}` })).filter(
+        ? safeMeals.map((m, i) => ({ ...m, id: `meal-${i}` })).filter(
             (m) => m.day === day || (m.day && m.day.toLowerCase().startsWith(day.slice(0, 3).toLowerCase()))
           )
         : [],

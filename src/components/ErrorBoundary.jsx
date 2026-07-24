@@ -36,9 +36,22 @@ export class ErrorBoundary extends React.Component {
         }}>
           <AlertTriangle size={48} color="#EF4444" style={{ marginBottom: '1rem' }} />
           <h2>Something went wrong loading Cadence</h2>
-          <p style={{ color: '#64748B', maxWidth: '400px', marginBottom: '1.5rem', fontSize: '14px' }}>
-            A temporary display error occurred. Don't worry, your schedule and settings are safe.
+          <p style={{ color: '#64748B', maxWidth: '500px', marginBottom: '1rem', fontSize: '14px' }}>
+            A display error occurred. Details:
           </p>
+          <pre style={{
+            background: '#F1F5F9',
+            color: '#991B1B',
+            padding: '10px 14px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            maxWidth: '90%',
+            overflowX: 'auto',
+            marginBottom: '1.5rem',
+            textAlign: 'left'
+          }}>
+            {this.state.error ? String(this.state.error.stack || this.state.error) : 'Unknown error'}
+          </pre>
           <button
             onClick={this.handleReset}
             style={{
