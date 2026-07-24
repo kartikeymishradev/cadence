@@ -167,7 +167,7 @@ export function usePersistence(weekStart, user) {
     if (user) {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
-        cloudSave(user.id, weekKey, payload);
+        cloudSave(weekKey, payload);
       }, 1000);
     }
   }, [
