@@ -20,6 +20,9 @@ async function callGroq(system, userText, apiKey) {
 
   for (const model of modelsToTry) {
     let res;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
     try {
       res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
@@ -36,9 +39,16 @@ async function callGroq(system, userText, apiKey) {
           temperature: 0.2,
           response_format: { type: 'json_object' },
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
     } catch (err) {
-      lastError = new Error(`Network error connecting to Groq API: ${err.message}`);
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        lastError = new Error(`Groq API timed out after 15s for model ${model}.`);
+      } else {
+        lastError = new Error(`Network error connecting to Groq API: ${err.message}`);
+      }
       continue;
     }
 
@@ -86,6 +96,9 @@ async function callGemini(system, userText, apiKey) {
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     let res;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
       res = await fetch(url, {
         method: 'POST',
@@ -98,9 +111,16 @@ async function callGemini(system, userText, apiKey) {
             temperature: 0.2,
           },
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
     } catch (err) {
-      lastError = new Error(`Network error connecting to Gemini: ${err.message}`);
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        lastError = new Error(`Gemini API timed out after 15s for model ${model}.`);
+      } else {
+        lastError = new Error(`Network error connecting to Gemini: ${err.message}`);
+      }
       continue;
     }
 
@@ -149,13 +169,22 @@ async function callLLM(system, userText) {
 
   // Last resort: backend proxy
   let res;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
   try {
     res = await fetch('/api/parse', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ system, userText }),
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
   } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      throw new Error('API proxy timed out after 15 seconds.');
+    }
     throw new Error(`Network error: ${err.message}`);
   }
 
@@ -164,7 +193,12 @@ async function callLLM(system, userText) {
     throw new Error(errObj.error || `API error (${res.status})`);
   }
 
-  return res.json();
+  const rawTextRes = await res.text();
+  try {
+    return JSON.parse(rawTextRes);
+  } catch {
+    throw new Error('No API keys configured on Vercel. Add VITE_GROQ_API_KEY in your Vercel settings.');
+  }
 }
 
 /**
