@@ -116,7 +116,10 @@ export function usePersistence(weekStart, user) {
     if (migrated.multiWeekPlan) setMultiWeekPlan(migrated.multiWeekPlan);
     if (migrated.currentWeekIndex) setCurrentWeekIndex(migrated.currentWeekIndex);
     if (migrated.goals) setGoals(migrated.goals);
-    if (migrated.streak) setStreak(migrated.streak);
+    // NOTE: streak is intentionally NOT applied here.
+    // Streak is calculated purely from visit-based localStorage keys
+    // (cadence_last_visit_date, cadence_user_streak) in the effect below.
+    // Applying it from saved data would overwrite the correct calculated value.
     if (migrated.sleepSchedule) setSleepSchedule(migrated.sleepSchedule);
     if (migrated.macros) setMacros(migrated.macros);
     if (migrated.muscleFocus) setMuscleFocus(migrated.muscleFocus);
@@ -212,11 +215,14 @@ export function usePersistence(weekStart, user) {
 
     saveWeekData(weekKey, payload);
 
-    if (user) {
+    if (user && cloudLoaded.current) {
+      // Only save to cloud AFTER we've finished loading from cloud.
+      // This prevents the race condition where empty local state
+      // overwrites valid cloud data before cloudLoad completes.
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
         cloudSave(weekKey, payload);
-      }, 1000);
+      }, 2000);
     }
   }, [
     weekKey,
