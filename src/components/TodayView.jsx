@@ -373,7 +373,7 @@ export default function TodayView({
         <div className="dintaal-cycle-card">
           <div className="dintaal-cycle-header">
             <span className="dintaal-mono-label">TODAY'S CYCLE</span>
-            <span className="dintaal-done-count">{doneTasks}/{totalTasks} beats ({progressPct}%)</span>
+            <span className="dintaal-done-count">{completedTasks}/{totalTasks} beats ({progressPct}%)</span>
           </div>
           <BeatStrip beats={allToday.map((t) => (taskStatuses[t.id]?.status === 'done'))} size={14} gap={10} />
         </div>

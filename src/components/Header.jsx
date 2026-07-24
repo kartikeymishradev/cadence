@@ -15,7 +15,7 @@ export default function Header({ weekStart, activeTheme, onSelectTheme, onStartT
           </h1>
           <span className="beta-version-badge">
             <Beaker size={12} />
-            v4.5.0 (Live)
+            v4.5.1 (Live)
           </span>
 
           <div className="dintaal-streak-chip" title={`${streak} Day Completion Streak!`}>
