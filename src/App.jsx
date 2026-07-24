@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Plus } from 'lucide-react';
 import './App.css';
 import { WEEKDAYS } from './utils/constants';
 import { useWeekDates } from './hooks/useWeekDates';
