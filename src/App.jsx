@@ -24,6 +24,7 @@ import InfoFooter from './components/InfoFooter';
 import NotificationBanner from './components/NotificationBanner';
 import PomodoroTimer from './components/PomodoroTimer';
 import GuidedTour from './components/GuidedTour';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 export default function App() {
   const { weekStart, weekDates, dateKey } = useWeekDates();
@@ -378,128 +379,130 @@ export default function App() {
   }, [setTaskStatuses]);
 
   return (
-    <div className="cadence-app">
-      <AuthBar user={user} />
-      <Header
-        weekStart={weekStart}
-        activeTheme={theme}
-        onSelectTheme={setTheme}
-        onStartTour={() => setIsTourOpen(true)}
-        streak={streak}
-      />
-      <Navbar activeView={viewMode} onViewChange={setViewMode} />
-
-      {/* 1. TODAY VIEW (Landing Screen) */}
-      {viewMode === 'today' && (
-        <TodayView
-          weekDates={weekDates}
-          dayStatus={dayStatus}
-          categories={categories}
-          schedule={schedule}
-          meals={meals}
-          taskStatuses={taskStatuses}
-          sleepSchedule={sleepSchedule}
-          macros={macros}
-          onUpdateMacros={setMacros}
-          muscleFocus={muscleFocus}
-          onUpdateMuscleFocus={setMuscleFocus}
-          onUpdateSleepSchedule={setSleepSchedule}
-          onUpdateTaskStatus={handleUpdateTaskStatus}
-          onUpdateTaskNote={handleUpdateTaskNote}
-          onUpdateTaskTime={handleUpdateTaskTime}
-          onCycleStatus={cycleStatus}
-          onNavigateToWeek={() => setViewMode('setup')}
+    <ErrorBoundary>
+      <div className="cadence-app">
+        <AuthBar user={user} />
+        <Header
+          weekStart={weekStart}
+          activeTheme={theme}
+          onSelectTheme={setTheme}
+          onStartTour={() => setIsTourOpen(true)}
+          streak={streak}
         />
-      )}
+        <Navbar activeView={viewMode} onViewChange={setViewMode} />
 
-      {/* 2. WEEK VIEW (Full Schedule) */}
-      {viewMode === 'week' && (
-        <>
-          {totalWeeks > 1 && (
-            <WeekNavigator
-              currentWeekIndex={activeWeekIdx}
-              totalWeeks={totalWeeks}
-              currentWeekTitle={activeWeek?.title}
-              onPrevWeek={handlePrevWeek}
-              onNextWeek={handleNextWeek}
-            />
-          )}
-
-          {currentPhase && <PhaseBanner currentPhase={currentPhase} />}
-
-          <WeekStrip
+        {/* 1. TODAY VIEW (Landing Screen) */}
+        {viewMode === 'today' && (
+          <TodayView
             weekDates={weekDates}
             dayStatus={dayStatus}
-            onCycleStatus={cycleStatus}
-          />
-
-          <TaskList
-            tasksByDay={tasksByDay}
-            weekDates={weekDates}
-            dayStatus={dayStatus}
-            actualMinutes={legacyActualMinutes}
-            mealsLogged={{}}
-            onQuickToggle={quickToggle}
-            onActualChange={handleActualChange}
-            onMealToggle={handleMealToggle}
-          />
-
-          <SummaryCards
-            totalPlannedMin={totalPlannedMin}
-            completionPct={completionPct}
-          />
-
-          <ProgressChart chartData={chartData} />
-        </>
-      )}
-
-      {/* 3. FOCUS VIEW (Pomodoro Timer) */}
-      {viewMode === 'focus' && (
-        <PomodoroTimer />
-      )}
-
-      {/* 4. SETUP VIEW (AI Plan Parser & Manual Task Builder) */}
-      {viewMode === 'setup' && (
-        <>
-          <PlanInput
-            tab={tab}
-            setTab={setTab}
             categories={categories}
-            onSaveCategories={setCategories}
-            rawText={rawText[tab] || ''}
-            onRawTextChange={handleRawTextChange}
-            onParse={handleParse}
-            onAddTaskManual={handleAddTaskManual}
-            loading={loading}
-            error={error}
+            schedule={schedule}
+            meals={meals}
+            taskStatuses={taskStatuses}
+            sleepSchedule={sleepSchedule}
+            macros={macros}
+            onUpdateMacros={setMacros}
+            muscleFocus={muscleFocus}
+            onUpdateMuscleFocus={setMuscleFocus}
+            onUpdateSleepSchedule={setSleepSchedule}
+            onUpdateTaskStatus={handleUpdateTaskStatus}
+            onUpdateTaskNote={handleUpdateTaskNote}
+            onUpdateTaskTime={handleUpdateTaskTime}
+            onCycleStatus={cycleStatus}
+            onNavigateToWeek={() => setViewMode('setup')}
           />
+        )}
 
-          <Clarifications
-            clarifications={clarifications[tab] || []}
-            answers={clarificationAnswers}
-            onAnswerChange={handleAnswerChange}
-            onRefine={handleRefine}
-            loading={loading}
+        {/* 2. WEEK VIEW (Full Schedule) */}
+        {viewMode === 'week' && (
+          <>
+            {totalWeeks > 1 && (
+              <WeekNavigator
+                currentWeekIndex={activeWeekIdx}
+                totalWeeks={totalWeeks}
+                currentWeekTitle={activeWeek?.title}
+                onPrevWeek={handlePrevWeek}
+                onNextWeek={handleNextWeek}
+              />
+            )}
+
+            {currentPhase && <PhaseBanner currentPhase={currentPhase} />}
+
+            <WeekStrip
+              weekDates={weekDates}
+              dayStatus={dayStatus}
+              onCycleStatus={cycleStatus}
+            />
+
+            <TaskList
+              tasksByDay={tasksByDay}
+              weekDates={weekDates}
+              dayStatus={dayStatus}
+              actualMinutes={legacyActualMinutes}
+              mealsLogged={{}}
+              onQuickToggle={quickToggle}
+              onActualChange={handleActualChange}
+              onMealToggle={handleMealToggle}
+            />
+
+            <SummaryCards
+              totalPlannedMin={totalPlannedMin}
+              completionPct={completionPct}
+            />
+
+            <ProgressChart chartData={chartData} />
+          </>
+        )}
+
+        {/* 3. FOCUS VIEW (Pomodoro Timer) */}
+        {viewMode === 'focus' && (
+          <PomodoroTimer />
+        )}
+
+        {/* 4. SETUP VIEW (AI Plan Parser & Manual Task Builder) */}
+        {viewMode === 'setup' && (
+          <>
+            <PlanInput
+              tab={tab}
+              setTab={setTab}
+              categories={categories}
+              onSaveCategories={setCategories}
+              rawText={rawText[tab] || ''}
+              onRawTextChange={handleRawTextChange}
+              onParse={handleParse}
+              onAddTaskManual={handleAddTaskManual}
+              loading={loading}
+              error={error}
+            />
+
+            <Clarifications
+              clarifications={clarifications[tab] || []}
+              answers={clarificationAnswers}
+              onAnswerChange={handleAnswerChange}
+              onRefine={handleRefine}
+              loading={loading}
+            />
+          </>
+        )}
+
+        <InfoFooter viewMode={viewMode} />
+
+        {hasParsed && (
+          <NotificationBanner
+            isSupported={pushSupported}
+            isSubscribed={pushSubscribed}
+            onSubscribe={pushSubscribe}
           />
-        </>
-      )}
+        )}
 
-      <InfoFooter viewMode={viewMode} />
-
-      {hasParsed && (
-        <NotificationBanner
-          isSupported={pushSupported}
-          isSubscribed={pushSubscribed}
-          onSubscribe={pushSubscribe}
+        {/* Interactive Spotlight Tour */}
+        <GuidedTour
+          isOpen={isTourOpen}
+          onClose={handleCloseTour}
+          onViewChange={setViewMode}
         />
-      )}
-
-      {/* Interactive Spotlight Tour */}
-      <GuidedTour
-        isOpen={isTourOpen}
-        onClose={handleCloseTour}
-        onViewChange={setViewMode}
-      />
-    </div>
+      </div>
+    </ErrorBoundary>
   );
 }

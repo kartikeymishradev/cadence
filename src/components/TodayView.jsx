@@ -138,8 +138,10 @@ export default function TodayView({
   let minutesUntilNext = null;
 
   for (const task of allToday) {
-    if (!task.start) continue;
-    const [h, m] = task.start.split(':').map(Number);
+    if (!task || !task.start || typeof task.start !== 'string') continue;
+    const parts = task.start.split(':').map(Number);
+    const h = parts[0] || 0;
+    const m = parts[1] || 0;
     const startMins = h * 60 + m;
     const duration = Number(task.duration) || 30;
     const endMins = startMins + duration;
@@ -156,9 +158,17 @@ export default function TodayView({
     }
   }
 
-  // Sleep Duration Calculator
-  const [bedH, bedM] = (sleepSchedule?.sleepStart || '23:30').split(':').map(Number);
-  const [wakeH, wakeM] = (sleepSchedule?.sleepEnd || '07:00').split(':').map(Number);
+  // Sleep Duration Calculator (Bulletproof Defensive Parsing)
+  const sleepStartStr = (sleepSchedule && typeof sleepSchedule.sleepStart === 'string') ? sleepSchedule.sleepStart : '23:30';
+  const sleepEndStr = (sleepSchedule && typeof sleepSchedule.sleepEnd === 'string') ? sleepSchedule.sleepEnd : '07:00';
+  
+  const bedParts = sleepStartStr.split(':').map(Number);
+  const wakeParts = sleepEndStr.split(':').map(Number);
+  
+  const bedH = bedParts[0] ?? 23;
+  const bedM = bedParts[1] ?? 30;
+  const wakeH = wakeParts[0] ?? 7;
+  const wakeM = wakeParts[1] ?? 0;
 
   let sleepMins = (wakeH * 60 + wakeM) - (bedH * 60 + bedM);
   if (sleepMins <= 0) sleepMins += 24 * 60; // overnight math
