@@ -1,14 +1,12 @@
 import React from 'react';
 import { Info } from 'lucide-react';
 import { cloudSave } from '../services/cloudSync';
+import { startOfWeek, dateKey } from '../utils/dateUtils';
 
 export default function InfoFooter({ viewMode }) {
   const injectDemoData = () => {
     const PREFIX = 'cadence_';
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const diffToMonday = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-    const currentMonday = new Date(today.setDate(diffToMonday));
+    const currentMonday = startOfWeek(new Date());
 
     const dummyTaskStatuses = {};
     const dummyMacros = { proteinTaken: 140, proteinTarget: 150, carbsTaken: 200, carbsTarget: 220, fatsTaken: 50, fatsTarget: 60 };
@@ -16,10 +14,7 @@ export default function InfoFooter({ viewMode }) {
     for (let i = 0; i < 4; i++) {
       const weekDate = new Date(currentMonday);
       weekDate.setDate(currentMonday.getDate() - (i * 7));
-      
-      // Use local date formatting so "2026-07-20" stays correct for timezone
-      const pad = (n) => String(n).padStart(2, '0');
-      const dateStr = `${weekDate.getFullYear()}-${pad(weekDate.getMonth() + 1)}-${pad(weekDate.getDate())}`;
+      const dateStr = dateKey(weekDate);
 
       const dayStatusObj = {};
       const generatedSkill = [];
