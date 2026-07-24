@@ -1,6 +1,5 @@
 import React from 'react';
 import { Info } from 'lucide-react';
-
 import { cloudSave } from '../services/cloudSync';
 
 export default function InfoFooter({ viewMode }) {
@@ -11,22 +10,34 @@ export default function InfoFooter({ viewMode }) {
     const diffToMonday = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
     const currentMonday = new Date(today.setDate(diffToMonday));
 
-    const dummySchedule = {
-      skill: [{ id: 's1', title: 'React Revision', start: '18:00', duration: 60 }],
-      gym: [{ id: 'g1', title: 'Chest & Triceps', start: '07:00', duration: 90 }]
-    };
-    const dummyTaskStatuses = { s1: { status: 'done' }, g1: { status: 'done' } };
+    const dummyTaskStatuses = {};
     const dummyMacros = { proteinTaken: 140, proteinTarget: 150, carbsTaken: 200, carbsTarget: 220, fatsTaken: 50, fatsTarget: 60 };
 
     for (let i = 0; i < 4; i++) {
       const weekDate = new Date(currentMonday);
       weekDate.setDate(currentMonday.getDate() - (i * 7));
-      const dateStr = weekDate.toISOString().split('T')[0];
+      
+      // Use local date formatting so "2026-07-20" stays correct for timezone
+      const pad = (n) => String(n).padStart(2, '0');
+      const dateStr = `${weekDate.getFullYear()}-${pad(weekDate.getMonth() + 1)}-${pad(weekDate.getDate())}`;
 
       const dayStatusObj = {};
-      ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].forEach(d => {
+      const generatedSkill = [];
+      const generatedGym = [];
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      
+      days.forEach((d, idx) => {
         dayStatusObj[d] = Math.random() > 0.2 ? 'done' : 'partial';
+        generatedSkill.push({ id: `s-${i}-${idx}`, title: 'React Revision', start: '18:00', duration: 60, day: d });
+        generatedGym.push({ id: `g-${i}-${idx}`, title: 'Chest & Triceps', start: '07:00', duration: 90, day: d });
+        dummyTaskStatuses[`s-${i}-${idx}`] = { status: 'done' };
+        dummyTaskStatuses[`g-${i}-${idx}`] = { status: 'done' };
       });
+
+      const dummySchedule = {
+        skill: generatedSkill,
+        gym: generatedGym,
+      };
 
       const payload = {
         schedule: dummySchedule,
