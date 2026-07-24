@@ -78,6 +78,8 @@ export default function App() {
     currentWeekIndex, setCurrentWeekIndex,
     streak, setStreak,
     sleepSchedule, setSleepSchedule,
+    macros, setMacros,
+    muscleFocus, setMuscleFocus,
   } = usePersistence(weekStart, user);
 
   // Sync active theme with document body data-theme attribute
