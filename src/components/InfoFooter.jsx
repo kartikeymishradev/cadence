@@ -39,8 +39,6 @@ export default function InfoFooter({ viewMode }) {
         taskStatuses: dummyTaskStatuses,
         dayStatus: dayStatusObj,
         macros: dummyMacros,
-        theme: 'dark',
-        streak: i === 0 ? 30 : 1,
         categories: [
           { id: 'skill', label: 'Skill Prep', icon: 'BookOpen', color: '#5F8467' },
           { id: 'gym', label: 'Gym & Diet', icon: 'Dumbbell', color: '#C9922B' }

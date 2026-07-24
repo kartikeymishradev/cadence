@@ -129,6 +129,42 @@ export function usePersistence(weekStart, user) {
     initialized.current = true;
   }, [weekKey, applyData]);
 
+  // ── Auto-Calculate Streak based on consecutive daily visits ──
+  useEffect(() => {
+    try {
+      const todayStr = dateKey(new Date());
+      const lastVisit = localStorage.getItem('cadence_last_visit_date');
+      const savedStreak = Number(localStorage.getItem('cadence_user_streak')) || 1;
+
+      if (!lastVisit) {
+        localStorage.setItem('cadence_last_visit_date', todayStr);
+        localStorage.setItem('cadence_user_streak', '1');
+        setStreak(1);
+      } else if (lastVisit !== todayStr) {
+        const lastDate = new Date(lastVisit);
+        const currDate = new Date(todayStr);
+        const diffDays = Math.round((currDate - lastDate) / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 1) {
+          // Visited yesterday -> Increment Streak!
+          const newStreak = savedStreak + 1;
+          localStorage.setItem('cadence_last_visit_date', todayStr);
+          localStorage.setItem('cadence_user_streak', String(newStreak));
+          setStreak(newStreak);
+        } else if (diffDays > 1) {
+          // Missed 1+ days -> Reset Streak to 1
+          localStorage.setItem('cadence_last_visit_date', todayStr);
+          localStorage.setItem('cadence_user_streak', '1');
+          setStreak(1);
+        }
+      } else {
+        setStreak(savedStreak);
+      }
+    } catch {
+      // fallback
+    }
+  }, []);
+
   // ── Load from cloud when user signs in ──
   useEffect(() => {
     if (!user || cloudLoaded.current) return;
