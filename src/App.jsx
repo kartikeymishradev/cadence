@@ -24,6 +24,7 @@ import InfoFooter from './components/InfoFooter';
 import NotificationBanner from './components/NotificationBanner';
 import PomodoroTimer from './components/PomodoroTimer';
 import NotesVault from './components/NotesVault';
+import ExcelGoalsSheet from './components/ExcelGoalsSheet';
 import GuidedTour from './components/GuidedTour';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
@@ -364,7 +365,9 @@ export default function App() {
   const legacyActualMinutes = useMemo(() => {
     const map = {};
     Object.entries(taskStatuses).forEach(([id, st]) => {
-      if (st.status === 'done') map[id] = 90;
+      if (st.actualMinutes !== undefined) {
+        map[id] = st.actualMinutes;
+      }
     });
     return map;
   }, [taskStatuses]);
@@ -438,16 +441,27 @@ export default function App() {
 
             {currentPhase && <PhaseBanner currentPhase={currentPhase} />}
 
-            <WeekStrip
-              weekDates={weekDates}
-              dayStatus={dayStatus}
-              onCycleStatus={cycleStatus}
-            />
+            <div className="week-view-header-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <WeekStrip
+                weekDates={weekDates}
+                dayStatus={dayStatus}
+                onCycleStatus={cycleStatus}
+              />
+              <button
+                className="cadence-btn cadence-btn--primary"
+                onClick={() => setViewMode('setup')}
+                style={{ height: '38px', gap: '6px', whiteSpace: 'nowrap' }}
+              >
+                <Plus size={16} />
+                <span>Parse Plan / Add Task</span>
+              </button>
+            </div>
 
             <TaskList
               tasksByDay={tasksByDay}
               weekDates={weekDates}
               dayStatus={dayStatus}
+              taskStatuses={taskStatuses}
               actualMinutes={legacyActualMinutes}
               mealsLogged={{}}
               onQuickToggle={quickToggle}
@@ -464,7 +478,15 @@ export default function App() {
           </>
         )}
 
-        {/* 3. NOTES VAULT & MONTHLY ARCHIVE VIEW */}
+        {/* 3. GOALS / MONTH VIEW (User Targets & Completion Tracking) */}
+        {viewMode === 'goals' && (
+          <ExcelGoalsSheet
+            goals={goals}
+            onUpdateGoals={setGoals}
+          />
+        )}
+
+        {/* 4. NOTES VAULT & MONTHLY ARCHIVE VIEW */}
         {viewMode === 'notes' && (
           <NotesVault
             categories={categories}

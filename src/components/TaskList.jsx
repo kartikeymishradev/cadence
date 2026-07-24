@@ -8,6 +8,7 @@ export default function TaskList({
   tasksByDay,
   weekDates,
   dayStatus,
+  taskStatuses = {},
   actualMinutes,
   mealsLogged,
   onQuickToggle,
@@ -37,6 +38,7 @@ export default function TaskList({
               <TaskRow
                 key={t.id}
                 task={t}
+                taskStatus={taskStatuses[t.id]}
                 actual={actualMinutes[t.id]}
                 status={status}
                 onQuickToggle={onQuickToggle}

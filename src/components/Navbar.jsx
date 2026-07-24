@@ -1,5 +1,5 @@
 import React from 'react';
-import { CalendarDays, CalendarCheck, Timer, Settings, BookMarked } from 'lucide-react';
+import { CalendarDays, CalendarCheck, Timer, Settings, BookMarked, Target } from 'lucide-react';
 
 export default function Navbar({ activeView, onViewChange }) {
   return (
@@ -21,6 +21,15 @@ export default function Navbar({ activeView, onViewChange }) {
         >
           <CalendarDays size={16} />
           <span>Week</span>
+        </button>
+
+        <button
+          id="nav-tab-goals"
+          className={`cadence-navbar__tab ${activeView === 'goals' ? 'cadence-navbar__tab--active' : ''}`}
+          onClick={() => onViewChange('goals')}
+        >
+          <Target size={16} />
+          <span>Goals</span>
         </button>
 
         <button
