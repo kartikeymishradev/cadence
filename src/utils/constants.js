@@ -22,6 +22,8 @@ export const WEEKDAYS = [
 // ─── Day-status stamp styles ───
 export const STATUS_STYLE = {
   study:   { label: 'STUDY',     bg: SAGE, fg: '#EFF5EE' },
+  done:    { label: 'STUDY',     bg: SAGE, fg: '#EFF5EE' },
+  partial: { label: 'PARTIAL',  bg: GOLD, fg: '#3A2A0A' },
   off:     { label: 'OFF',       bg: ROSE, fg: '#FBEDE9' },
   holiday: { label: 'HOLIDAY +', bg: GOLD, fg: '#3A2A0A' },
 };

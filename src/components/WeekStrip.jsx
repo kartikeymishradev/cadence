@@ -10,7 +10,7 @@ export default function WeekStrip({ weekDates, dayStatus, onCycleStatus }) {
           const dk = dateKey(d);
           const dayName = WEEKDAYS[i];
           const status = dayStatus[dk] || dayStatus[dayName] || dayStatus[`study-${dayName}`] || 'study';
-          const style = STATUS_STYLE[status];
+          const style = STATUS_STYLE[status] || STATUS_STYLE.study;
 
           return (
             <button
