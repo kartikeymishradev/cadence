@@ -46,7 +46,12 @@ export async function cloudLoad(explicitUserId = null) {
   }
   if (!data) return null;
 
-  return Object.fromEntries(data.map((row) => [row.key, row.data]));
+  // Filter out any garbage rows where data is not a valid JSON object
+  const validRows = data.filter(
+    (row) => row.data && typeof row.data === 'object' && !Array.isArray(row.data)
+  );
+
+  return Object.fromEntries(validRows.map((row) => [row.key, row.data]));
 }
 
 /**

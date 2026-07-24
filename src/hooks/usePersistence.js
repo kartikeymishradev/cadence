@@ -103,23 +103,43 @@ export function usePersistence(weekStart, user) {
 
   // ── Apply a saved data object to state ──
   const applyData = useCallback((savedData) => {
-    if (!savedData) return;
+    if (!savedData || typeof savedData !== 'object' || Array.isArray(savedData)) return;
+
+    // Guard: Must contain at least one recognized payload property
+    const hasPayloadKeys =
+      savedData.schedule ||
+      savedData.categories ||
+      savedData.taskStatuses ||
+      savedData.macros ||
+      savedData.dayStatus;
+
+    if (!hasPayloadKeys) return;
+
     const migrated = migrateTaskStatuses(savedData);
 
     if (migrated.theme) setTheme(migrated.theme);
     if (migrated.categories) setCategories(migrated.categories);
-    if (migrated.schedule) setSchedule(migrated.schedule);
+
+    // Only apply schedule if it has task items
+    if (migrated.schedule) {
+      const totalTasks = Object.values(migrated.schedule).reduce(
+        (acc, arr) => acc + (Array.isArray(arr) ? arr.length : 0),
+        0
+      );
+      if (totalTasks > 0) {
+        setSchedule(migrated.schedule);
+      }
+    }
+
     if (migrated.meals) setMeals(migrated.meals);
     if (migrated.dayStatus) setDayStatus(migrated.dayStatus);
-    if (migrated.taskStatuses) setTaskStatuses(migrated.taskStatuses);
+    if (migrated.taskStatuses && Object.keys(migrated.taskStatuses).length > 0) {
+      setTaskStatuses(migrated.taskStatuses);
+    }
     if (migrated.rawText) setRawText(migrated.rawText);
     if (migrated.multiWeekPlan) setMultiWeekPlan(migrated.multiWeekPlan);
     if (migrated.currentWeekIndex) setCurrentWeekIndex(migrated.currentWeekIndex);
     if (migrated.goals) setGoals(migrated.goals);
-    // NOTE: streak is intentionally NOT applied here.
-    // Streak is calculated purely from visit-based localStorage keys
-    // (cadence_last_visit_date, cadence_user_streak) in the effect below.
-    // Applying it from saved data would overwrite the correct calculated value.
     if (migrated.sleepSchedule) setSleepSchedule(migrated.sleepSchedule);
     if (migrated.macros) setMacros(migrated.macros);
     if (migrated.muscleFocus) setMuscleFocus(migrated.muscleFocus);
