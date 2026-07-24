@@ -237,108 +237,85 @@ export default function TodayView({
     setEditingTimeId(null);
   };
 
-  const renderTaskCard = (task, catColor) => {
+  const renderTaskCard = (task, catColor, indexInDay = 0) => {
     const taskState = taskStatuses[task.id] || { status: 'pending', note: '' };
     const curStatus = taskState.status;
+    const isDone = curStatus === 'done';
+    const isSam = indexInDay === 0;
     const noteText = taskState.note || '';
     const isEditingThisNote = editingNoteId === task.id;
-    const isEditingThisTime = editingTimeId === task.id;
 
     return (
       <div
         key={task.id}
-        className={`today-task-card today-task-card--${curStatus}`}
-        style={catColor ? { borderLeftColor: curStatus === 'pending' ? catColor : undefined } : {}}
+        className={`dintaal-task-button ${isDone ? 'dintaal-task-button--done' : ''}`}
+        onClick={() => handleToggleStatus(task.id, curStatus)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          padding: '10px 12px',
+          borderRadius: 10,
+          border: `1px solid ${isSam ? 'var(--indigo, #2B3A67)' : 'var(--hairline)'}`,
+          background: isDone ? 'rgba(95,132,103,0.08)' : 'var(--paper-raised)',
+          cursor: 'pointer',
+          textAlign: 'left',
+          marginBottom: 8,
+          transition: 'all 0.15s ease',
+        }}
       >
-        <div className="today-task-card__time">
-          <Clock size={14} />
-          {isEditingThisTime ? (
-            <div className="time-edit-inline">
-              <input
-                type="time"
-                className="time-edit-input"
-                value={editStart}
-                onChange={(e) => setEditStart(e.target.value)}
-              />
-              <input
-                type="number"
-                className="dur-edit-input"
-                value={editDuration}
-                onChange={(e) => setEditDuration(e.target.value)}
-                placeholder="m"
-              />
-              <button className="time-save-btn" onClick={() => handleSaveTime(task)}>
-                <Check size={12} />
-              </button>
-            </div>
-          ) : (
-            <div className="time-display-clickable" onClick={() => handleStartEditTime(task)} title="Click to edit time & duration">
-              <span>{task.start || 'Flexible'}</span>
-              {task.duration && <span className="today-task-card__dur">({task.duration}m)</span>}
-              <Edit2 size={10} className="time-edit-icon" />
-            </div>
-          )}
-        </div>
+        <span
+          style={{
+            width: 18,
+            height: 18,
+            flexShrink: 0,
+            borderRadius: '50%',
+            border: `2px solid ${isSam ? 'var(--indigo, #2B3A67)' : 'var(--sage)'}`,
+            background: isDone
+              ? isSam
+                ? 'var(--indigo, #2B3A67)'
+                : 'var(--sage)'
+              : 'transparent',
+            transition: 'all 0.15s ease',
+          }}
+        />
 
-        <div className="today-task-card__main">
-          <div className="today-task-card__title-row">
-            <h4 className="today-task-card__title">{task.title}</h4>
-            {noteText && !isEditingThisNote && (
-              <span className="task-note-inline-badge" onClick={() => handleOpenNoteEditor(task.id, noteText)} title="Click to edit note">
-                📝 {noteText}
-              </span>
-            )}
-            <button
-              className={`note-icon-btn ${noteText ? 'note-icon-btn--active' : ''}`}
-              onClick={() => handleOpenNoteEditor(task.id, noteText)}
-              title={noteText ? 'Edit Note' : 'Add Note / Homework'}
-            >
-              <FileText size={13} />
-            </button>
-          </div>
+        <span
+          style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            color: 'var(--slate)',
+            minWidth: 66,
+          }}
+        >
+          {task.start || '09:00'}
+        </span>
 
-          {/* Inline Note Editor */}
-          {isEditingThisNote && (
-            <div className="task-note-editor">
-              <input
-                type="text"
-                className="task-note-input"
-                placeholder="e.g. Complete assignment in NCS 453..."
-                value={noteInput}
-                onChange={(e) => setNoteInput(e.target.value)}
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSaveNote(task.id);
-                  if (e.key === 'Escape') setEditingNoteId(null);
-                }}
-              />
-              <button className="cadence-btn task-note-save-btn" onClick={() => handleSaveNote(task.id)}>
-                Save
-              </button>
-            </div>
-          )}
+        <span
+          style={{
+            flex: 1,
+            fontSize: 13,
+            fontWeight: 500,
+            textDecoration: isDone ? 'line-through' : 'none',
+            color: isDone ? 'var(--slate)' : 'var(--ink)',
+          }}
+        >
+          {task.title}
+        </span>
 
-          {task.kind === 'meal' && (task.calories || task.protein) && (
-            <div className="today-task-card__meta">
-              {task.calories && <span>{task.calories} kcal</span>}
-              {task.protein && <span>{task.protein}g protein</span>}
-            </div>
-          )}
-        </div>
+        {noteText && !isEditingThisNote && (
+          <span className="task-note-inline-badge" onClick={(e) => { e.stopPropagation(); handleOpenNoteEditor(task.id, noteText); }} title="Click to edit note">
+            📝 {noteText}
+          </span>
+        )}
 
-        <div className="today-task-card__actions">
-          <button
-            className={`status-btn status-btn--${curStatus}`}
-            onClick={() => handleToggleStatus(task.id, curStatus)}
-            title="Click to cycle status: Done -> Partial -> Skipped -> Pending"
-          >
-            {curStatus === 'done' && <Check size={16} />}
-            {curStatus === 'partial' && <Minus size={16} />}
-            {curStatus === 'skipped' && <X size={16} />}
-            {curStatus === 'pending' && <div className="status-btn__circle" />}
-            <span className="status-btn__label">{curStatus}</span>
-          </button>
-        </div>
+        <button
+          className={`note-icon-btn ${noteText ? 'note-icon-btn--active' : ''}`}
+          onClick={(e) => { e.stopPropagation(); handleOpenNoteEditor(task.id, noteText); }}
+          title={noteText ? 'Edit Note' : 'Add Note'}
+        >
+          <FileText size={13} />
+        </button>
       </div>
     );
   };
@@ -530,7 +507,7 @@ export default function TodayView({
                 <span className="section-count">{sec.tasks.length} tasks</span>
               </div>
               <div className="today-view__task-list">
-                {sec.tasks.map((task) => renderTaskCard(task, sec.color))}
+                {sec.tasks.map((task, i) => renderTaskCard(task, sec.color, i))}
               </div>
             </div>
           ))}

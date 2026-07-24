@@ -2,74 +2,34 @@ import React from 'react';
 import { CalendarDays, CalendarCheck, Timer, Settings, BookMarked, Target } from 'lucide-react';
 
 export default function Navbar({ activeView, onViewChange }) {
+  const NAV_ITEMS = [
+    { id: 'today', label: 'Today', icon: CalendarCheck },
+    { id: 'week', label: 'Week', icon: CalendarDays },
+    { id: 'goals', label: 'Goals', icon: Target },
+    { id: 'notes', label: 'Notes', icon: BookMarked },
+    { id: 'focus', label: 'Focus', icon: Timer },
+    { id: 'setup', label: 'Setup', icon: Settings },
+  ];
+
   return (
-    <nav className="cadence-navbar">
-      <div className="cadence-navbar__container">
-        <button
-          id="nav-tab-today"
-          className={`cadence-navbar__tab ${activeView === 'today' ? 'cadence-navbar__tab--active' : ''}`}
-          onClick={() => onViewChange('today')}
-          aria-label="Today"
-          title="Today"
-        >
-          <CalendarCheck size={16} />
-          <span>Today</span>
-        </button>
-
-        <button
-          id="nav-tab-week"
-          className={`cadence-navbar__tab ${activeView === 'week' ? 'cadence-navbar__tab--active' : ''}`}
-          onClick={() => onViewChange('week')}
-          aria-label="Week"
-          title="Week"
-        >
-          <CalendarDays size={16} />
-          <span>Week</span>
-        </button>
-
-        <button
-          id="nav-tab-goals"
-          className={`cadence-navbar__tab ${activeView === 'goals' ? 'cadence-navbar__tab--active' : ''}`}
-          onClick={() => onViewChange('goals')}
-          aria-label="Goals"
-          title="Goals"
-        >
-          <Target size={16} />
-          <span>Goals</span>
-        </button>
-
-        <button
-          id="nav-tab-notes"
-          className={`cadence-navbar__tab ${activeView === 'notes' ? 'cadence-navbar__tab--active' : ''}`}
-          onClick={() => onViewChange('notes')}
-          aria-label="Notes"
-          title="Notes"
-        >
-          <BookMarked size={16} />
-          <span>Notes</span>
-        </button>
-
-        <button
-          id="nav-tab-focus"
-          className={`cadence-navbar__tab ${activeView === 'focus' ? 'cadence-navbar__tab--active' : ''}`}
-          onClick={() => onViewChange('focus')}
-          aria-label="Focus"
-          title="Focus"
-        >
-          <Timer size={16} />
-          <span>Focus</span>
-        </button>
-
-        <button
-          id="nav-tab-setup"
-          className={`cadence-navbar__tab ${activeView === 'setup' ? 'cadence-navbar__tab--active' : ''}`}
-          onClick={() => onViewChange('setup')}
-          aria-label="Setup"
-          title="Setup"
-        >
-          <Settings size={16} />
-          <span>Setup</span>
-        </button>
+    <nav className="dintaal-bottom-nav">
+      <div className="dintaal-bottom-nav__container">
+        {NAV_ITEMS.map(({ id, label, icon: Icon }) => {
+          const active = activeView === id;
+          return (
+            <button
+              key={id}
+              id={`nav-tab-${id}`}
+              onClick={() => onViewChange(id)}
+              aria-label={label}
+              title={label}
+              className={`dintaal-bottom-nav__btn ${active ? 'dintaal-bottom-nav__btn--active' : ''}`}
+            >
+              <Icon size={18} />
+              <span className={`dintaal-nav-dot ${active ? 'dintaal-nav-dot--active' : ''}`} />
+            </button>
+          );
+        })}
       </div>
     </nav>
   );

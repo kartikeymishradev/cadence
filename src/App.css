@@ -1,8 +1,103 @@
 @import url('https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:wght@400;700&family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 /* ═══════════════════════════════════════════
-   Design Tokens
+   Dintaal Redesign Styles ("the beat of your day")
    ═══════════════════════════════════════════ */
+:root {
+  --indigo: #2B3A67;
+}
+
+.dintaal-header {
+  padding: 12px 0;
+  margin-bottom: 0.75rem;
+}
+
+.dintaal-header__top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.dintaal-wordmark {
+  font-family: var(--font-voice);
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: -0.5px;
+  color: var(--ink);
+}
+
+.dintaal-wordmark__accent {
+  font-weight: 400;
+  color: var(--indigo, #2B3A67);
+}
+
+.dintaal-header__right-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dintaal-tagline {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--slate);
+}
+
+/* Dintaal Bottom Navigation Dock */
+.dintaal-bottom-nav {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--paper-raised);
+  border-top: 1px solid var(--hairline);
+  padding: 8px 12px;
+  z-index: 99;
+  margin-top: 2rem;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.04);
+}
+
+.dintaal-bottom-nav__container {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.dintaal-bottom-nav__btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--slate);
+  transition: color 0.15s ease;
+}
+
+.dintaal-bottom-nav__btn:hover,
+.dintaal-bottom-nav__btn--active {
+  color: var(--ink);
+}
+
+.dintaal-nav-dot {
+  width: 0;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--indigo, #2B3A67);
+  transition: width 0.15s ease;
+}
+
+.dintaal-nav-dot--active {
+  width: 5px;
+}
 :root, [data-theme="paper"] {
   --ink: #1F3A34;
   --paper: #EDEFEA;

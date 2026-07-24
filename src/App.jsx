@@ -405,7 +405,6 @@ export default function App() {
           onStartTour={() => setIsTourOpen(true)}
           streak={streak}
         />
-        <Navbar activeView={viewMode} onViewChange={setViewMode} />
 
         {/* 1. TODAY VIEW (Landing Screen) */}
         {viewMode === 'today' && (
@@ -547,6 +546,9 @@ export default function App() {
           onClose={handleCloseTour}
           onViewChange={setViewMode}
         />
+
+        {/* Dintaal Bottom Navigation Dock */}
+        <Navbar activeView={viewMode} onViewChange={setViewMode} />
       </div>
     </ErrorBoundary>
   );
