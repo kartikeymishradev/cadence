@@ -4,7 +4,7 @@ import { cloudSave } from '../services/cloudSync';
 import { startOfWeek, dateKey } from '../utils/dateUtils';
 
 export default function InfoFooter({ viewMode }) {
-  const injectDemoData = () => {
+  const injectDemoData = async () => {
     const PREFIX = 'cadence_';
     const currentMonday = startOfWeek(new Date());
 
@@ -39,6 +39,7 @@ export default function InfoFooter({ viewMode }) {
         taskStatuses: dummyTaskStatuses,
         dayStatus: dayStatusObj,
         macros: dummyMacros,
+        streak: 30,
         categories: [
           { id: 'skill', label: 'Skill Prep', icon: 'BookOpen', color: '#5F8467' },
           { id: 'gym', label: 'Gym & Diet', icon: 'Dumbbell', color: '#C9922B' }
@@ -50,9 +51,11 @@ export default function InfoFooter({ viewMode }) {
         localStorage.setItem(`${PREFIX}${dateStr}_${k}`, JSON.stringify(v));
       });
 
-      // Force Cloud Save for this week
-      cloudSave(dateStr, payload);
+      // Force Cloud Save for this week and await completion!
+      await cloudSave(dateStr, payload);
     }
+
+    localStorage.setItem('cadence_user_streak', '30');
 
     alert('✅ 1 Month Dummy Data Injected & Synced! Reloading...');
     window.location.reload();
