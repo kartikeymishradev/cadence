@@ -4,6 +4,25 @@ function storageKey(weekStart, field) {
   return `${PREFIX}${weekStart}_${field}`;
 }
 
+const ALL_FIELDS = [
+  'schedule',
+  'meals',
+  'dayStatus',
+  'actualMinutes',
+  'mealsLogged',
+  'rawText',
+  'theme',
+  'categories',
+  'taskStatuses',
+  'multiWeekPlan',
+  'currentWeekIndex',
+  'goals',
+  'streak',
+  'sleepSchedule',
+  'macros',
+  'muscleFocus',
+];
+
 /**
  * Save all schedule data for a given week to localStorage.
  * @param {string} weekStart – ISO date of Monday (e.g. "2026-07-20")
@@ -12,7 +31,9 @@ function storageKey(weekStart, field) {
 export function saveWeekData(weekStart, data) {
   try {
     for (const [field, value] of Object.entries(data)) {
-      localStorage.setItem(storageKey(weekStart, field), JSON.stringify(value));
+      if (value !== undefined) {
+        localStorage.setItem(storageKey(weekStart, field), JSON.stringify(value));
+      }
     }
   } catch (e) {
     console.warn('Cadence: localStorage save failed', e);
@@ -24,16 +45,16 @@ export function saveWeekData(weekStart, data) {
  * Returns an object with whichever fields were found.
  */
 export function loadWeekData(weekStart) {
-  const fields = [
-    'schedule', 'meals', 'dayStatus',
-    'actualMinutes', 'mealsLogged', 'rawText',
-  ];
   const result = {};
   try {
-    for (const field of fields) {
+    for (const field of ALL_FIELDS) {
       const stored = localStorage.getItem(storageKey(weekStart, field));
-      if (stored !== null) {
-        result[field] = JSON.parse(stored);
+      if (stored !== null && stored !== 'undefined') {
+        try {
+          result[field] = JSON.parse(stored);
+        } catch (err) {
+          // ignore corrupted JSON
+        }
       }
     }
   } catch (e) {
@@ -46,11 +67,7 @@ export function loadWeekData(weekStart) {
  * Remove all saved data for a given week.
  */
 export function clearWeekData(weekStart) {
-  const fields = [
-    'schedule', 'meals', 'dayStatus',
-    'actualMinutes', 'mealsLogged', 'rawText',
-  ];
-  for (const field of fields) {
+  for (const field of ALL_FIELDS) {
     localStorage.removeItem(storageKey(weekStart, field));
   }
 }
