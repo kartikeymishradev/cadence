@@ -1,11 +1,47 @@
 import React from 'react';
-import { LogIn, LogOut, User } from 'lucide-react';
+import { LogIn, LogOut, User, Trash2 } from 'lucide-react';
 import { signInWithGoogle, signOut } from '../services/cloudSync';
 
 export default function AuthBar({ user }) {
+  const handleClearData = () => {
+    const confirmation = window.prompt('Are you sure you want to completely delete ALL your Cadence data (schedule, tasks, etc)? This cannot be undone.\\n\\nType "delete" (without quotes) to confirm:');
+    if (confirmation === 'delete') {
+      window.localStorage.clear();
+      window.location.reload();
+    } else if (confirmation !== null) {
+      alert('Deletion cancelled. You must type exactly "delete".');
+    }
+  };
+
+  const ClearDataBtn = () => (
+    <button
+      onClick={handleClearData}
+      title="Clear all app data"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        background: 'transparent',
+        border: '1px solid var(--cherry)',
+        padding: '4px 10px',
+        borderRadius: 20,
+        fontSize: 12,
+        color: 'var(--cherry)',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+      }}
+      onMouseOver={(e) => { e.currentTarget.style.background = 'var(--cherry)'; e.currentTarget.style.color = 'white'; }}
+      onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--cherry)'; }}
+    >
+      <Trash2 size={12} />
+      Clear Data
+    </button>
+  );
+
   if (!user) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24, gap: 12, alignItems: 'center' }}>
+        <ClearDataBtn />
         <button
           id="auth-signin-btn"
           onClick={signInWithGoogle}
@@ -35,7 +71,8 @@ export default function AuthBar({ user }) {
   const avatar = user.user_metadata?.avatar_url;
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24, gap: 12, alignItems: 'center' }}>
+      <ClearDataBtn />
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -54,22 +91,22 @@ export default function AuthBar({ user }) {
             <img 
               src={avatar} 
               alt={name} 
-              style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--hairline)' }}
+              style={{ width: 30, height: 30, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--paper)', boxShadow: '0 0 0 1px var(--indigo)' }}
             />
           ) : (
             <div style={{
-              width: 26,
-              height: 26,
+              width: 30,
+              height: 30,
               borderRadius: '50%',
-              background: 'var(--paper)',
-              border: '1px solid var(--gold)',
+              background: 'var(--indigo)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--ink)',
+              color: 'var(--paper)',
               fontFamily: 'var(--font-voice)',
               fontSize: 14,
-              fontWeight: '600'
+              fontWeight: '600',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
             }}>
               {initial}
             </div>

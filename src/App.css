@@ -121,11 +121,12 @@
 [data-theme="dark"] {
   --ink: #F0F4F2;
   --paper: #121816;
-  --paper-raised: #1A2320;
+  --paper-raised: #1C2421;
   --gold: #F59E0B;
   --rose: #EF4444;
   --sage: #10B981;
   --slate: #9CA3AF;
+  --indigo: #60A5FA;
   --hairline: rgba(240, 244, 242, 0.12);
 }
 
@@ -137,6 +138,7 @@
   --rose: #E11D48;
   --sage: #0D9488;
   --slate: #64748B;
+  --indigo: #3B82F6;
   --hairline: rgba(15, 23, 42, 0.12);
 }
 
@@ -148,6 +150,7 @@
   --rose: #991B1B;
   --sage: #4D7C0F;
   --slate: #52525B;
+  --indigo: #047857;
   --hairline: rgba(28, 40, 38, 0.12);
 }
 
@@ -159,6 +162,7 @@
   --rose: #BE185D;
   --sage: #059669;
   --slate: #701A75;
+  --indigo: #9D174D;
   --hairline: rgba(41, 27, 37, 0.12);
 }
 
@@ -2090,7 +2094,7 @@ body {
   position: fixed;
   width: 320px;
   background: var(--paper-raised);
-  border: 1px solid var(--gold);
+  border: 1px solid var(--indigo);
   border-radius: var(--radius-lg);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
   padding: 16px;
@@ -2110,8 +2114,9 @@ body {
 .tour-step-badge {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--gold);
-  background: rgba(201, 146, 43, 0.15);
+  color: var(--indigo);
+  background: transparent;
+  border: 1px solid var(--indigo);
   padding: 2px 8px;
   border-radius: var(--radius-pill);
 }
