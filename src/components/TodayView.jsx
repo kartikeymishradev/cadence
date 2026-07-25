@@ -109,7 +109,7 @@ export default function TodayView({
       ...cat,
       tasks,
     };
-  }).filter((section) => section.tasks.length > 0);
+  });
 
   // Today Meals
   const todayMeals = (Array.isArray(meals) ? meals : [])
@@ -605,14 +605,16 @@ export default function TodayView({
 
                 {sec.id === 'college' && (
                   <div className="college-header-actions">
-                    <button
-                      className="college-mark-all-btn"
-                      onClick={handleMarkAllCollegeDone}
-                      title="Mark all college classes completed for today"
-                    >
-                      <CheckCircle2 size={13} />
-                      College Completed
-                    </button>
+                    {sec.tasks.length > 0 && (
+                      <button
+                        className="college-mark-all-btn"
+                        onClick={handleMarkAllCollegeDone}
+                        title="Mark all college classes completed for today"
+                      >
+                        <CheckCircle2 size={13} />
+                        College Completed
+                      </button>
+                    )}
 
                     <button
                       className="college-overview-trigger"
@@ -628,7 +630,13 @@ export default function TodayView({
                 <span className="section-count">{sec.tasks.length} tasks</span>
               </div>
               <div className="today-view__task-list">
-                {sec.tasks.map((task, i) => renderTaskCard(task, sec.color, i))}
+                {sec.tasks.length > 0 ? (
+                  sec.tasks.map((task, i) => renderTaskCard(task, sec.color, i))
+                ) : (
+                  <div className="empty-category-pill">
+                    <span>No {sec.label} items scheduled for {todayName}</span>
+                  </div>
+                )}
               </div>
             </div>
           ))}

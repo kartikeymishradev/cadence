@@ -3620,6 +3620,20 @@ input, select, textarea {
   gap: 10px;
 }
 
+.empty-category-pill {
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--hairline);
+  background: var(--paper-raised);
+  color: var(--slate);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .today-task-card {
   display: flex;
   align-items: center;
