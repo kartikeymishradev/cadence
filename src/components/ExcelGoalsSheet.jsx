@@ -8,11 +8,7 @@ export default function ExcelGoalsSheet({ goals = [], onUpdateGoals }) {
   const [newUnit, setNewUnit] = useState('hrs');
   const [newCategory, setNewCategory] = useState('Skill');
 
-  const safeGoals = Array.isArray(goals) && goals.length > 0 ? goals : [
-    { id: 'g1', name: 'SQL Practice', category: 'Skill', target: 20, unit: 'hrs', pct: 65 },
-    { id: 'g2', name: 'Gym Sessions', category: 'Health', target: 5, unit: '/ wk', pct: 40 },
-    { id: 'g3', name: 'Book Reading', category: 'Personal', target: 3, unit: 'chapters', pct: 100 },
-  ];
+  const safeGoals = goals && goals.length > 0 ? goals : [];
 
   const handleAddGoal = () => {
     if (!newGoalName.trim()) return;

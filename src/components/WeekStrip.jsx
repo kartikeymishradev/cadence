@@ -76,16 +76,9 @@ export default function WeekStrip({ weekDates, dayStatus, onCycleStatus }) {
             >
               <div style={{ fontSize: 11, color: 'var(--slate)' }}>{dayName}</div>
               <div style={{ fontSize: 15, fontWeight: 600, margin: '2px 0 6px' }}>{d.getDate()}</div>
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  display: 'inline-block',
-                  background: statusColor[status] || 'var(--sage)',
-                  border: status === 'off' ? '1px solid var(--hairline)' : 'none',
-                }}
-              />
+              <div style={{ fontSize: 10, color: status === 'holiday' ? 'var(--indigo)' : status === 'off' ? 'var(--slate)' : 'var(--sage)', fontWeight: 'bold' }}>
+                {status === 'holiday' ? 'HOL' : status === 'off' ? 'OFF' : '•'}
+              </div>
             </button>
           );
         })}

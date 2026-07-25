@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Volume2, Target } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, Target, Copy, CheckCircle2 } from 'lucide-react';
 import BeatStrip from './BeatStrip';
 
 const NOISE_OPTIONS = [
@@ -14,6 +14,7 @@ export default function PomodoroTimer() {
   const [running, setRunning] = useState(false);
   const [focusMins, setFocusMins] = useState(25);
   const [breakMins, setBreakMins] = useState(5);
+  const [copied, setCopied] = useState(false);
   
   const cycle = ['study', 'break', 'study', 'break', 'study'];
   const [activeBeat, setActiveBeat] = useState(0);
@@ -108,6 +109,26 @@ export default function PomodoroTimer() {
           onChange={e => setLinkedTask(e.target.value)}
           style={{ border: 'none', background: 'transparent', fontSize: 13, flex: 1, color: 'var(--ink)', outline: 'none' }}
         />
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(linkedTask);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          }}
+          title="Copy task note"
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: copied ? 'var(--sage)' : 'var(--slate)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 4,
+          }}
+        >
+          {copied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
+        </button>
       </div>
 
       {/* Focus Cycle Card */}

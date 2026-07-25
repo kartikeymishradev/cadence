@@ -9,11 +9,7 @@ export default function NotesVault({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCat, setActiveCat] = useState('all');
 
-  const DEMO_NOTES = [
-    { id: 'n1', title: 'React Hooks — useEffect cleanup', cat: 'Skill Prep', color: 'var(--sage)', day: 'Wed' },
-    { id: 'n2', title: 'DBMS — Normalization forms', cat: 'College', color: 'var(--indigo)', day: 'Thu' },
-    { id: 'n3', title: 'Push day — form notes', cat: 'Gym & Diet', color: 'var(--gold)', day: 'Fri' },
-  ];
+  const DEMO_NOTES = [];
 
   // Extract all notes & task items across categories
   const realNotesList = useMemo(() => {
@@ -41,7 +37,7 @@ export default function NotesVault({
     return items;
   }, [categories, schedule, taskStatuses]);
 
-  const allNotes = realNotesList.length > 0 ? realNotesList : DEMO_NOTES;
+  const allNotes = realNotesList;
 
   const cats = [
     { id: 'all', label: 'All Categories' },
