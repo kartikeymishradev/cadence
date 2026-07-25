@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Copy, Check, LayoutGrid } from 'lucide-react';
+import CollegeOverviewModal from './CollegeOverviewModal';
 
 export default function NotesVault({
   categories = [],
@@ -8,6 +9,8 @@ export default function NotesVault({
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCat, setActiveCat] = useState('all');
+  const [copiedAll, setCopiedAll] = useState(false);
+  const [isOverviewOpen, setIsOverviewOpen] = useState(false);
 
   const DEMO_NOTES = [];
 
@@ -52,11 +55,57 @@ export default function NotesVault({
     return matchesCat && matchesSearch;
   });
 
+  const handleCopyAllNotes = () => {
+    if (allNotes.length === 0) return;
+    const compiled = allNotes
+      .map((n) => `📌 [${n.day}] ${n.cat}: ${n.title}`)
+      .join('\n\n');
+
+    navigator.clipboard.writeText(compiled);
+    setCopiedAll(true);
+    setTimeout(() => setCopiedAll(false), 2000);
+  };
+
   return (
     <div style={{ padding: '4px 0 18px' }}>
-      <h2 style={{ fontFamily: 'var(--font-voice)', fontSize: 18, margin: '0 0 12px' }}>
-        Notes & Class Archive
-      </h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+        <h2 style={{ fontFamily: 'var(--font-voice)', fontSize: 18, margin: 0 }}>
+          Notes & Class Archive
+        </h2>
+        
+        <div style={{ display: 'flex', gap: 8 }}>
+          {categories.some(c => c.id === 'college') && (
+            <button
+              onClick={() => setIsOverviewOpen(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 12px', borderRadius: 8,
+                background: 'var(--paper-raised)', border: '1px solid var(--hairline)',
+                fontSize: 11, fontWeight: 600, color: 'var(--slate)',
+                cursor: 'pointer', fontFamily: 'inherit'
+              }}
+            >
+              <LayoutGrid size={12} />
+              College Overview
+            </button>
+          )}
+          <button
+            onClick={handleCopyAllNotes}
+            disabled={allNotes.length === 0}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: 8,
+              background: 'var(--indigo)', border: 'none',
+              fontSize: 11, fontWeight: 600, color: 'var(--paper)',
+              cursor: allNotes.length === 0 ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+              opacity: allNotes.length === 0 ? 0.5 : 1
+            }}
+          >
+            {copiedAll ? <Check size={12} /> : <Copy size={12} />}
+            {copiedAll ? 'Copied!' : 'Export All'}
+          </button>
+        </div>
+      </div>
 
       {/* Search Input */}
       <div
@@ -151,6 +200,13 @@ export default function NotesVault({
           </div>
         ))}
       </div>
+
+      <CollegeOverviewModal
+        isOpen={isOverviewOpen}
+        onClose={() => setIsOverviewOpen(false)}
+        collegeSchedule={schedule.college || []}
+        taskStatuses={taskStatuses}
+      />
     </div>
   );
 }

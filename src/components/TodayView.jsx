@@ -634,7 +634,7 @@ export default function TodayView({
           ))}
 
           {/* Meals & Macro Diet Section */}
-          {todayMeals.length > 0 && (
+          {(todayMeals.length > 0 || categories.some(c => c.id === 'gym' || c.id === 'health')) && (
             <div className="today-view__section">
               <div className="today-view__section-header">
                 <Coffee size={16} className="section-icon" />

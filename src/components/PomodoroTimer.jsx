@@ -16,6 +16,12 @@ export default function PomodoroTimer() {
   const [breakMins, setBreakMins] = useState(5);
   const [copied, setCopied] = useState(false);
   
+  const PRESETS = [
+    { label: '25/5', focus: 25, brk: 5 },
+    { label: '50/10', focus: 50, brk: 10 },
+    { label: '90/15', focus: 90, brk: 15 },
+  ];
+  
   const cycle = ['study', 'break', 'study', 'break', 'study'];
   const [activeBeat, setActiveBeat] = useState(0);
   const [timeLeft, setTimeLeft] = useState(focusMins * 60);
@@ -25,6 +31,25 @@ export default function PomodoroTimer() {
   
   const timerRef = useRef(null);
   const audioRef = useRef(new Audio(ALARM_URL));
+
+  const playTick = () => {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+      gain.gain.setValueAtTime(0.2, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.05);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.05);
+    } catch (e) {
+      console.log('Audio tick failed:', e);
+    }
+  };
 
   // Initialize time when switching beats or changing config while stopped
   useEffect(() => {
@@ -38,6 +63,9 @@ export default function PomodoroTimer() {
     if (running) {
       timerRef.current = setInterval(() => {
         setTimeLeft((prev) => {
+          if (prev <= 11 && prev > 1 && cycle[activeBeat] === 'study') {
+            playTick();
+          }
           if (prev <= 1) {
             clearInterval(timerRef.current);
             setRunning(false);
@@ -76,25 +104,51 @@ export default function PomodoroTimer() {
           Focus Cycle
         </h2>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 11, color: 'var(--slate)', fontFamily: 'var(--font-mono)' }}>FOCUS</span>
-            <input 
-              type="number" 
-              value={focusMins} 
-              onChange={e => setFocusMins(Number(e.target.value))}
-              disabled={running}
-              style={{ width: 36, padding: 2, fontSize: 13, border: '1px solid var(--hairline)', borderRadius: 4, background: 'var(--paper)', textAlign: 'center' }}
-            />
+          <div style={{ display: 'flex', gap: 4 }}>
+            {PRESETS.map((p) => (
+              <button
+                key={p.label}
+                onClick={() => {
+                  setFocusMins(p.focus);
+                  setBreakMins(p.brk);
+                  if (!running) setTimeLeft(p.focus * 60);
+                }}
+                disabled={running}
+                style={{
+                  fontSize: 10,
+                  padding: '2px 6px',
+                  borderRadius: 12,
+                  border: '1px solid var(--hairline)',
+                  background: focusMins === p.focus ? 'var(--slate)' : 'transparent',
+                  color: focusMins === p.focus ? 'var(--paper)' : 'var(--slate)',
+                  cursor: running ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 11, color: 'var(--slate)', fontFamily: 'var(--font-mono)' }}>BREAK</span>
-            <input 
-              type="number" 
-              value={breakMins} 
-              onChange={e => setBreakMins(Number(e.target.value))}
-              disabled={running}
-              style={{ width: 36, padding: 2, fontSize: 13, border: '1px solid var(--hairline)', borderRadius: 4, background: 'var(--paper)', textAlign: 'center' }}
-            />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 11, color: 'var(--slate)', fontFamily: 'var(--font-mono)' }}>F</span>
+              <input 
+                type="number" 
+                value={focusMins} 
+                onChange={e => setFocusMins(Number(e.target.value))}
+                disabled={running}
+                style={{ width: 32, padding: 2, fontSize: 12, border: '1px solid var(--hairline)', borderRadius: 4, background: 'var(--paper)', textAlign: 'center' }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 11, color: 'var(--slate)', fontFamily: 'var(--font-mono)' }}>B</span>
+              <input 
+                type="number" 
+                value={breakMins} 
+                onChange={e => setBreakMins(Number(e.target.value))}
+                disabled={running}
+                style={{ width: 32, padding: 2, fontSize: 12, border: '1px solid var(--hairline)', borderRadius: 4, background: 'var(--paper)', textAlign: 'center' }}
+              />
+            </div>
           </div>
         </div>
       </div>
