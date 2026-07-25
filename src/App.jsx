@@ -113,14 +113,20 @@ export default function App() {
   }, [setTaskStatuses, setStreak]);
 
   // Update task note/assignment handler
-  const handleUpdateTaskNote = useCallback((id, note) => {
-    setTaskStatuses((prev) => ({
-      ...prev,
-      [id]: {
+  const handleUpdateTaskNote = useCallback((id, note, deadline = undefined) => {
+    setTaskStatuses((prev) => {
+      const updated = {
         ...(prev[id] || {}),
         note,
-      },
-    }));
+      };
+      if (deadline !== undefined) {
+        updated.deadline = deadline;
+      }
+      return {
+        ...prev,
+        [id]: updated,
+      };
+    });
   }, [setTaskStatuses]);
 
   // Inline edit handler for Start Time & Duration

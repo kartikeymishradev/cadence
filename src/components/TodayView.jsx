@@ -28,6 +28,7 @@ export default function TodayView({
   const [now, setNow] = useState(new Date());
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [noteInput, setNoteInput] = useState('');
+  const [deadlineInput, setDeadlineInput] = useState('');
   const [editingTimeId, setEditingTimeId] = useState(null);
   const [editStart, setEditStart] = useState('10:00');
   const [editDuration, setEditDuration] = useState('60');
@@ -179,6 +180,73 @@ export default function TodayView({
   const isLateNight = (now.getHours() >= 23 || now.getHours() < 5) && !dismissLateNightPopup;
   const isFreeTime = !activeTask && totalTasks > 0 && !dismissFreeTimePopup && !isLateNight;
 
+  // ── Calculate Escalating Deadlines ──
+  const upcomingDeadlines = Object.keys(taskStatuses)
+    .filter(id => taskStatuses[id]?.deadline && taskStatuses[id]?.status !== 'done')
+    .map(id => ({
+      id,
+      deadline: new Date(taskStatuses[id].deadline),
+      note: taskStatuses[id].note
+    }))
+    .filter(t => t.deadline > now)
+    .sort((a, b) => a.deadline - b.deadline);
+
+  const closestDeadline = upcomingDeadlines[0];
+  let deadlineNudge = null;
+  
+  if (closestDeadline) {
+    const msLeft = closestDeadline.deadline - now;
+    const hoursLeft = msLeft / (1000 * 60 * 60);
+
+    let freeMinsToday = 0;
+    const sleepStartStrLocal = sleepSchedule?.sleepStart || '23:30';
+    const [ssH, ssM] = sleepStartStrLocal.split(':').map(Number);
+    let endOfDayMins = ssH * 60 + ssM;
+    if (endOfDayMins < 12 * 60) endOfDayMins += 24 * 60; 
+    
+    let currentMarker = Math.max(nowMinutes, 0); 
+    
+    for (const t of allToday) {
+      if (!t.start) continue;
+      const [h, m] = t.start.split(':').map(Number);
+      const startMins = h * 60 + m;
+      const duration = Number(t.duration) || 30;
+      const endMins = startMins + duration;
+      
+      if (startMins > currentMarker && startMins < endOfDayMins) {
+        freeMinsToday += (Math.min(startMins, endOfDayMins) - currentMarker);
+      }
+      if (endMins > currentMarker) {
+        currentMarker = endMins;
+      }
+    }
+    
+    if (currentMarker < endOfDayMins) {
+      freeMinsToday += (endOfDayMins - currentMarker);
+    }
+    
+    const freeHoursLeft = (freeMinsToday / 60).toFixed(1);
+
+    let level = 'gentle';
+    let style = { background: 'var(--paper-raised)', border: '1px dashed var(--indigo)', color: 'var(--ink)' };
+    let title = 'Assignment Upcoming';
+    
+    if (hoursLeft <= 4) {
+      level = 'panic';
+      style = { background: 'var(--cherry)', border: '2px solid #ff4d4f', color: 'white', boxShadow: '0 0 15px rgba(255,77,79,0.4)' };
+      title = '🚨 BHAYANAK PANIC MODE';
+    } else if (hoursLeft <= 12) {
+      level = 'urgent';
+      style = { background: 'var(--gold)', border: '2px solid #d97706', color: 'var(--ink)' };
+      title = '⚠️ Urgent Deadline';
+    }
+    
+    deadlineNudge = {
+      level, style, title, hoursLeft: hoursLeft.toFixed(1), freeHoursLeft,
+      note: closestDeadline.note
+    };
+  }
+
   // Calculate metrics
   const completedTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'done').length;
   const partialTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'partial').length;
@@ -214,13 +282,14 @@ export default function TodayView({
     setIsEditingSleep(false);
   };
 
-  const handleOpenNoteEditor = (id, existingNote) => {
+  const handleOpenNoteEditor = (id, existingNote, existingDeadline) => {
     setEditingNoteId(id);
     setNoteInput(existingNote || '');
+    setDeadlineInput(existingDeadline || '');
   };
 
   const handleSaveNote = (id) => {
-    onUpdateTaskNote(id, noteInput.trim());
+    onUpdateTaskNote(id, noteInput.trim(), deadlineInput.trim() || undefined);
     setEditingNoteId(null);
   };
 
@@ -243,6 +312,7 @@ export default function TodayView({
     const isDone = curStatus === 'done';
     const isSam = indexInDay === 0;
     const noteText = taskState.note || '';
+    const deadline = taskState.deadline || '';
     const isEditingThisNote = editingNoteId === task.id;
 
     return (
@@ -303,19 +373,50 @@ export default function TodayView({
           {task.title}
         </span>
 
-        {noteText && !isEditingThisNote && (
-          <span className="task-note-inline-badge" onClick={(e) => { e.stopPropagation(); handleOpenNoteEditor(task.id, noteText); }} title="Click to edit note">
-            📝 {noteText}
-          </span>
-        )}
+        {isEditingThisNote ? (
+          <div className="inline-note-editor" onClick={(e) => e.stopPropagation()} style={{ width: '100%', padding: '8px', display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px', background: 'var(--paper)', borderRadius: '8px', border: '1px dashed var(--sage)' }}>
+            <input
+              type="text"
+              value={noteInput}
+              onChange={(e) => setNoteInput(e.target.value)}
+              placeholder="Add note or assignment details..."
+              style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid var(--hairline)', background: 'var(--paper)', fontSize: '13px' }}
+              autoFocus
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--slate)', fontFamily: 'var(--font-mono)' }}>DEADLINE:</span>
+                <input 
+                  type="datetime-local" 
+                  value={deadlineInput}
+                  onChange={(e) => setDeadlineInput(e.target.value)}
+                  style={{ padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--hairline)', fontSize: '12px', background: 'var(--paper)' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={() => setEditingNoteId(null)} style={{ padding: '6px 12px', background: 'transparent', color: 'var(--slate)', border: 'none', cursor: 'pointer', fontSize: '12px' }}>Cancel</button>
+                <button onClick={() => handleSaveNote(task.id)} style={{ padding: '6px 12px', background: 'var(--indigo)', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>Save</button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {noteText && (
+              <span className="task-note-inline-badge" onClick={(e) => { e.stopPropagation(); handleOpenNoteEditor(task.id, noteText, deadline); }} title="Click to edit note">
+                📝 {noteText}
+                {deadline && <span style={{ color: 'var(--cherry)', marginLeft: '6px' }}>🚨 Due: {new Date(deadline).toLocaleString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}</span>}
+              </span>
+            )}
 
-        <button
-          className={`note-icon-btn ${noteText ? 'note-icon-btn--active' : ''}`}
-          onClick={(e) => { e.stopPropagation(); handleOpenNoteEditor(task.id, noteText); }}
-          title={noteText ? 'Edit Note' : 'Add Note'}
-        >
-          <FileText size={13} />
-        </button>
+            <button
+              className={`note-icon-btn ${noteText ? 'note-icon-btn--active' : ''}`}
+              onClick={(e) => { e.stopPropagation(); handleOpenNoteEditor(task.id, noteText, deadline); }}
+              title={noteText ? 'Edit Note/Deadline' : 'Add Note/Deadline'}
+            >
+              <FileText size={13} />
+            </button>
+          </>
+        )}
       </div>
     );
   };
@@ -428,6 +529,26 @@ export default function TodayView({
             <strong>{activeTask.title}</strong>
           </div>
           <span className="countdown-timer">{activeTask.remainingMins}m remaining</span>
+        </div>
+      )}
+
+      {/* 🚨 ESCALATING DEADLINE NUDGE 🚨 */}
+      {deadlineNudge && (
+        <div className="deadline-nudge-banner" style={{
+          ...deadlineNudge.style,
+          borderRadius: 14, padding: '16px', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: 8
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <strong style={{ fontSize: 16 }}>{deadlineNudge.title}</strong>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 'bold' }}>{deadlineNudge.hoursLeft}h left</span>
+          </div>
+          <p style={{ fontSize: 13, margin: 0, opacity: 0.9 }}>
+            Assignment: <strong>{deadlineNudge.note}</strong>
+          </p>
+          <div style={{ background: 'rgba(255,255,255,0.2)', padding: '8px 12px', borderRadius: 8, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+            <Hourglass size={14} />
+            <span>You only have <strong>{deadlineNudge.freeHoursLeft} hrs of free slots</strong> remaining today before sleep. {deadlineNudge.level === 'panic' ? 'DO IT NOW!' : 'Plan accordingly!'}</span>
+          </div>
         </div>
       )}
 
