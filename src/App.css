@@ -2205,14 +2205,15 @@ input, select, textarea {
 }
 
 .tour-nav-arrow-btn--next {
-  background: var(--gold);
-  color: #3A2A0A;
-  border-color: var(--gold);
+  background: var(--indigo);
+  color: #FFFFFF;
+  border-color: var(--indigo);
 }
 
 .tour-nav-arrow-btn--next:hover {
-  background: var(--ink) !important;
-  color: var(--paper) !important;
+  background: var(--indigo) !important;
+  filter: brightness(1.15);
+  color: #FFFFFF !important;
 }
 
 .tour-dots {
@@ -2224,13 +2225,15 @@ input, select, textarea {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--hairline);
+  background: var(--slate);
+  opacity: 0.35;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .tour-dot--active {
-  background: var(--gold);
+  background: var(--indigo);
+  opacity: 1;
   width: 16px;
   border-radius: var(--radius-pill);
 }
