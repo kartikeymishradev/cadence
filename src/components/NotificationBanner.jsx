@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, BellCheck, X } from 'lucide-react';
 
 export default function NotificationBanner({
@@ -9,6 +9,15 @@ export default function NotificationBanner({
   const [dismissed, setDismissed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [subscribedLocal, setSubscribedLocal] = useState(isSubscribed);
+
+  useEffect(() => {
+    if (subscribedLocal && !dismissed) {
+      const timer = setTimeout(() => {
+        setDismissed(true);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [subscribedLocal, dismissed]);
 
   if (!isSupported || dismissed) return null;
 
@@ -33,27 +42,21 @@ export default function NotificationBanner({
         style={{
           background: 'var(--paper-raised)',
           border: '1px solid var(--sage)',
-          borderRadius: 14,
-          padding: '14px 16px',
-          margin: '16px 0',
+          borderRadius: 30,
+          padding: '8px 14px',
+          margin: '16px auto',
+          maxWidth: 300,
           display: 'flex',
           alignItems: 'center',
-          gap: 12,
-          color: 'var(--ink)',
+          justifyContent: 'center',
+          gap: 8,
+          color: 'var(--sage)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+          animation: 'stampIn 0.3s ease-out'
         }}
       >
-        <BellCheck size={20} color="var(--sage)" />
-        <div style={{ flex: 1 }}>
-          <strong style={{ color: 'var(--ink)', fontSize: 14, display: 'block' }}>✓ Reminders Active!</strong>
-          <p style={{ color: 'var(--slate)', fontSize: 12, margin: 0 }}>Push notifications 5 min before each session.</p>
-        </div>
-        <button
-          onClick={() => setDismissed(true)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}
-          title="Dismiss"
-        >
-          <X size={16} />
-        </button>
+        <BellCheck size={16} />
+        <span style={{ fontSize: 13, fontWeight: 500 }}>Reminders Active!</span>
       </div>
     );
   }
@@ -65,22 +68,37 @@ export default function NotificationBanner({
         background: 'var(--paper-raised)',
         border: '1px solid var(--hairline)',
         borderRadius: 14,
-        padding: '16px',
+        padding: '12px 16px',
         margin: '16px 0',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
-        textAlign: 'center',
-        gap: 10,
+        justifyContent: 'space-between',
+        gap: 12,
         color: 'var(--ink)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
       }}
     >
-      <Bell size={24} color="var(--gold)" />
-      <div>
-        <strong style={{ color: 'var(--ink)', fontSize: 15, display: 'block', marginBottom: 4 }}>Stay on track</strong>
-        <p style={{ color: 'var(--slate)', fontSize: 13, margin: 0 }}>Get reminded 5 min before each session starts.</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <Bell size={18} color="var(--gold)" />
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <strong style={{ color: 'var(--ink)', fontSize: 13, display: 'block' }}>Stay on track</strong>
+          <span style={{ color: 'var(--slate)', fontSize: 11 }}>Get notified 5m before sessions.</span>
+        </div>
       </div>
-      <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <button
+          onClick={() => setDismissed(true)}
+          style={{
+            background: 'none',
+            color: 'var(--slate)',
+            border: 'none',
+            padding: '4px',
+            fontSize: 12,
+            cursor: 'pointer',
+          }}
+        >
+          Skip
+        </button>
         <button
           onClick={handleEnableNotifications}
           disabled={loading}
@@ -88,28 +106,14 @@ export default function NotificationBanner({
             background: 'var(--indigo)',
             color: 'var(--paper)',
             border: 'none',
-            padding: '8px 18px',
+            padding: '6px 12px',
             borderRadius: 8,
             fontWeight: 600,
-            fontSize: 13,
+            fontSize: 12,
             cursor: loading ? 'wait' : 'pointer',
           }}
         >
-          {loading ? 'Enabling...' : 'Enable Reminders'}
-        </button>
-        <button
-          onClick={() => setDismissed(true)}
-          style={{
-            background: 'transparent',
-            border: '1px solid var(--hairline)',
-            color: 'var(--slate)',
-            padding: '8px 14px',
-            borderRadius: 8,
-            fontSize: 13,
-            cursor: 'pointer',
-          }}
-        >
-          Dismiss
+          {loading ? '...' : 'Enable'}
         </button>
       </div>
     </div>

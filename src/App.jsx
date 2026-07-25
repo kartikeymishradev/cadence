@@ -444,7 +444,7 @@ export default function App() {
 
             {currentPhase && <PhaseBanner currentPhase={currentPhase} />}
 
-            <div className="week-view-header-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div className="week-view-header-actions" style={{ marginBottom: '1.5rem' }}>
               <WeekStrip
                 weekDates={weekDates}
                 dayStatus={dayStatus}
@@ -453,7 +453,7 @@ export default function App() {
               <button
                 className="cadence-btn cadence-btn--primary"
                 onClick={() => setViewMode('setup')}
-                style={{ height: '38px', gap: '6px', whiteSpace: 'nowrap' }}
+                style={{ height: '44px', gap: '8px', width: '100%', marginTop: '4px' }}
               >
                 <Plus size={16} />
                 <span>Parse Plan / Add Task</span>

@@ -122,7 +122,7 @@ export default function GuidedTour({ isOpen, onClose, onViewChange }) {
       <div
         className="tour-tooltip-card"
         style={{
-          top: targetRect ? `${Math.min(window.innerHeight - 200, targetRect.rawBottom + 16)}px` : '30%',
+          top: targetRect ? `${Math.min(window.innerHeight - 260, targetRect.rawBottom + 16)}px` : '30%',
           left: targetRect ? `${Math.max(16, Math.min(window.innerWidth - 340, targetRect.rawLeft - 20))}px` : '50%',
         }}
       >

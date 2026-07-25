@@ -5,39 +5,101 @@ import { signInWithGoogle, signOut } from '../services/cloudSync';
 export default function AuthBar({ user }) {
   if (!user) {
     return (
-      <div className="auth-bar">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
         <button
           id="auth-signin-btn"
-          className="cadence-btn auth-bar__login"
           onClick={signInWithGoogle}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            background: 'var(--paper-raised)',
+            border: '1px solid var(--hairline)',
+            padding: '6px 14px',
+            borderRadius: 20,
+            fontSize: 13,
+            color: 'var(--slate)',
+            cursor: 'pointer',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+          }}
         >
           <LogIn size={14} />
-          Sign in with Google
+          Sign in
         </button>
       </div>
     );
   }
 
   const name = user.user_metadata?.full_name || user.email || 'User';
+  const initial = name.charAt(0).toUpperCase();
   const avatar = user.user_metadata?.avatar_url;
 
   return (
-    <div className="auth-bar auth-bar--signed-in">
-      <div className="auth-bar__user">
-        {avatar
-          ? <img src={avatar} alt={name} className="auth-bar__avatar" />
-          : <User size={14} />
-        }
-        <span className="auth-bar__name">{name}</span>
+    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        background: 'var(--paper-raised)',
+        border: '1px solid var(--hairline)',
+        padding: '4px 6px 4px 12px',
+        borderRadius: 24,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 13, color: 'var(--slate)', fontWeight: 500 }}>
+            {name}
+          </span>
+          {avatar ? (
+            <img 
+              src={avatar} 
+              alt={name} 
+              style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--hairline)' }}
+            />
+          ) : (
+            <div style={{
+              width: 26,
+              height: 26,
+              borderRadius: '50%',
+              background: 'var(--paper)',
+              border: '1px solid var(--gold)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--ink)',
+              fontFamily: 'var(--font-voice)',
+              fontSize: 14,
+              fontWeight: '600'
+            }}>
+              {initial}
+            </div>
+          )}
+        </div>
+        
+        <div style={{ width: 1, height: 16, background: 'var(--hairline)', margin: '0 4px' }} />
+
+        <button
+          id="auth-signout-btn"
+          onClick={signOut}
+          title="Sign out"
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'var(--slate)',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 4,
+            borderRadius: '50%',
+            transition: 'all 0.2s ease',
+          }}
+          onMouseOver={(e) => { e.currentTarget.style.color = 'var(--rose)'; e.currentTarget.style.background = 'var(--paper)'; }}
+          onMouseOut={(e) => { e.currentTarget.style.color = 'var(--slate)'; e.currentTarget.style.background = 'transparent'; }}
+        >
+          <LogOut size={14} />
+        </button>
       </div>
-      <button
-        id="auth-signout-btn"
-        className="auth-bar__logout"
-        onClick={signOut}
-        title="Sign out"
-      >
-        <LogOut size={14} />
-      </button>
     </div>
   );
 }
