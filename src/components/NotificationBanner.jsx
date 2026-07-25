@@ -28,15 +28,28 @@ export default function NotificationBanner({
 
   if (subscribedLocal) {
     return (
-      <div className="notif-banner notif-banner--active">
-        <BellCheck size={18} className="notif-banner__icon" />
-        <div className="notif-banner__content">
-          <strong>✓ Reminders Active!</strong>
-          <p>You will get push notifications 5 min before each session.</p>
+      <div
+        className="notif-banner notif-banner--active"
+        style={{
+          background: 'var(--paper-raised)',
+          border: '1px solid var(--sage)',
+          borderRadius: 14,
+          padding: '14px 16px',
+          margin: '16px 0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          color: 'var(--ink)',
+        }}
+      >
+        <BellCheck size={20} color="var(--sage)" />
+        <div style={{ flex: 1 }}>
+          <strong style={{ color: 'var(--ink)', fontSize: 14, display: 'block' }}>✓ Reminders Active!</strong>
+          <p style={{ color: 'var(--slate)', fontSize: 12, margin: 0 }}>Push notifications 5 min before each session.</p>
         </div>
         <button
-          className="notif-banner__dismiss"
           onClick={() => setDismissed(true)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}
           title="Dismiss"
         >
           <X size={16} />
@@ -46,26 +59,57 @@ export default function NotificationBanner({
   }
 
   return (
-    <div className="notif-banner">
-      <Bell size={18} className="notif-banner__icon" />
-      <div className="notif-banner__content">
-        <strong>Stay on track</strong>
-        <p>Get reminded 5 min before each session starts.</p>
+    <div
+      className="notif-banner"
+      style={{
+        background: 'var(--paper-raised)',
+        border: '1px solid var(--hairline)',
+        borderRadius: 14,
+        padding: '16px',
+        margin: '16px 0',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        gap: 10,
+        color: 'var(--ink)',
+      }}
+    >
+      <Bell size={24} color="var(--gold)" />
+      <div>
+        <strong style={{ color: 'var(--ink)', fontSize: 15, display: 'block', marginBottom: 4 }}>Stay on track</strong>
+        <p style={{ color: 'var(--slate)', fontSize: 13, margin: 0 }}>Get reminded 5 min before each session starts.</p>
       </div>
-      <div className="notif-banner__actions">
+      <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
         <button
-          className="cadence-btn cadence-btn--primary notif-enable-btn"
           onClick={handleEnableNotifications}
           disabled={loading}
+          style={{
+            background: 'var(--indigo)',
+            color: 'var(--paper)',
+            border: 'none',
+            padding: '8px 18px',
+            borderRadius: 8,
+            fontWeight: 600,
+            fontSize: 13,
+            cursor: loading ? 'wait' : 'pointer',
+          }}
         >
           {loading ? 'Enabling...' : 'Enable Reminders'}
         </button>
         <button
-          className="notif-banner__dismiss"
           onClick={() => setDismissed(true)}
-          title="Dismiss"
+          style={{
+            background: 'transparent',
+            border: '1px solid var(--hairline)',
+            color: 'var(--slate)',
+            padding: '8px 14px',
+            borderRadius: 8,
+            fontSize: 13,
+            cursor: 'pointer',
+          }}
         >
-          <X size={16} />
+          Dismiss
         </button>
       </div>
     </div>
