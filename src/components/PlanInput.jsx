@@ -1,260 +1,114 @@
-import React, { useState } from 'react';
-import { Sparkles, AlertCircle, Image, Settings, Plus, Wrench, Bot, Copy, Check, Info, CheckCircle2 } from 'lucide-react';
-import TimetablePromptModal from './TimetablePromptModal';
-import CategorySettingsModal from './CategorySettingsModal';
-
-const PROMPT_TEMPLATE = `Extract only the weekly timetable from this text or image. Format each item as a clean list with:
-Day: [Monday..Sunday]
-Start Time: [HH:MM 24-hr]
-Duration: [minutes]
-Title: [Task name]`;
+import React from 'react';
 
 export default function PlanInput({
   tab,
   setTab,
-  categories,
-  onSaveCategories,
+  categories = [],
   rawText,
   onRawTextChange,
   onParse,
-  onAddTaskManual,
   loading,
-  error,
 }) {
-  const [setupMode, setSetupMode] = useState('ai'); // 'ai' | 'manual'
-  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const cats = (Array.isArray(categories) && categories.length > 0) ? categories : [
+    { id: 'skill', label: 'Skill Prep', dot: 'var(--sage)' },
+    { id: 'college', label: 'College', dot: 'var(--indigo)' },
+    { id: 'gym', label: 'Gym & Diet', dot: 'var(--gold)' },
+  ];
 
-  const [parseStatus, setParseStatus] = useState('idle'); // 'idle' | 'parsing' | 'success' | 'error'
-
-  // Manual task form state
-  const [manualDay, setManualDay] = useState('Monday');
-  const [manualTitle, setManualTitle] = useState('');
-  const [manualStart, setManualStart] = useState('10:00');
-  const [manualDur, setManualDur] = useState('60');
-
-  const activeCategory = categories.find((c) => c.id === tab) || categories[0] || { label: 'Plan' };
-
-  const handleCopyPrompt = () => {
-    navigator.clipboard.writeText(PROMPT_TEMPLATE);
-    setCopiedPrompt(true);
-    setTimeout(() => setCopiedPrompt(false), 2000);
-  };
-
-  const handleSafeParse = async () => {
-    if (loading || parseStatus === 'parsing' || !rawText.trim() || rawText.trim().length < 3) return;
-
-    setParseStatus('parsing');
-    try {
-      if (onParse) {
-        await onParse();
-      }
-      setParseStatus('success');
-      // Hide success toast after 5 seconds
-      setTimeout(() => {
-        setParseStatus('idle');
-      }, 5000);
-    } catch (err) {
-      setParseStatus('error');
-    }
-  };
-
-  const handleCreateTask = () => {
-    if (!manualTitle.trim()) return;
-    if (onAddTaskManual) {
-      onAddTaskManual(tab, {
-        day: manualDay,
-        title: manualTitle.trim(),
-        start: manualStart,
-        duration: Number(manualDur) || 60,
-      });
-    }
-    setManualTitle('');
-    setParseStatus('success');
-    setTimeout(() => setParseStatus('idle'), 4000);
-  };
-
-  const isBtnDisabled = loading || parseStatus === 'parsing' || !rawText.trim();
+  const activeCat = tab || cats[0]?.id || 'skill';
 
   return (
-    <section className="cadence-card plan-input">
-      {/* Category Tabs & Settings */}
-      <div className="plan-input__header">
-        <div className="plan-input__tabs">
-          {categories.map((cat) => (
+    <div style={{ padding: '4px 0 18px' }}>
+      <h2 style={{ fontFamily: 'var(--font-voice)', fontSize: 18, margin: '0 0 12px' }}>
+        Setup
+      </h2>
+
+      {/* Category Pills */}
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+        {cats.map((c) => {
+          const active = activeCat === c.id;
+          return (
             <button
-              key={cat.id}
-              id={`tab-btn-${cat.id}`}
-              className={`plan-input__tab ${tab === cat.id ? 'plan-input__tab--active' : ''}`}
-              onClick={() => { setTab(cat.id); setParseStatus('idle'); }}
+              key={c.id}
+              onClick={() => setTab && setTab(c.id)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 12px',
+                borderRadius: 999,
+                fontSize: 12,
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                border: `1px solid ${active ? 'var(--ink)' : 'var(--hairline)'}`,
+                background: active ? 'var(--ink)' : 'transparent',
+                color: active ? 'var(--paper)' : 'var(--ink)',
+              }}
             >
-              <span className="tab-color-indicator" style={{ background: cat.color }} />
-              {cat.label}
+              <span style={{ width: 7, height: 7, borderRadius: '50%', background: c.color || c.dot || 'var(--sage)' }} />
+              {c.label || c.name || 'Category'}
             </button>
-          ))}
-
-          <button
-            className="plan-input__tab-manage"
-            onClick={() => setIsSettingsModalOpen(true)}
-            title="Manage Categories"
-          >
-            <Settings size={14} />
-          </button>
-        </div>
-
-        <button
-          className="timetable-prompt-trigger"
-          onClick={() => setIsPromptModalOpen(true)}
-          title="Get prompt for timetable image"
-        >
-          <Image size={14} />
-          Timetable Image Prompt
-        </button>
+          );
+        })}
       </div>
 
-      {/* Mode Switcher: AI Mode vs Manual Mode */}
-      <div className="setup-mode-switcher">
-        <button
-          className={`setup-mode-btn ${setupMode === 'ai' ? 'setup-mode-btn--active' : ''}`}
-          onClick={() => setSetupMode('ai')}
-        >
-          <Bot size={15} />
-          Option A: AI Parse Mode (Fast)
-        </button>
+      {/* Paste Card */}
+      <div
+        style={{
+          background: 'var(--paper-raised)',
+          border: '1px solid var(--hairline)',
+          borderRadius: 14,
+          padding: '14px 16px',
+          marginBottom: 12,
+        }}
+      >
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.5px', color: 'var(--slate)' }}>
+          PASTE YOUR PLAN
+        </span>
 
-        <button
-          className={`setup-mode-btn ${setupMode === 'manual' ? 'setup-mode-btn--active' : ''}`}
-          onClick={() => setSetupMode('manual')}
-        >
-          <Wrench size={15} />
-          Option B: Build Yourself (Manual)
-        </button>
+        <textarea
+          placeholder="Monday 10am DSA Practice 60m&#10;Tuesday 7pm React Revision 90m..."
+          value={rawText || ''}
+          onChange={(e) => onRawTextChange && onRawTextChange(e.target.value)}
+          style={{
+            width: '100%',
+            marginTop: 8,
+            minHeight: 110,
+            border: '1px solid var(--hairline)',
+            borderRadius: 8,
+            padding: 10,
+            fontSize: 12,
+            fontFamily: 'var(--font-mono)',
+            background: 'var(--paper)',
+            color: 'var(--ink)',
+            resize: 'none',
+            outline: 'none',
+            boxSizing: 'border-box',
+          }}
+        />
       </div>
 
-      {/* OPTION A: AI PARSE MODE */}
-      {setupMode === 'ai' && (
-        <div className="setup-ai-container">
-          <div className="prompt-template-banner">
-            <div className="prompt-template-info">
-              <span><strong>LLM Prompt Template:</strong> Copy this prompt to ChatGPT/Gemini along with your timetable:</span>
-            </div>
-            <button className="cadence-btn prompt-copy-chip" onClick={handleCopyPrompt}>
-              {copiedPrompt ? <Check size={13} /> : <Copy size={13} />}
-              <span>{copiedPrompt ? 'Copied!' : 'Copy Prompt'}</span>
-            </button>
-          </div>
-
-          <textarea
-            id="plan-textarea"
-            className="plan-input__textarea"
-            rows={4}
-            placeholder={`Paste your ${activeCategory.label} timetable or list tasks, e.g.\nMonday 10am Task 1 60m\nTuesday 7pm Task 2 90m...`}
-            value={rawText}
-            onChange={(e) => { onRawTextChange(e.target.value); if (parseStatus === 'success') setParseStatus('idle'); }}
-          />
-
-          {/* 1. PARSING IN PROGRESS TOAST */}
-          {(parseStatus === 'parsing' || loading) && (
-            <div className="parse-confirmation-toast parse-confirmation-toast--flashing">
-              <Sparkles size={16} className="spin" />
-              <span><strong>✨ AI Parsing Initiated!</strong> Formatting your {activeCategory.label} schedule (2-3 sec)...</span>
-            </div>
-          )}
-
-          {/* 2. SUCCESS CONFIRMATION TOAST */}
-          {parseStatus === 'success' && !loading && (
-            <div className="parse-confirmation-toast parse-confirmation-toast--success">
-              <CheckCircle2 size={18} />
-              <span><strong>🎉 Schedule Successfully Created!</strong> Check your {activeCategory.label} tasks in the Today or Week view.</span>
-            </div>
-          )}
-
-          <div className="plan-input__actions">
-            <button
-              id="btn-parse-ai"
-              className="cadence-btn cadence-btn--primary"
-              onClick={handleSafeParse}
-              disabled={isBtnDisabled}
-            >
-              <Sparkles size={16} className={isBtnDisabled ? 'spin' : ''} />
-              {isBtnDisabled ? `Parsing ${activeCategory.label} with AI...` : `Parse ${activeCategory.label} with AI`}
-            </button>
-
-            {error && (
-              <div className="plan-input__error">
-                <AlertCircle size={14} />
-                <span>{error}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* OPTION B: MANUAL BUILD MODE */}
-      {setupMode === 'manual' && (
-        <div className="setup-manual-container">
-          <h4>Add Task Directly to {activeCategory.label}</h4>
-          <div className="manual-task-form">
-            <select
-              className="manual-input"
-              value={manualDay}
-              onChange={(e) => setManualDay(e.target.value)}
-            >
-              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((d) => (
-                <option key={d} value={d}>{d}</option>
-              ))}
-            </select>
-
-            <input
-              type="text"
-              className="manual-input manual-input--title"
-              placeholder="Task / Class Title (e.g. NCS 401)"
-              value={manualTitle}
-              onChange={(e) => setManualTitle(e.target.value)}
-            />
-
-            <input
-              type="time"
-              className="manual-input"
-              value={manualStart}
-              onChange={(e) => setManualStart(e.target.value)}
-            />
-
-            <div className="manual-dur-group">
-              <input
-                type="number"
-                className="manual-input manual-input--dur"
-                placeholder="60"
-                value={manualDur}
-                onChange={(e) => setManualDur(e.target.value)}
-              />
-              <span className="dur-unit">mins</span>
-            </div>
-
-            <button
-              className="cadence-btn cadence-btn--primary manual-add-btn"
-              onClick={handleCreateTask}
-              disabled={!manualTitle.trim()}
-            >
-              <Plus size={15} />
-              Add Task
-            </button>
-          </div>
-        </div>
-      )}
-
-      <TimetablePromptModal
-        isOpen={isPromptModalOpen}
-        onClose={() => setIsPromptModalOpen(false)}
-      />
-
-      <CategorySettingsModal
-        isOpen={isSettingsModalOpen}
-        onClose={() => setIsSettingsModalOpen(false)}
-        categories={categories}
-        onSaveCategories={onSaveCategories}
-      />
-    </section>
+      {/* Primary Action Button */}
+      <button
+        onClick={onParse}
+        disabled={loading}
+        style={{
+          width: '100%',
+          padding: '12px',
+          borderRadius: 10,
+          border: 'none',
+          background: 'var(--indigo)',
+          color: 'var(--paper)',
+          fontWeight: 600,
+          fontSize: 13,
+          fontFamily: 'inherit',
+          cursor: loading ? 'wait' : 'pointer',
+          transition: 'opacity 0.2s ease',
+          opacity: loading ? 0.7 : 1,
+        }}
+      >
+        {loading ? 'Parsing Plan...' : 'Parse Plan with AI'}
+      </button>
+    </div>
   );
 }

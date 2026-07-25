@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
-import { Check, X, Minus, Plus, Trash2, Calendar, Target, Award, PieChart, Layers } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
-export default function ExcelGoalsSheet({ goals, onUpdateGoals }) {
-  const [timeRange, setTimeRange] = useState('daily'); // 'daily' | 'weekly' | 'monthly'
+export default function ExcelGoalsSheet({ goals = [], onUpdateGoals }) {
+  const [showAddForm, setShowAddForm] = useState(false);
   const [newGoalName, setNewGoalName] = useState('');
-  const [newTarget, setNewTarget] = useState('1');
+  const [newTarget, setNewTarget] = useState('20');
   const [newUnit, setNewUnit] = useState('hrs');
   const [newCategory, setNewCategory] = useState('Skill');
+
+  const safeGoals = Array.isArray(goals) && goals.length > 0 ? goals : [
+    { id: 'g1', name: 'SQL Practice', category: 'Skill', target: 20, unit: 'hrs', pct: 65 },
+    { id: 'g2', name: 'Gym Sessions', category: 'Health', target: 5, unit: '/ wk', pct: 40 },
+    { id: 'g3', name: 'Book Reading', category: 'Personal', target: 3, unit: 'chapters', pct: 100 },
+  ];
 
   const handleAddGoal = () => {
     if (!newGoalName.trim()) return;
@@ -17,228 +23,186 @@ export default function ExcelGoalsSheet({ goals, onUpdateGoals }) {
       target: Number(newTarget) || 1,
       unit: newUnit,
       category: newCategory,
-      status: {
-        daily: 'pending',
-        weekly: 'pending',
-        monthly: 'pending',
-      },
+      pct: 0,
     };
 
-    onUpdateGoals([...goals, goalItem]);
+    if (onUpdateGoals) {
+      onUpdateGoals([...safeGoals, goalItem]);
+    }
     setNewGoalName('');
-  };
-
-  const handleStatusChange = (goalId, newStatus) => {
-    const updated = goals.map((g) => {
-      if (g.id === goalId) {
-        return {
-          ...g,
-          status: {
-            ...(g.status || {}),
-            [timeRange]: newStatus,
-          },
-        };
-      }
-      return g;
-    });
-    onUpdateGoals(updated);
+    setShowAddForm(false);
   };
 
   const handleDeleteGoal = (goalId) => {
-    const updated = goals.filter((g) => g.id !== goalId);
-    onUpdateGoals(updated);
+    const updated = safeGoals.filter((g) => g.id !== goalId);
+    if (onUpdateGoals) {
+      onUpdateGoals(updated);
+    }
   };
 
-  // Metrics calculation
-  const total = goals.length;
-  const completed = goals.filter((g) => g.status?.[timeRange] === 'done').length;
-  const inProgress = goals.filter((g) => g.status?.[timeRange] === 'partial').length;
-  const failed = goals.filter((g) => g.status?.[timeRange] === 'failed').length;
-
-  const completionPct = total > 0 ? Math.round(((completed + inProgress * 0.5) / total) * 100) : 0;
-
   return (
-    <div className="excel-goals-container">
-      {/* Header & Controls */}
-      <div className="excel-goals-header">
-        <div className="excel-goals-title">
-          <Target size={22} className="goals-icon" />
-          <div>
-            <h2>Interactive Goals & Habit Sheet</h2>
-            <span className="goals-subtitle">Track custom daily, weekly & monthly targets</span>
-          </div>
-        </div>
+    <div style={{ padding: '4px 0 18px' }}>
+      <h2 style={{ fontFamily: 'var(--font-voice)', fontSize: 18, margin: '0 0 12px' }}>
+        Goals & Habits
+      </h2>
 
-        {/* View Switcher: Daily | Weekly | Monthly */}
-        <div className="goals-range-switcher">
-          <button
-            className={`range-btn ${timeRange === 'daily' ? 'range-btn--active' : ''}`}
-            onClick={() => setTimeRange('daily')}
-          >
-            Daily Sheet
-          </button>
-          <button
-            className={`range-btn ${timeRange === 'weekly' ? 'range-btn--active' : ''}`}
-            onClick={() => setTimeRange('weekly')}
-          >
-            Weekly Sheet
-          </button>
-          <button
-            className={`range-btn ${timeRange === 'monthly' ? 'range-btn--active' : ''}`}
-            onClick={() => setTimeRange('monthly')}
-          >
-            Monthly Sheet
-          </button>
-        </div>
-      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {safeGoals.map((g, i) => {
+          const pct = g.pct !== undefined ? g.pct : (g.status?.monthly === 'done' ? 100 : g.status?.monthly === 'partial' ? 50 : 0);
+          const barColor = pct === 100 ? 'var(--sage)' : i % 2 === 0 ? 'var(--indigo)' : 'var(--gold)';
 
-      {/* Progress & Overview Card */}
-      <div className="cadence-card goals-summary-card">
-        <div className="goals-summary-main">
-          <div className="goals-summary-metric">
-            <span className="metric-label">{timeRange.toUpperCase()} COMPLETION</span>
-            <div className="metric-val-row">
-              <strong className="metric-val">{completionPct}%</strong>
-              <span className="metric-count">({completed}/{total} Completed)</span>
+          return (
+            <div
+              key={g.id}
+              style={{
+                background: 'var(--paper-raised)',
+                border: '1px solid var(--hairline)',
+                borderRadius: 14,
+                padding: '14px 16px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, alignItems: 'center' }}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{g.name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--slate)' }}>
+                    {g.target} {g.unit || ''}
+                  </span>
+                  <button
+                    onClick={() => handleDeleteGoal(g.id)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', opacity: 0.6 }}
+                    title="Delete Goal"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ height: 6, borderRadius: 999, background: 'var(--hairline)', overflow: 'hidden', marginBottom: 6 }}>
+                <div
+                  style={{
+                    width: `${pct}%`,
+                    height: '100%',
+                    background: barColor,
+                    transition: 'width 0.3s ease',
+                  }}
+                />
+              </div>
+              <span style={{ fontSize: 11, color: 'var(--slate)' }}>{g.category || 'Skill'} &middot; {pct}%</span>
             </div>
-          </div>
-          <div className="goals-progress-bar">
-            <div className="goals-progress-fill" style={{ width: `${completionPct}%` }} />
-          </div>
-        </div>
-
-        <div className="goals-summary-tags">
-          <span className="tag-stat tag-stat--done"><Check size={12} /> {completed} Done</span>
-          <span className="tag-stat tag-stat--partial"><Minus size={12} /> {inProgress} In Progress</span>
-          <span className="tag-stat tag-stat--failed"><X size={12} /> {failed} Incomplete</span>
-        </div>
+          );
+        })}
       </div>
 
-      {/* Excel Sheet Table */}
-      <div className="excel-table-wrapper">
-        <table className="excel-table">
-          <thead>
-            <tr>
-              <th>Goal / Habit Name</th>
-              <th>Category</th>
-              <th>Target</th>
-              <th>Status Action ({timeRange.toUpperCase()})</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {goals.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="excel-table-empty">
-                  No custom goals added yet. Use the form below to create your first goal!
-                </td>
-              </tr>
-            ) : (
-              goals.map((g) => {
-                const currentStatus = g.status?.[timeRange] || 'pending';
-
-                return (
-                  <tr key={g.id} className={`excel-row excel-row--${currentStatus}`}>
-                    <td className="excel-cell-name">
-                      <strong>{g.name}</strong>
-                    </td>
-                    <td>
-                      <span className="excel-category-badge">{g.category || 'General'}</span>
-                    </td>
-                    <td className="excel-cell-target">
-                      {g.target} {g.unit}
-                    </td>
-                    <td className="excel-cell-status">
-                      <div className="status-selector-group">
-                        <button
-                          className={`status-chip status-chip--done ${currentStatus === 'done' ? 'status-chip--active' : ''}`}
-                          onClick={() => handleStatusChange(g.id, 'done')}
-                          title="Mark Completed"
-                        >
-                          <Check size={14} /> Completed
-                        </button>
-
-                        <button
-                          className={`status-chip status-chip--partial ${currentStatus === 'partial' ? 'status-chip--active' : ''}`}
-                          onClick={() => handleStatusChange(g.id, 'partial')}
-                          title="Mark In Progress"
-                        >
-                          <Minus size={14} /> In Progress
-                        </button>
-
-                        <button
-                          className={`status-chip status-chip--failed ${currentStatus === 'failed' ? 'status-chip--active' : ''}`}
-                          onClick={() => handleStatusChange(g.id, 'failed')}
-                          title="Mark Incomplete"
-                        >
-                          <X size={14} /> Incomplete
-                        </button>
-                      </div>
-                    </td>
-                    <td>
-                      <button
-                        className="excel-delete-btn"
-                        onClick={() => handleDeleteGoal(g.id)}
-                        title="Delete Goal"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Add New Goal Bar */}
-      <div className="excel-add-goal-bar">
-        <h4>Add Custom Goal / Habit</h4>
-        <div className="add-goal-inputs">
+      {showAddForm ? (
+        <div
+          style={{
+            marginTop: 14,
+            background: 'var(--paper-raised)',
+            border: '1px solid var(--hairline)',
+            borderRadius: 14,
+            padding: 14,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+          }}
+        >
           <input
             type="text"
-            className="add-goal-input"
-            placeholder="e.g. SQL Practice / Gym Workout / Book Reading"
+            placeholder="Goal name (e.g. System Design)..."
             value={newGoalName}
             onChange={(e) => setNewGoalName(e.target.value)}
+            style={{
+              padding: '8px 10px',
+              borderRadius: 8,
+              border: '1px solid var(--hairline)',
+              fontSize: 12,
+              fontFamily: 'inherit',
+            }}
           />
-
-          <input
-            type="number"
-            className="add-goal-target-num"
-            placeholder="Target"
-            value={newTarget}
-            onChange={(e) => setNewTarget(e.target.value)}
-          />
-
-          <select
-            className="add-goal-select"
-            value={newUnit}
-            onChange={(e) => setNewUnit(e.target.value)}
-          >
-            <option value="hrs">hrs</option>
-            <option value="sessions">sessions</option>
-            <option value="tasks">tasks</option>
-            <option value="pages">pages</option>
-          </select>
-
-          <select
-            className="add-goal-select"
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-          >
-            <option value="Skill">Skill</option>
-            <option value="College">College</option>
-            <option value="Gym & Diet">Gym & Diet</option>
-            <option value="General">General</option>
-          </select>
-
-          <button className="cadence-btn add-goal-btn" onClick={handleAddGoal} disabled={!newGoalName.trim()}>
-            <Plus size={14} /> Add Goal
-          </button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              type="number"
+              placeholder="Target"
+              value={newTarget}
+              onChange={(e) => setNewTarget(e.target.value)}
+              style={{
+                width: 70,
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--hairline)',
+                fontSize: 12,
+                fontFamily: 'var(--font-mono)',
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Unit (hrs, books)"
+              value={newUnit}
+              onChange={(e) => setNewUnit(e.target.value)}
+              style={{
+                flex: 1,
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--hairline)',
+                fontSize: 12,
+              }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={handleAddGoal}
+              style={{
+                flex: 1,
+                padding: '8px',
+                borderRadius: 8,
+                border: 'none',
+                background: 'var(--indigo)',
+                color: 'var(--paper)',
+                fontWeight: 600,
+                fontSize: 12,
+                cursor: 'pointer',
+              }}
+            >
+              Save Goal
+            </button>
+            <button
+              onClick={() => setShowAddForm(false)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: 8,
+                border: '1px solid var(--hairline)',
+                background: 'transparent',
+                fontSize: 12,
+                cursor: 'pointer',
+              }}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
-      </div>
+      ) : (
+        <button
+          onClick={() => setShowAddForm(true)}
+          style={{
+            marginTop: 14,
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            padding: '10px',
+            borderRadius: 10,
+            border: '1px dashed var(--hairline)',
+            background: 'transparent',
+            color: 'var(--slate)',
+            fontSize: 12,
+            fontFamily: 'inherit',
+            cursor: 'pointer',
+          }}
+        >
+          <Plus size={14} /> Add Custom Goal
+        </button>
+      )}
     </div>
   );
 }
