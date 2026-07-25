@@ -25,8 +25,9 @@ export default function BeatStrip({ beats = [], size = 10, gap = 6 }) {
                   : 'var(--sage)'
                 : 'transparent',
               border: `2px solid ${
-                isSam ? 'var(--indigo, #2B3A67)' : 'var(--hairline)'
+                isSam ? 'var(--indigo, #2B3A67)' : 'var(--slate)'
               }`,
+              opacity: filled ? 1 : 0.4,
               boxSizing: 'border-box',
               transition: 'all 0.15s ease',
             }}

@@ -184,6 +184,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+input, select, textarea {
+  color: var(--ink);
+  font-family: inherit;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
 /* ═══════════════════════════════════════════
    Animations
    ═══════════════════════════════════════════ */
@@ -1948,7 +1957,8 @@ body {
   padding: 2px 6px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--hairline);
-  background: var(--paper);
+  background: var(--paper-raised);
+  color: var(--ink);
   font-family: var(--font-mono);
   font-size: 11px;
 }
@@ -1996,7 +2006,8 @@ body {
 }
 
 .popup-body p {
-  color: var(--slate);
+  color: var(--ink);
+  opacity: 0.85;
   margin: 0;
 }
 
@@ -3132,6 +3143,11 @@ body {
 .college-overview-trigger:hover {
   background: var(--ink);
   color: var(--paper);
+}
+
+.college-overview-trigger:hover svg {
+  color: var(--paper);
+  stroke: var(--paper);
 }
 
 
