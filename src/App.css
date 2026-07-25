@@ -450,34 +450,41 @@ input, select, textarea {
 
 .clarifications__input {
   width: 100%;
-  padding: 6px 8px;
+  padding: 8px 10px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--hairline);
   font-size: 13px;
   font-family: var(--font-sans);
-  background: var(--paper);
+  background: var(--paper-raised);
   color: var(--ink);
   transition: border-color 0.15s;
 }
 
+.clarifications__input::placeholder {
+  color: var(--slate);
+  opacity: 0.65;
+}
+
 .clarifications__input:focus {
   outline: none;
-  border-color: var(--sage);
+  border-color: var(--indigo);
 }
 
 .clarifications__submit {
-  padding: 7px 14px;
-  border-radius: 7px;
-  background: var(--ink);
-  color: var(--paper);
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  background: var(--indigo);
+  color: #FFFFFF;
   font-size: 12.5px;
   font-weight: 500;
-  margin-top: 4px;
+  margin-top: 6px;
+  border: none;
 }
 
 .clarifications__submit:hover:not(:disabled) {
-  filter: brightness(1.3);
+  filter: brightness(1.15);
 }
+
 
 /* ═══════════════════════════════════════════
    Week Strip
@@ -2425,10 +2432,11 @@ input, select, textarea {
 }
 
 .setup-mode-btn--active {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--indigo);
+  color: #FFFFFF;
   font-weight: 600;
 }
+
 
 .prompt-template-banner {
   display: flex;
