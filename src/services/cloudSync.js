@@ -75,3 +75,25 @@ export async function signOut() {
   if (!supabase) return;
   await supabase.auth.signOut();
 }
+
+/**
+ * Delete all saved data for the current user.
+ */
+export async function cloudDeleteAll(explicitUserId = null) {
+  if (!supabase) return;
+  let userId = explicitUserId;
+  if (!userId) {
+    const { data: { user } } = await supabase.auth.getUser();
+    userId = user?.id;
+  }
+  if (!userId) return;
+
+  const { error } = await supabase
+    .from('schedules')
+    .delete()
+    .eq('user_id', userId);
+    
+  if (error) {
+    console.error('Supabase cloudDeleteAll error:', error);
+  }
+}

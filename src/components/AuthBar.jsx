@@ -1,11 +1,16 @@
 import React from 'react';
 import { LogIn, LogOut, User, Trash2 } from 'lucide-react';
-import { signInWithGoogle, signOut } from '../services/cloudSync';
+import { signInWithGoogle, signOut, cloudDeleteAll } from '../services/cloudSync';
 
 export default function AuthBar({ user }) {
-  const handleClearData = () => {
+  const handleClearData = async () => {
     const confirmation = window.prompt('Are you sure you want to completely delete ALL your Cadence data (schedule, tasks, etc)? This cannot be undone.\\n\\nType "delete" (without quotes) to confirm:');
     if (confirmation === 'delete') {
+      try {
+        await cloudDeleteAll();
+      } catch (err) {
+        console.error("Failed to delete cloud data:", err);
+      }
       window.localStorage.clear();
       window.location.reload();
     } else if (confirmation !== null) {
