@@ -248,6 +248,20 @@ input, select, textarea {
   cursor: not-allowed;
 }
 
+.cadence-btn--primary {
+  background: var(--indigo);
+  color: #FFFFFF;
+  font-weight: 500;
+  border: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  transition: all 0.15s ease;
+}
+
+.cadence-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+
 /* ═══════════════════════════════════════════
    Minutes Input (shared)
    ═══════════════════════════════════════════ */
@@ -379,15 +393,15 @@ input, select, textarea {
   gap: 8px;
   padding: 9px 16px;
   border-radius: 8px;
-  background: var(--gold);
-  color: #2E2004;
+  background: var(--indigo);
+  color: #FFFFFF;
   font-size: 13px;
   font-weight: 500;
   transition: filter 0.15s;
 }
 
 .plan-input__parse:hover:not(:disabled) {
-  filter: brightness(1.08);
+  filter: brightness(1.12);
 }
 
 .plan-input__error {
@@ -1540,7 +1554,7 @@ input, select, textarea {
 }
 
 .vol-icon {
-  color: #6366F1;
+  color: var(--indigo);
 }
 
 .vol-slider {
@@ -1576,7 +1590,7 @@ input, select, textarea {
 /* Inline Task Note Badge */
 .task-note-inline-badge {
   font-size: 11px;
-  color: #7A5710;
+  color: var(--gold);
   background: rgba(201, 146, 43, 0.15);
   border: 1px solid rgba(201, 146, 43, 0.3);
   padding: 2px 6px;
@@ -1890,7 +1904,7 @@ input, select, textarea {
   border-radius: var(--radius-pill);
   background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.15));
   border: 1px solid rgba(245, 158, 11, 0.35);
-  color: #EF4444;
+  color: var(--rose);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 700;
