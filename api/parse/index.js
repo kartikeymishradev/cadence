@@ -32,8 +32,8 @@ module.exports = async function handler(arg1, arg2) {
       return sendResponse(400, { error: 'Missing system prompt or user text' });
     }
 
-    const groqKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
-    const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.FREEMODEL_API_KEY;
+    const groqKey = process.env.GROQ_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
     if (!groqKey && !geminiKey) {
       return sendResponse(500, { error: 'LLM API key not configured on backend Vercel environment' });

@@ -54,7 +54,7 @@ async function callGroq(system, userText, apiKey) {
         continue;
       }
       if (res.status === 401) {
-        throw new Error(`Groq API key invalid (401): Check your VITE_GROQ_API_KEY`);
+        throw new Error(`Groq API key invalid (401): Check your server-side GROQ_API_KEY in Vercel settings`);
       }
       lastError = new Error(`Groq error (${res.status}): ${message}`);
       continue;

@@ -42,7 +42,7 @@ export default function CopilotDrawer({
     setInputQuery('');
     setIsProcessing(true);
 
-    // 1. Try Environment API Key (VITE_GROQ_API_KEY / VITE_GEMINI_API_KEY) or user key
+    // 1. Try Serverless Function (/api/copilot) or user key
     const llmResult = await queryCopilotWithAPIKey(textToSend, apiKey, schedule, notesArchive);
     if (llmResult) {
       if (llmResult.type === 'proposal') {
