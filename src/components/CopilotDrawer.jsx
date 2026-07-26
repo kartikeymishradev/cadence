@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Sparkles, X, Send, Lock, ArrowRight, Check, Bot } from 'lucide-react';
-import { checkCopilotAccess, generateRescheduleProposal, queryNotesVault } from '../services/copilotService';
+import { Sparkles, X, Send, Lock, ArrowRight, Check, Key } from 'lucide-react';
+import { checkCopilotAccess, generateRescheduleProposal, queryNotesVault, queryCopilotWithAPIKey } from '../services/copilotService';
 
 export default function CopilotDrawer({
   isOpen,
@@ -19,12 +19,21 @@ export default function CopilotDrawer({
   ]);
   const [inputQuery, setInputQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showKeyInput, setShowKeyInput] = useState(false);
+  const [apiKey, setApiKey] = useState(
+    typeof window !== 'undefined' ? localStorage.getItem('cadence_copilot_key') || '' : ''
+  );
 
   if (!isOpen) return null;
 
   const hasAccess = checkCopilotAccess(user);
 
-  const handleSend = (queryText) => {
+  const handleSaveKey = (val) => {
+    setApiKey(val);
+    localStorage.setItem('cadence_copilot_key', val.trim());
+  };
+
+  const handleSend = async (queryText) => {
     const textToSend = queryText || inputQuery;
     if (!textToSend.trim()) return;
 
@@ -33,36 +42,54 @@ export default function CopilotDrawer({
     setInputQuery('');
     setIsProcessing(true);
 
-    setTimeout(() => {
-      const qLower = textToSend.toLowerCase();
-
-      if (qLower.includes('note') || qLower.includes('summary') || qLower.includes('react') || qLower.includes('dsa')) {
-        const answer = queryNotesVault(textToSend, notesArchive);
-        setMessages((prev) => [
-          ...prev,
-          { id: Date.now() + 1, sender: 'ai', text: answer },
-        ]);
-      } else {
-        const result = generateRescheduleProposal(textToSend, schedule);
-        if (result.type === 'proposal') {
+    // 1. If dedicated user API key is configured (Groq/Gemini), call direct LLM endpoint
+    if (apiKey.trim()) {
+      const llmResult = await queryCopilotWithAPIKey(textToSend, apiKey, schedule, notesArchive);
+      if (llmResult) {
+        if (llmResult.type === 'proposal') {
           setMessages((prev) => [
             ...prev,
-            {
-              id: Date.now() + 1,
-              sender: 'ai',
-              text: `Here is a proposed schedule adjustment for your class:`,
-              proposal: result.proposal,
-            },
+            { id: Date.now() + 1, sender: 'ai', text: 'Here is a proposed schedule adjustment:', proposal: llmResult.proposal },
           ]);
         } else {
           setMessages((prev) => [
             ...prev,
-            { id: Date.now() + 1, sender: 'ai', text: result.content },
+            { id: Date.now() + 1, sender: 'ai', text: llmResult.content },
           ]);
         }
+        setIsProcessing(false);
+        return;
       }
-      setIsProcessing(false);
-    }, 600);
+    }
+
+    // 2. Instant Local Smart Heuristic fallback (0ms delay)
+    const qLower = textToSend.toLowerCase();
+    if (qLower.includes('note') || qLower.includes('summary') || qLower.includes('react') || qLower.includes('dsa')) {
+      const answer = queryNotesVault(textToSend, notesArchive);
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, sender: 'ai', text: answer },
+      ]);
+    } else {
+      const result = generateRescheduleProposal(textToSend, schedule);
+      if (result.type === 'proposal') {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            sender: 'ai',
+            text: `Here is a proposed schedule adjustment for your class:`,
+            proposal: result.proposal,
+          },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, sender: 'ai', text: result.content },
+        ]);
+      }
+    }
+    setIsProcessing(false);
   };
 
   const handleApplyProposal = (proposal) => {
@@ -116,13 +143,87 @@ export default function CopilotDrawer({
             Cadence AI Copilot <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>BETA</span>
           </h3>
         </div>
-        <button
-          onClick={onClose}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}
-        >
-          <X size={18} />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            onClick={() => setShowKeyInput(!showKeyInput)}
+            title="Configure Dedicated AI Key (Groq / Gemini)"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 8px',
+              borderRadius: 6,
+              border: '1px solid var(--hairline)',
+              background: apiKey ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+              color: apiKey ? 'var(--sage)' : 'var(--slate)',
+              fontSize: 11,
+              fontFamily: 'var(--font-mono)',
+              cursor: 'pointer',
+            }}
+          >
+            <Key size={12} /> {apiKey ? 'Key Set' : 'Add Key'}
+          </button>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
+
+      {/* Collapsible Dedicated API Key Bar */}
+      {showKeyInput && (
+        <div
+          style={{
+            padding: '10px 16px',
+            background: 'var(--paper-raised)',
+            borderBottom: '1px solid var(--hairline)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+          }}
+        >
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink)' }}>Dedicated AI Key (Groq or Gemini)</span>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input
+              type="password"
+              placeholder="Paste Groq key (gsk_...) or Gemini key (AIzaSy...)"
+              value={apiKey}
+              onChange={(e) => handleSaveKey(e.target.value)}
+              style={{
+                flex: 1,
+                padding: '6px 10px',
+                borderRadius: 6,
+                border: '1px solid var(--hairline)',
+                fontSize: 11,
+                fontFamily: 'var(--font-mono)',
+                background: 'var(--paper)',
+                color: 'var(--ink)',
+              }}
+            />
+            {apiKey && (
+              <button
+                onClick={() => handleSaveKey('')}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: 6,
+                  border: '1px solid var(--hairline)',
+                  background: 'transparent',
+                  fontSize: 11,
+                  cursor: 'pointer',
+                  color: 'var(--rose)',
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          <span style={{ fontSize: 10, color: 'var(--slate)' }}>
+            Provides 200ms ultra-fast streaming responses directly from Groq or Gemini API.
+          </span>
+        </div>
+      )}
 
       {/* Body: Locked State for Non-Whitelisted Users */}
       {!hasAccess ? (
