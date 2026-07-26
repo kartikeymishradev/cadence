@@ -10,6 +10,7 @@ export default function PlanInput({
   onRawTextChange,
   onParse,
   onClearCategorySchedule,
+  onClearAllSchedules,
   onDeleteTask,
   onNavigateToWeek,
   parseSuccess,
