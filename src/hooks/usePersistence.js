@@ -122,18 +122,13 @@ export function usePersistence(weekStart, user) {
     if (migrated.theme) setTheme(migrated.theme);
     if (migrated.categories) setCategories(migrated.categories);
 
-    // Only apply schedule if it has task items
     if (migrated.schedule) {
-      const totalTasks = Object.values(migrated.schedule).reduce(
-        (acc, arr) => acc + (Array.isArray(arr) ? arr.length : 0),
-        0
-      );
-      if (totalTasks > 0) {
-        setSchedule(migrated.schedule);
-      }
+      setSchedule(migrated.schedule);
     }
 
-    if (migrated.meals) setMeals(migrated.meals);
+    if (migrated.meals !== undefined) {
+      setMeals(migrated.meals || []);
+    }
     if (migrated.dayStatus) setDayStatus(migrated.dayStatus);
     if (migrated.taskStatuses && Object.keys(migrated.taskStatuses).length > 0) {
       setTaskStatuses(migrated.taskStatuses);

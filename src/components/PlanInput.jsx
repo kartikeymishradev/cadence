@@ -283,6 +283,35 @@ export default function PlanInput({
           </p>
         )}
       </div>
+
+      {/* Master Clear All Schedules Button */}
+      {onClearAllSchedules && (
+        <div style={{ marginTop: 24, textAlign: 'center' }}>
+          <button
+            onClick={() => {
+              if (window.confirm('Are you sure you want to clear ALL schedules, tasks, and meals across all categories?')) {
+                onClearAllSchedules();
+              }
+            }}
+            style={{
+              background: 'transparent',
+              border: '1px dashed var(--rose)',
+              borderRadius: 10,
+              padding: '8px 16px',
+              color: 'var(--rose)',
+              fontSize: 12,
+              fontWeight: 600,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <Trash2 size={14} /> Wipe All Plans & Reset Schedule
+          </button>
+        </div>
+      )}
     </div>
   );
 }

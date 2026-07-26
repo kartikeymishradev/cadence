@@ -133,8 +133,25 @@ export default function App() {
   const handleClearCategorySchedule = useCallback((catId) => {
     setSchedule((prev) => ({ ...prev, [catId]: [] }));
     setRawText((prev) => ({ ...prev, [catId]: '' }));
+    if (catId === 'gym' || catId === 'health') {
+      setMeals([]);
+    }
     setParseSuccess(null);
-  }, [setSchedule, setRawText]);
+  }, [setSchedule, setRawText, setMeals]);
+
+  const handleClearAllSchedules = useCallback(() => {
+    const emptySched = {};
+    const emptyRaw = {};
+    (categories || []).forEach((cat) => {
+      emptySched[cat.id] = [];
+      emptyRaw[cat.id] = '';
+    });
+    setSchedule(emptySched);
+    setRawText(emptyRaw);
+    setMeals([]);
+    setTaskStatuses({});
+    setParseSuccess(null);
+  }, [categories, setSchedule, setRawText, setMeals, setTaskStatuses]);
 
   const handleDeleteTask = useCallback((catId, index) => {
     setSchedule((prev) => {
@@ -591,6 +608,7 @@ export default function App() {
               onRawTextChange={handleRawTextChange}
               onParse={handleParse}
               onClearCategorySchedule={handleClearCategorySchedule}
+              onClearAllSchedules={handleClearAllSchedules}
               onDeleteTask={handleDeleteTask}
               onNavigateToWeek={() => setViewMode('week')}
               parseSuccess={parseSuccess}
