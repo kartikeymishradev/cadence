@@ -32,10 +32,45 @@ module.exports = async function handler(arg1, arg2) {
       return sendResponse(400, { error: 'Missing system prompt or user text' });
     }
 
+    const groqKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
     const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.VITE_GEMINI_API_KEY || process.env.FREEMODEL_API_KEY;
 
-    if (!geminiKey) {
-      return sendResponse(500, { error: 'LLM API key not configured on backend' });
+    if (!groqKey && !geminiKey) {
+      return sendResponse(500, { error: 'LLM API key not configured on backend Vercel environment' });
+    }
+
+    // 1. Try Server-Side Groq API
+    if (groqKey) {
+      try {
+        const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${groqKey}`,
+          },
+          body: JSON.stringify({
+            model: 'llama-3.3-70b-versatile',
+            messages: [
+              { role: 'system', content: system },
+              { role: 'user', content: userText },
+            ],
+            temperature: 0.2,
+            response_format: { type: 'json_object' },
+          }),
+        });
+
+        if (groqRes.ok) {
+          const data = await groqRes.json();
+          const text = data.choices?.[0]?.message?.content;
+          if (text) {
+            const clean = text.replace(/```json|```/g, '').trim();
+            const parsedJSON = JSON.parse(clean);
+            return sendResponse(200, parsedJSON);
+          }
+        }
+      } catch (err) {
+        console.error('Groq parse error:', err);
+      }
     }
 
     const modelsToTry = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-2.0-flash'];

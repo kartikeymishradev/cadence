@@ -104,90 +104,23 @@ export function queryNotesVault(query, notesArchive = []) {
   return `📌 **Found in note "${note.title}"**:\n\n${note.content}\n\n*Key takeaway*: This note was saved under ${note.category || 'General'}.`;
 }
 
-const DEFAULT_GROQ_B64 = 'Z3NrXzFraGZIUkFRTEl6eVI4R0dvV2RVV0dkeWJGWW5qdnl3cUwwSTd0YkRXbVRORDIxVk1aNg==';
-
 /**
- * Queries AI model directly using built-in key, Environment variables, or user input for lightning fast responses.
+ * Sends Copilot query to Vercel Serverless Function (/api/copilot) where secrets are kept 100% server-side.
  */
 export async function queryCopilotWithAPIKey(query, userApiKey = '', schedule = {}, notesArchive = []) {
-  const fallbackKey = typeof window !== 'undefined' ? atob(DEFAULT_GROQ_B64) : '';
-  const apiKey = (userApiKey || import.meta.env.VITE_GROQ_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || fallbackKey).trim();
-  if (!apiKey) return null;
-
-  const keyTrimmed = apiKey.trim();
-  const scheduleSummary = Object.entries(schedule)
-    .map(([cat, tasks]) => `${cat}: ${(tasks || []).map((t) => `${t.title} (${t.time || 'no time'})`).join(', ')}`)
-    .join('\n');
-
-  const notesSummary = (notesArchive || [])
-    .map((n) => `[${n.title}]: ${n.content.substring(0, 150)}...`)
-    .join('\n');
-
-  const systemPrompt = `You are Cadence AI Copilot, a fast productivity assistant for schedule rescheduling and notes Q&A.
-User's Schedule Today:
-${scheduleSummary || 'No tasks scheduled yet'}
-
-User's Notes Vault:
-${notesSummary || 'No notes stored yet'}
-
-If user asks to shift, reschedule, or change time for a class/task, respond in valid JSON format:
-{"type":"proposal","originalTitle":"Task Name","catId":"skill","taskIndex":0,"originalTime":"10:00 AM","newTime":"06:00 PM","reason":"Adjusted for evening focus window"}
-
-Otherwise, respond in plain text with a concise, helpful answer.`;
-
   try {
-    // Groq API (gsk_...)
-    if (keyTrimmed.startsWith('gsk_')) {
-      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${keyTrimmed}`,
-        },
-        body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: query },
-          ],
-          temperature: 0.2,
-        }),
-      });
+    const res = await fetch('/api/copilot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, schedule, notesArchive, userApiKey }),
+    });
 
+    if (res.ok) {
       const data = await res.json();
-      const answerText = data?.choices?.[0]?.message?.content || '';
-
-      if (answerText.includes('"type":"proposal"') || answerText.includes('"newTime"')) {
-        try {
-          const jsonMatch = answerText.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            const parsed = JSON.parse(jsonMatch[0]);
-            return { type: 'proposal', proposal: parsed };
-          }
-        } catch (e) {
-          console.warn('Proposal parse error:', e);
-        }
-      }
-      return { type: 'text', content: answerText };
-    }
-
-    // Gemini API (AIzaSy...)
-    if (keyTrimmed.startsWith('AIzaSy')) {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keyTrimmed}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `${systemPrompt}\n\nUser Question: ${query}` }] }],
-        }),
-      });
-
-      const data = await res.json();
-      const answerText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      return { type: 'text', content: answerText };
+      return data;
     }
   } catch (err) {
-    console.error('Copilot API key call error:', err);
+    console.warn('Serverless /api/copilot call unavailable:', err);
   }
-
   return null;
 }

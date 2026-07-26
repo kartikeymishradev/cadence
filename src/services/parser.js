@@ -1,11 +1,5 @@
 import { STUDY_SYS, GYM_SYS } from '../utils/constants';
 
-const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY || '';
-const GEMINI_KEY =
-  import.meta.env.VITE_GEMINI_API_KEY ||
-  import.meta.env.VITE_GOOGLE_API_KEY ||
-  '';
-
 /**
  * Call Groq API (OpenAI-compatible, very fast, generous free tier).
  * Endpoint: https://api.groq.com/openai/v1/chat/completions
@@ -155,19 +149,10 @@ async function callGemini(system, userText, apiKey) {
 }
 
 /**
- * Internal: call LLM.
- * Priority: Groq (fast + high limits) → Gemini → backend proxy
+ * Internal: call LLM through secure serverless backend proxy (/api/parse).
+ * Server-side Vercel Environment holds GROQ_API_KEY / GEMINI_API_KEY with 0 client exposure.
  */
 async function callLLM(system, userText) {
-  if (GROQ_KEY) {
-    return callGroq(system, userText, GROQ_KEY);
-  }
-
-  if (GEMINI_KEY) {
-    return callGemini(system, userText, GEMINI_KEY);
-  }
-
-  // Last resort: backend proxy
   let res;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -197,7 +182,7 @@ async function callLLM(system, userText) {
   try {
     return JSON.parse(rawTextRes);
   } catch {
-    throw new Error('No API keys configured on Vercel. Add VITE_GROQ_API_KEY in your Vercel settings.');
+    throw new Error('Serverless parser returned invalid JSON.');
   }
 }
 
