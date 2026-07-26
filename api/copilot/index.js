@@ -78,10 +78,10 @@ Otherwise, respond in plain text with a concise, helpful answer.`;
             const jsonMatch = text.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
               const parsed = JSON.parse(jsonMatch[0]);
-              return sendResponse(200, parsed);
+              return sendResponse(200, { ...parsed, modelUsed: '⚡ Groq Llama 3.3' });
             }
           }
-          return sendResponse(200, { type: 'text', content: text });
+          return sendResponse(200, { type: 'text', content: text, modelUsed: '⚡ Groq Llama 3.3' });
         }
       } catch (err) {
         console.error('Groq server-side call failed:', err);
@@ -90,22 +90,26 @@ Otherwise, respond in plain text with a concise, helpful answer.`;
 
     // 2. Try Server-Side Gemini API if key configured
     if (geminiKey) {
-      try {
-        const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `${systemPrompt}\n\nUser Query: ${query}` }] }],
-          }),
-        });
+      const geminiModels = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-flash-latest'];
+      for (const model of geminiModels) {
+        try {
+          const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: `${systemPrompt}\n\nUser Query: ${query}` }] }],
+            }),
+          });
 
-        if (geminiRes.ok) {
-          const data = await geminiRes.json();
-          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-          return sendResponse(200, { type: 'text', content: text });
+          if (geminiRes.ok) {
+            const data = await geminiRes.json();
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            const modelLabel = model.includes('2.0') ? '✨ Gemini 2.0 Flash' : '✨ Gemini 1.5 Flash';
+            return sendResponse(200, { type: 'text', content: text, modelUsed: modelLabel });
+          }
+        } catch (err) {
+          console.error(`Gemini ${model} server-side call failed:`, err);
         }
-      } catch (err) {
-        console.error('Gemini server-side call failed:', err);
       }
     }
 

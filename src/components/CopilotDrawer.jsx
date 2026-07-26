@@ -48,12 +48,12 @@ export default function CopilotDrawer({
       if (llmResult.type === 'proposal') {
         setMessages((prev) => [
           ...prev,
-          { id: Date.now() + 1, sender: 'ai', text: 'Here is a proposed schedule adjustment:', proposal: llmResult.proposal },
+          { id: Date.now() + 1, sender: 'ai', text: 'Here is a proposed schedule adjustment:', proposal: llmResult.proposal, modelUsed: llmResult.modelUsed },
         ]);
       } else {
         setMessages((prev) => [
           ...prev,
-          { id: Date.now() + 1, sender: 'ai', text: llmResult.content },
+          { id: Date.now() + 1, sender: 'ai', text: llmResult.content, modelUsed: llmResult.modelUsed },
         ]);
       }
       setIsProcessing(false);
@@ -188,7 +188,13 @@ export default function CopilotDrawer({
               type="password"
               placeholder="Paste Groq key (gsk_...) or Gemini key (AIzaSy...)"
               value={apiKey}
-              onChange={(e) => handleSaveKey(e.target.value)}
+              onChange={(e) => setApiKey(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSaveKey(apiKey);
+                  setShowKeyInput(false);
+                }
+              }}
               style={{
                 flex: 1,
                 padding: '6px 10px',
@@ -200,6 +206,24 @@ export default function CopilotDrawer({
                 color: 'var(--ink)',
               }}
             />
+            <button
+              onClick={() => {
+                handleSaveKey(apiKey);
+                setShowKeyInput(false);
+              }}
+              style={{
+                padding: '6px 12px',
+                borderRadius: 6,
+                border: 'none',
+                background: 'var(--indigo)',
+                color: '#FFFFFF',
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Save
+            </button>
             {apiKey && (
               <button
                 onClick={() => handleSaveKey('')}
@@ -286,6 +310,11 @@ export default function CopilotDrawer({
                 }}
               >
                 <div style={{ whiteSpace: 'pre-wrap' }}>{m.text}</div>
+                {m.sender === 'ai' && m.modelUsed && (
+                  <span style={{ fontSize: 9, opacity: 0.6, marginTop: 4, display: 'block', fontFamily: 'var(--font-mono)' }}>
+                    {m.modelUsed}
+                  </span>
+                )}
 
                 {/* Proposal Card */}
                 {m.proposal && (
