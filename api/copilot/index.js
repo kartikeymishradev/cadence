@@ -28,9 +28,16 @@ module.exports = async function handler(arg1, arg2) {
       return sendResponse(400, { error: 'Missing user query' });
     }
 
-    // SERVER-SIDE ONLY SECRET KEY READ (Never exposed to browser JavaScript)
-    const groqKey = process.env.GROQ_API_KEY_COPILOT || process.env.GROQ_API_KEY;
-    const geminiKey = process.env.GEMINI_API_KEY_COPILOT || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    const userKeyTrim = (userApiKey || '').trim();
+    let groqKey = process.env.GROQ_API_KEY_COPILOT || process.env.GROQ_API_KEY;
+    let geminiKey = process.env.GEMINI_API_KEY_COPILOT || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+
+    if (userKeyTrim.startsWith('gsk_')) {
+      groqKey = userKeyTrim;
+    } else if (userKeyTrim.startsWith('AIzaSy')) {
+      geminiKey = userKeyTrim;
+      groqKey = null; // User explicitly set Gemini key in UI, prioritize Gemini model
+    }
 
     const scheduleSummary = Object.entries(schedule || {})
       .map(([cat, tasks]) => `${cat}: ${(tasks || []).map((t) => `${t.title} (${t.time || 'no time'})`).join(', ')}`)

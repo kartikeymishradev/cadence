@@ -142,25 +142,27 @@ export default function CopilotDrawer({
           </h3>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <button
-            onClick={() => setShowKeyInput(!showKeyInput)}
-            title="Configure Dedicated AI Key (Groq / Gemini)"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 4,
-              padding: '4px 8px',
-              borderRadius: 6,
-              border: '1px solid var(--hairline)',
-              background: apiKey ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-              color: apiKey ? 'var(--sage)' : 'var(--slate)',
-              fontSize: 11,
-              fontFamily: 'var(--font-mono)',
-              cursor: 'pointer',
-            }}
-          >
-            <Key size={12} /> {apiKey ? 'Key Set' : 'Add Key'}
-          </button>
+          {hasAccess && (
+            <button
+              onClick={() => setShowKeyInput(!showKeyInput)}
+              title="Configure Dedicated AI Key (Groq / Gemini)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '4px 8px',
+                borderRadius: 6,
+                border: '1px solid var(--hairline)',
+                background: apiKey ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                color: apiKey ? 'var(--sage)' : 'var(--slate)',
+                fontSize: 11,
+                fontFamily: 'var(--font-mono)',
+                cursor: 'pointer',
+              }}
+            >
+              <Key size={12} /> {apiKey ? 'Key Set' : 'Add Key'}
+            </button>
+          )}
           <button
             onClick={onClose}
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}
@@ -170,8 +172,8 @@ export default function CopilotDrawer({
         </div>
       </div>
 
-      {/* Collapsible Dedicated API Key Bar */}
-      {showKeyInput && (
+      {/* Collapsible Dedicated API Key Bar (Whitelisted Users Only) */}
+      {hasAccess && showKeyInput && (
         <div
           style={{
             padding: '10px 16px',
