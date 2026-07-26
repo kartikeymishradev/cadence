@@ -10,7 +10,7 @@ const NOISE_OPTIONS = [
 
 const ALARM_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
 
-export default function PomodoroTimer() {
+export default function PomodoroTimer({ onFocusSessionComplete }) {
   const [running, setRunning] = useState(false);
   const [focusMins, setFocusMins] = useState(25);
   const [breakMins, setBreakMins] = useState(5);
@@ -73,6 +73,11 @@ export default function PomodoroTimer() {
             // Play alarm
             audioRef.current.play().catch(e => console.log('Audio play failed:', e));
             
+            // Accumulate focus minutes if completing a study block
+            if (cycle[activeBeat] === 'study' && onFocusSessionComplete) {
+              onFocusSessionComplete(focusMins, 'skill');
+            }
+
             setActiveBeat((b) => (b + 1) % cycle.length);
             return 0; // The dependency effect above will reset it to next beat's time
           }
@@ -83,7 +88,7 @@ export default function PomodoroTimer() {
       clearInterval(timerRef.current);
     }
     return () => clearInterval(timerRef.current);
-  }, [running, cycle.length]);
+  }, [running, cycle.length, activeBeat, focusMins, onFocusSessionComplete]);
 
   const handleReset = () => {
     setRunning(false);

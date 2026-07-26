@@ -25,6 +25,9 @@ import InfoFooter from './components/InfoFooter';
 import NotificationBanner from './components/NotificationBanner';
 import PomodoroTimer from './components/PomodoroTimer';
 import NotesVault from './components/NotesVault';
+import OnboardingWizardModal from './components/OnboardingWizardModal';
+import CopilotDrawer from './components/CopilotDrawer';
+import { useTaskNotifications } from './hooks/useTaskNotifications';
 import ExcelGoalsSheet from './components/ExcelGoalsSheet';
 import GuidedTour from './components/GuidedTour';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -35,12 +38,14 @@ export default function App() {
   // ── View mode state (defaults to 'today') ──
   const [viewMode, setViewMode] = useState('today');
   const [isTourOpen, setIsTourOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
 
-  // Auto-launch Guided Tour on First Visit
+  // Auto-launch Onboarding Wizard on First Visit
   useEffect(() => {
-    const hasSeen = localStorage.getItem('hasSeenTour');
-    if (!hasSeen) {
-      setIsTourOpen(true);
+    const hasOnboarded = localStorage.getItem('cadence_onboarded_v2');
+    if (!hasOnboarded) {
+      setIsOnboardingOpen(true);
     }
   }, []);
 
@@ -90,6 +95,32 @@ export default function App() {
   useEffect(() => {
     document.body.setAttribute('data-theme', theme || 'paper');
   }, [theme]);
+
+  // Client-side task reminder notification scheduler
+  useTaskNotifications(schedule, categories);
+
+  const handleSaveOnboarding = useCallback((data) => {
+    if (data.selectedTheme) setTheme(data.selectedTheme);
+    if (data.sleepTimes) setSleepSchedule(data.sleepTimes);
+    if (data.restDays && data.restDays.length > 0) {
+      setDayStatus((prev) => {
+        const nextStatus = { ...prev };
+        WEEKDAYS.forEach((day) => {
+          if (data.restDays.includes(day)) {
+            nextStatus[day] = 'off';
+          }
+        });
+        return nextStatus;
+      });
+    }
+  }, [setTheme, setSleepSchedule, setDayStatus]);
+
+  const handleFocusSessionComplete = useCallback((mins, catId = 'skill') => {
+    setFocusLogs((prev) => ({
+      ...prev,
+      [catId]: (prev[catId] || 0) + mins,
+    }));
+  }, [setFocusLogs]);
 
   // ── Local UI state ──
   const [tab, setTab] = useState(categories[0]?.id || 'skill');
@@ -410,6 +441,7 @@ export default function App() {
           activeTheme={theme}
           onSelectTheme={setTheme}
           onStartTour={() => setIsTourOpen(true)}
+          onOpenCopilot={() => setIsCopilotOpen(true)}
           streak={streak}
         />
 
@@ -513,7 +545,7 @@ export default function App() {
 
         {/* 4. FOCUS VIEW (Pomodoro Timer) */}
         {viewMode === 'focus' && (
-          <PomodoroTimer />
+          <PomodoroTimer onFocusSessionComplete={handleFocusSessionComplete} />
         )}
 
         {/* 4. SETUP VIEW (AI Plan Parser & Manual Task Builder) */}
@@ -557,6 +589,23 @@ export default function App() {
           isOpen={isTourOpen}
           onClose={handleCloseTour}
           onViewChange={setViewMode}
+        />
+
+        <OnboardingWizardModal
+          isOpen={isOnboardingOpen}
+          onClose={() => setIsOnboardingOpen(false)}
+          initialName={localStorage.getItem('cadence_user_name') || ''}
+          initialTheme={theme}
+          initialSleep={sleepSchedule}
+          onSaveOnboarding={handleSaveOnboarding}
+        />
+
+        <CopilotDrawer
+          isOpen={isCopilotOpen}
+          onClose={() => setIsCopilotOpen(false)}
+          user={user}
+          schedule={schedule}
+          onUpdateSchedule={setSchedule}
         />
 
         {/* Dintaal Bottom Navigation Dock */}

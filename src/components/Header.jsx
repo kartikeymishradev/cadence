@@ -1,5 +1,5 @@
 import React from 'react';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Sparkles } from 'lucide-react';
 import ThemeSelector from './ThemeSelector';
 import BeatStrip from './BeatStrip';
 
@@ -9,6 +9,7 @@ export default function Header({
   activeTheme,
   onSelectTheme,
   onStartTour,
+  onOpenCopilot,
 }) {
   const streakBeats = Array.from({ length: 5 }, (_, i) => (i < Math.min(streak, 5) ? 1 : 0));
   const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase();
@@ -40,6 +41,29 @@ export default function Header({
 
           {onSelectTheme && (
             <ThemeSelector activeTheme={activeTheme} onSelectTheme={onSelectTheme} />
+          )}
+
+          {onOpenCopilot && (
+            <button
+              onClick={onOpenCopilot}
+              title="Open Cadence AI Copilot"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '6px 11px',
+                borderRadius: 8,
+                border: '1px solid var(--indigo)',
+                background: 'rgba(99, 102, 241, 0.1)',
+                color: 'var(--indigo)',
+                fontSize: 12,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              <Sparkles size={14} />
+              <span>Copilot</span>
+            </button>
           )}
 
           {onStartTour && (

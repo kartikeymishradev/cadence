@@ -442,7 +442,22 @@ export default function TodayView({
               </button>
             )}
           </div>
-          <h2 className="today-view__title">Today's Focus</h2>
+          {(() => {
+            const currentHour = now.getHours();
+            const savedName = (typeof window !== 'undefined' ? localStorage.getItem('cadence_user_name') : '') || 'Kartikey';
+            const timeGreeting = currentHour >= 5 && currentHour < 12
+              ? `Good morning, ${savedName}! ☀️`
+              : currentHour >= 12 && currentHour < 17
+              ? `Good afternoon, ${savedName}! 🌤️`
+              : `Good evening, ${savedName}! 🌙`;
+
+            return (
+              <div>
+                <h2 className="today-view__title" style={{ marginBottom: 2 }}>{timeGreeting}</h2>
+                <span style={{ fontSize: 12, color: 'var(--slate)', fontFamily: 'var(--font-mono)' }}>Today's Focus & Rhythm</span>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
