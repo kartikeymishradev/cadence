@@ -29,8 +29,8 @@ module.exports = async function handler(arg1, arg2) {
     }
 
     // SERVER-SIDE ONLY SECRET KEY READ (Never exposed to browser JavaScript)
-    const groqKey = process.env.GROQ_API_KEY;
-    const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+    const groqKey = process.env.GROQ_API_KEY_COPILOT || process.env.GROQ_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY_COPILOT || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
     const scheduleSummary = Object.entries(schedule || {})
       .map(([cat, tasks]) => `${cat}: ${(tasks || []).map((t) => `${t.title} (${t.time || 'no time'})`).join(', ')}`)
