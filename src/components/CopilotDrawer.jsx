@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, X, Send, Lock, ArrowRight, Check, Key } from 'lucide-react';
+import { Sparkles, X, Send, Lock, ArrowRight, Check } from 'lucide-react';
 import { checkCopilotAccess, generateRescheduleProposal, queryNotesVault, queryCopilotWithAPIKey } from '../services/copilotService';
 
 export default function CopilotDrawer({
@@ -19,19 +19,10 @@ export default function CopilotDrawer({
   ]);
   const [inputQuery, setInputQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showKeyInput, setShowKeyInput] = useState(false);
-  const [apiKey, setApiKey] = useState(
-    typeof window !== 'undefined' ? localStorage.getItem('cadence_copilot_key') || '' : ''
-  );
 
   if (!isOpen) return null;
 
   const hasAccess = checkCopilotAccess(user);
-
-  const handleSaveKey = (val) => {
-    setApiKey(val);
-    localStorage.setItem('cadence_copilot_key', val.trim());
-  };
 
   const handleSend = async (queryText) => {
     const textToSend = queryText || inputQuery;
@@ -42,8 +33,8 @@ export default function CopilotDrawer({
     setInputQuery('');
     setIsProcessing(true);
 
-    // 1. Try Serverless Function (/api/copilot) or user key
-    const llmResult = await queryCopilotWithAPIKey(textToSend, apiKey, schedule, notesArchive);
+    // 1. Try Serverless Function (/api/copilot)
+    const llmResult = await queryCopilotWithAPIKey(textToSend, schedule, notesArchive);
     if (llmResult) {
       if (llmResult.type === 'proposal') {
         setMessages((prev) => [
@@ -141,113 +132,13 @@ export default function CopilotDrawer({
             Cadence AI Copilot <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>BETA</span>
           </h3>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {hasAccess && (
-            <button
-              onClick={() => setShowKeyInput(!showKeyInput)}
-              title="Configure Dedicated AI Key (Groq / Gemini)"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '4px 8px',
-                borderRadius: 6,
-                border: '1px solid var(--hairline)',
-                background: apiKey ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-                color: apiKey ? 'var(--sage)' : 'var(--slate)',
-                fontSize: 11,
-                fontFamily: 'var(--font-mono)',
-                cursor: 'pointer',
-              }}
-            >
-              <Key size={12} /> {apiKey ? 'Key Set' : 'Add Key'}
-            </button>
-          )}
-          <button
-            onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}
-          >
-            <X size={18} />
-          </button>
-        </div>
-      </div>
-
-      {/* Collapsible Dedicated API Key Bar (Whitelisted Users Only) */}
-      {hasAccess && showKeyInput && (
-        <div
-          style={{
-            padding: '10px 16px',
-            background: 'var(--paper-raised)',
-            borderBottom: '1px solid var(--hairline)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 6,
-          }}
+        <button
+          onClick={onClose}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)' }}
         >
-          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ink)' }}>Dedicated AI Key (Groq or Gemini)</span>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <input
-              type="password"
-              placeholder="Paste Groq key (gsk_...) or Gemini key (AIzaSy...)"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSaveKey(apiKey);
-                  setShowKeyInput(false);
-                }
-              }}
-              style={{
-                flex: 1,
-                padding: '6px 10px',
-                borderRadius: 6,
-                border: '1px solid var(--hairline)',
-                fontSize: 11,
-                fontFamily: 'var(--font-mono)',
-                background: 'var(--paper)',
-                color: 'var(--ink)',
-              }}
-            />
-            <button
-              onClick={() => {
-                handleSaveKey(apiKey);
-                setShowKeyInput(false);
-              }}
-              style={{
-                padding: '6px 12px',
-                borderRadius: 6,
-                border: 'none',
-                background: 'var(--indigo)',
-                color: '#FFFFFF',
-                fontSize: 11,
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              Save
-            </button>
-            {apiKey && (
-              <button
-                onClick={() => handleSaveKey('')}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: 6,
-                  border: '1px solid var(--hairline)',
-                  background: 'transparent',
-                  fontSize: 11,
-                  cursor: 'pointer',
-                  color: 'var(--rose)',
-                }}
-              >
-                Clear
-              </button>
-            )}
-          </div>
-          <span style={{ fontSize: 10, color: 'var(--slate)' }}>
-            Provides 200ms ultra-fast streaming responses directly from Groq or Gemini API.
-          </span>
-        </div>
-      )}
+          <X size={18} />
+        </button>
+      </div>
 
       {/* Body: Locked State for Non-Whitelisted Users */}
       {!hasAccess ? (

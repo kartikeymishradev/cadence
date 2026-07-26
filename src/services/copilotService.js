@@ -108,12 +108,12 @@ export function queryNotesVault(query, notesArchive = []) {
 /**
  * Sends Copilot query to Vercel Serverless Function (/api/copilot) where secrets are kept 100% server-side.
  */
-export async function queryCopilotWithAPIKey(query, userApiKey = '', schedule = {}, notesArchive = []) {
+export async function queryCopilotWithAPIKey(query, schedule = {}, notesArchive = []) {
   try {
     const res = await fetch('/api/copilot', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, schedule, notesArchive, userApiKey }),
+      body: JSON.stringify({ query, schedule, notesArchive }),
     });
 
     if (res.ok) {
