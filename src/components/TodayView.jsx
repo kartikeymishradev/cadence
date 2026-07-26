@@ -682,8 +682,8 @@ export default function TodayView({
             </div>
           ))}
 
-          {/* Meals & Macro Diet Section */}
-          {(todayMeals.length > 0 || categories.some(c => c.id === 'gym' || c.id === 'health')) && (
+          {/* Meals & Macro Diet Section (Only show if meals or gym tasks are active) */}
+          {(todayMeals.length > 0 || ((schedule?.gym || []).length > 0) || ((schedule?.health || []).length > 0)) && (
             <div className="today-view__section">
               <div className="today-view__section-header">
                 <Coffee size={16} className="section-icon" />
