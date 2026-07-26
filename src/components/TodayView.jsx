@@ -160,20 +160,26 @@ export default function TodayView({
     }
   }
 
-  // Sleep Duration Calculator (Bulletproof Defensive Parsing)
+  // Sleep Duration Calculator (Robust & Defensive Parsing)
   const sleepStartStr = (sleepSchedule && typeof sleepSchedule.sleepStart === 'string') ? sleepSchedule.sleepStart : '23:30';
   const sleepEndStr = (sleepSchedule && typeof sleepSchedule.sleepEnd === 'string') ? sleepSchedule.sleepEnd : '07:00';
   
   const bedParts = sleepStartStr.split(':').map(Number);
   const wakeParts = sleepEndStr.split(':').map(Number);
   
-  const bedH = bedParts[0] ?? 23;
+  let bedH = bedParts[0] ?? 23;
   const bedM = bedParts[1] ?? 30;
-  const wakeH = wakeParts[0] ?? 7;
+  let wakeH = wakeParts[0] ?? 7;
   const wakeM = wakeParts[1] ?? 0;
+
+  // Fix 12:xx AM 24-hour hour ambiguity: when bedtime is entered as 12:xx (12:30 AM midnight) and wake time is morning
+  if (bedH === 12 && wakeH < 12) {
+    bedH = 0; // Normalize 12:xx AM to 00:xx
+  }
 
   let sleepMins = (wakeH * 60 + wakeM) - (bedH * 60 + bedM);
   if (sleepMins <= 0) sleepMins += 24 * 60; // overnight math
+  if (sleepMins > 16 * 60) sleepMins = 24 * 60 - sleepMins; // defensive cap for 12/00 hour rollover
   const sleepHours = (sleepMins / 60).toFixed(1);
 
   // Late-Night Detector (e.g. past bedtime 23:30 or before 5am)
