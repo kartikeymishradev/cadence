@@ -228,16 +228,16 @@ export default function TodayView({
     const freeHoursLeft = (freeMinsToday / 60).toFixed(1);
 
     let level = 'gentle';
-    let style = { background: 'var(--paper-raised)', border: '1px dashed var(--indigo)', color: 'var(--ink)' };
+    let style = { background: 'var(--paper-raised)', border: '1.5px dashed var(--indigo)', color: 'var(--ink)' };
     let title = 'Assignment Upcoming';
     
     if (hoursLeft <= 4) {
       level = 'panic';
-      style = { background: 'var(--cherry)', border: '2px solid #ff4d4f', color: 'white', boxShadow: '0 0 15px rgba(255,77,79,0.4)' };
+      style = { background: '#EF4444', border: '2px solid #DC2626', color: '#FFFFFF', boxShadow: '0 0 16px rgba(239, 68, 68, 0.4)' };
       title = '🚨 BHAYANAK PANIC MODE';
     } else if (hoursLeft <= 12) {
       level = 'urgent';
-      style = { background: 'var(--gold)', border: '2px solid #d97706', color: 'var(--ink)' };
+      style = { background: '#F59E0B', border: '2px solid #D97706', color: '#FFFFFF', boxShadow: '0 0 12px rgba(245, 158, 11, 0.3)' };
       title = '⚠️ Urgent Deadline';
     }
     
@@ -545,7 +545,7 @@ export default function TodayView({
           <p style={{ fontSize: 13, margin: 0, opacity: 0.9 }}>
             Assignment: <strong>{deadlineNudge.note}</strong>
           </p>
-          <div style={{ background: 'rgba(255,255,255,0.2)', padding: '8px 12px', borderRadius: 8, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+          <div style={{ background: deadlineNudge.level === 'panic' || deadlineNudge.level === 'urgent' ? 'rgba(0,0,0,0.18)' : 'var(--paper)', padding: '8px 12px', borderRadius: 8, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
             <Hourglass size={14} />
             <span>You only have <strong>{deadlineNudge.freeHoursLeft} hrs of free slots</strong> remaining today before sleep. {deadlineNudge.level === 'panic' ? 'DO IT NOW!' : 'Plan accordingly!'}</span>
           </div>
