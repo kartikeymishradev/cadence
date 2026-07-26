@@ -450,12 +450,29 @@ export default function TodayView({
           </div>
           {(() => {
             const currentHour = now.getHours();
+            const currentMins = currentHour * 60 + now.getMinutes();
             const savedName = (typeof window !== 'undefined' ? localStorage.getItem('cadence_user_name') : '') || 'Kartikey';
-            const timeGreeting = currentHour >= 5 && currentHour < 12
-              ? `Good morning, ${savedName}! ☀️`
-              : currentHour >= 12 && currentHour < 17
-              ? `Good afternoon, ${savedName}! 🌤️`
-              : `Good evening, ${savedName}! 🌙`;
+
+            const sleepStartStr = sleepSchedule?.sleepStart || '23:30';
+            const [bHRaw, bMRaw] = (sleepStartStr || '').split(':').map(Number);
+            let bH = bHRaw ?? 23;
+            let bM = bMRaw ?? 30;
+            if (bH === 12) bH = 0; // 12:30 AM midnight normalization
+            const bedMins = bH * 60 + bM;
+
+            // Detect if active past set bedtime or between 00:00 and 05:00 AM
+            const isPastBedtime = (currentHour < 5) || (currentMins >= bedMins && bedMins >= 20 * 60);
+
+            let timeGreeting = '';
+            if (isPastBedtime) {
+              timeGreeting = `Good night, ${savedName}! 🌙 Itni der kyun jaag rahe ho?`;
+            } else if (currentHour >= 5 && currentHour < 12) {
+              timeGreeting = `Good morning, ${savedName}! ☀️`;
+            } else if (currentHour >= 12 && currentHour < 17) {
+              timeGreeting = `Good afternoon, ${savedName}! 🌤️`;
+            } else {
+              timeGreeting = `Good evening, ${savedName}! 🌆`;
+            }
 
             return (
               <div>
