@@ -1,16 +1,20 @@
+const AUTHORIZED_EMAILS = [
+  'mishrakartikey2024@gmail.com',
+  'mridul.jadaun.dev@gmail.com',
+];
+
 /**
  * Checks whether the current user is authorized for Cadence AI Copilot Beta.
- * Verified via Supabase OAuth session metadata (Kartikey & Mridul).
+ * Uses strict Supabase OAuth verified email authentication to prevent impersonation.
  */
 export function checkCopilotAccess(user) {
   if (import.meta.env.DEV) return true; // Local dev environment has access
   if (!user) return false;
 
   const email = (user.email || user.user_metadata?.email || '').toLowerCase().trim();
-  const name = (user.user_metadata?.full_name || user.user_metadata?.name || '').toLowerCase().trim();
+  if (!email) return false;
 
-  // Allow authorized developers/testers (Kartikey & Mridul)
-  return name.includes('kartikey') || name.includes('mridul') || email.includes('kartikey') || email.includes('mridul');
+  return AUTHORIZED_EMAILS.includes(email);
 }
 
 /**
