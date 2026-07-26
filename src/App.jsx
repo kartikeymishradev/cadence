@@ -448,6 +448,7 @@ export default function App() {
         {/* 1. TODAY VIEW (Landing Screen) */}
         {viewMode === 'today' && (
           <TodayView
+            user={user}
             weekDates={weekDates}
             dayStatus={dayStatus}
             categories={categories}

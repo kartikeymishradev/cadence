@@ -6,6 +6,7 @@ import CollegeOverviewModal from './CollegeOverviewModal';
 import BeatStrip from './BeatStrip';
 
 export default function TodayView({
+  user,
   weekDates,
   dayStatus,
   categories,
@@ -451,7 +452,9 @@ export default function TodayView({
           {(() => {
             const currentHour = now.getHours();
             const currentMins = currentHour * 60 + now.getMinutes();
-            const savedName = (typeof window !== 'undefined' ? localStorage.getItem('cadence_user_name') : '') || 'Kartikey';
+            const rawName = (typeof window !== 'undefined' ? localStorage.getItem('cadence_user_name') : '') || user?.user_metadata?.full_name || user?.user_metadata?.name || '';
+            const firstName = rawName.trim() ? rawName.trim().split(' ')[0] : '';
+            const nameSuffix = firstName ? `, ${firstName}` : '';
 
             const sleepStartStr = sleepSchedule?.sleepStart || '23:30';
             const [bHRaw, bMRaw] = (sleepStartStr || '').split(':').map(Number);
@@ -465,13 +468,13 @@ export default function TodayView({
 
             let timeGreeting = '';
             if (isPastBedtime) {
-              timeGreeting = `Good night, ${savedName}! 🌙 Up late, everything okay?`;
+              timeGreeting = `Good night${nameSuffix}! 🌙 Up late, everything okay?`;
             } else if (currentHour >= 5 && currentHour < 12) {
-              timeGreeting = `Good morning, ${savedName}! ☀️`;
+              timeGreeting = `Good morning${nameSuffix}! ☀️`;
             } else if (currentHour >= 12 && currentHour < 17) {
-              timeGreeting = `Good afternoon, ${savedName}! 🌤️`;
+              timeGreeting = `Good afternoon${nameSuffix}! 🌤️`;
             } else {
-              timeGreeting = `Good evening, ${savedName}! 🌆`;
+              timeGreeting = `Good evening${nameSuffix}! 🌆`;
             }
 
             return (
