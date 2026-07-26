@@ -68,6 +68,7 @@ export function migrateTaskStatuses(saved) {
       fatsTaken: 45, fatsTarget: 60,
     },
     muscleFocus: saved.muscleFocus || ['Chest', 'Arms'],
+    focusLogs: saved.focusLogs || {},
   };
 }
 
@@ -96,6 +97,7 @@ export function usePersistence(weekStart, user) {
     fatsTaken: 45, fatsTarget: 60,
   });
   const [muscleFocus, setMuscleFocus] = useState(['Chest', 'Arms']);
+  const [focusLogs, setFocusLogs] = useState({});
 
   // Multi-week plan metadata
   const [multiWeekPlan, setMultiWeekPlan] = useState({});
@@ -148,6 +150,7 @@ export function usePersistence(weekStart, user) {
     if (migrated.sleepSchedule) setSleepSchedule(migrated.sleepSchedule);
     if (migrated.macros) setMacros(migrated.macros);
     if (migrated.muscleFocus) setMuscleFocus(migrated.muscleFocus);
+    if (migrated.focusLogs) setFocusLogs(migrated.focusLogs);
   }, []);
 
   // ── Load from localStorage on mount ──
@@ -263,6 +266,7 @@ export function usePersistence(weekStart, user) {
     sleepSchedule,
     macros,
     muscleFocus,
+    focusLogs,
     user,
   ]);
 
@@ -281,5 +285,6 @@ export function usePersistence(weekStart, user) {
     sleepSchedule, setSleepSchedule,
     macros, setMacros,
     muscleFocus, setMuscleFocus,
+    focusLogs, setFocusLogs,
   };
 }

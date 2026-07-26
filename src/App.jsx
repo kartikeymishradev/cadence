@@ -83,6 +83,7 @@ export default function App() {
     sleepSchedule, setSleepSchedule,
     macros, setMacros,
     muscleFocus, setMuscleFocus,
+    focusLogs, setFocusLogs,
   } = usePersistence(weekStart, user);
 
   // Sync active theme with document body data-theme attribute
@@ -492,6 +493,11 @@ export default function App() {
           <ExcelGoalsSheet
             goals={goals}
             onUpdateGoals={setGoals}
+            categories={categories}
+            schedule={schedule}
+            taskStatuses={taskStatuses}
+            dayStatus={dayStatus}
+            focusLogs={focusLogs}
           />
         )}
 
