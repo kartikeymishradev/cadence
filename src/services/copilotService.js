@@ -9,8 +9,15 @@ const AUTHORIZED_EMAILS = [
  */
 export function checkCopilotAccess(user) {
   if (import.meta.env.DEV) return true; // Local dev environment has access
-  if (!user || !user.email) return false;
-  return AUTHORIZED_EMAILS.includes(user.email.toLowerCase().trim());
+  if (!user) return false;
+
+  const email = (user.email || user.user_metadata?.email || '').toLowerCase().trim();
+  const name = (user.user_metadata?.full_name || '').toLowerCase().trim();
+
+  // Allow Kartikey's logged in Google account on production (email or full_name)
+  if (email.includes('kartikey') || name.includes('kartikey')) return true;
+
+  return AUTHORIZED_EMAILS.some((auth) => email && (email.includes(auth) || auth.includes(email)));
 }
 
 /**
