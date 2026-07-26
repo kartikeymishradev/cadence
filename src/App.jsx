@@ -128,6 +128,21 @@ export default function App() {
   const [clarificationAnswers, setClarificationAnswers] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [parseSuccess, setParseSuccess] = useState(null);
+
+  const handleClearCategorySchedule = useCallback((catId) => {
+    setSchedule((prev) => ({ ...prev, [catId]: [] }));
+    setRawText((prev) => ({ ...prev, [catId]: '' }));
+    setParseSuccess(null);
+  }, [setSchedule, setRawText]);
+
+  const handleDeleteTask = useCallback((catId, index) => {
+    setSchedule((prev) => {
+      const catTasks = [...(prev[catId] || [])];
+      catTasks.splice(index, 1);
+      return { ...prev, [catId]: catTasks };
+    });
+  }, [setSchedule]);
 
   // Auto-increment streak when user marks tasks done
   const handleUpdateTaskStatus = useCallback((id, status) => {
@@ -205,20 +220,34 @@ export default function App() {
 
     setLoading(true);
     setError('');
+    setParseSuccess(null);
     try {
       const parseTab = tab === 'gym' ? 'gym' : 'study';
       const parsed = await parsePlan(parseTab, text);
+      let count = 0;
 
       if (parsed.weeks && parsed.weeks.length > 0) {
         setMultiWeekPlan((prev) => ({ ...prev, [tab]: parsed }));
         setCurrentWeekIndex((prev) => ({ ...prev, [tab]: 0 }));
         applyMultiWeekData(parsed, 0, tab);
+        count = (parsed.weeks[0]?.tasks || []).length;
       } else if (tab === 'gym') {
-        setSchedule((prev) => ({ ...prev, gym: parsed.workouts || [] }));
+        const workouts = parsed.workouts || [];
+        setSchedule((prev) => ({ ...prev, gym: workouts }));
         setMeals(parsed.meals || []);
+        count = workouts.length;
       } else {
-        setSchedule((prev) => ({ ...prev, [tab]: parsed.tasks || [] }));
+        const tasks = parsed.tasks || [];
+        setSchedule((prev) => ({ ...prev, [tab]: tasks }));
+        count = tasks.length;
       }
+
+      const catObj = categories.find((c) => c.id === tab);
+      setParseSuccess({
+        count,
+        category: catObj?.label || tab,
+        timestamp: Date.now(),
+      });
 
       setClarifications((prev) => ({
         ...prev,
@@ -230,7 +259,7 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [rawText, tab, setSchedule, setMeals, setMultiWeekPlan, setCurrentWeekIndex, applyMultiWeekData]);
+  }, [rawText, tab, setSchedule, setMeals, setMultiWeekPlan, setCurrentWeekIndex, applyMultiWeekData, categories]);
 
   const handleRefine = useCallback(async () => {
     const qs = clarifications[tab] || [];
@@ -557,9 +586,14 @@ export default function App() {
               setTab={setTab}
               categories={categories}
               onSaveCategories={setCategories}
+              schedule={schedule}
               rawText={rawText[tab] || ''}
               onRawTextChange={handleRawTextChange}
               onParse={handleParse}
+              onClearCategorySchedule={handleClearCategorySchedule}
+              onDeleteTask={handleDeleteTask}
+              onNavigateToWeek={() => setViewMode('week')}
+              parseSuccess={parseSuccess}
               onAddTaskManual={handleAddTaskManual}
               loading={loading}
               error={error}

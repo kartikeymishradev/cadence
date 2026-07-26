@@ -1,12 +1,18 @@
 import React from 'react';
+import { Trash2, CheckCircle2, ArrowRight, Calendar, Sparkles } from 'lucide-react';
 
 export default function PlanInput({
   tab,
   setTab,
   categories = [],
+  schedule = {},
   rawText,
   onRawTextChange,
   onParse,
+  onClearCategorySchedule,
+  onDeleteTask,
+  onNavigateToWeek,
+  parseSuccess,
   loading,
 }) {
   const cats = (Array.isArray(categories) && categories.length > 0) ? categories : [
@@ -16,11 +22,13 @@ export default function PlanInput({
   ];
 
   const activeCat = tab || cats[0]?.id || 'skill';
+  const activeCatObj = cats.find((c) => c.id === activeCat) || cats[0];
+  const activeTasks = (schedule && schedule[activeCat]) || [];
 
   return (
     <div style={{ padding: '4px 0 18px' }}>
       <h2 style={{ fontFamily: 'var(--font-voice)', fontSize: 18, margin: '0 0 12px' }}>
-        Setup
+        Setup & AI Plan Parser
       </h2>
 
       {/* Category Pills */}
@@ -52,6 +60,57 @@ export default function PlanInput({
         })}
       </div>
 
+      {/* Parsing Success Confirmation Banner */}
+      {parseSuccess && (
+        <div
+          style={{
+            background: 'rgba(16, 185, 129, 0.12)',
+            border: '1.5px solid var(--sage)',
+            borderRadius: 14,
+            padding: '14px 16px',
+            marginBottom: 14,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            boxShadow: '0 4px 16px rgba(16, 185, 129, 0.12)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <CheckCircle2 size={22} style={{ color: 'var(--sage)', flexShrink: 0 }} />
+            <div>
+              <strong style={{ fontSize: 13, color: 'var(--ink)', display: 'block' }}>
+                Parsing Done! Added {parseSuccess.count} task{parseSuccess.count === 1 ? '' : 's'} to {activeCatObj?.label || activeCat}
+              </strong>
+              <span style={{ fontSize: 11, color: 'var(--slate)' }}>
+                Your updated schedule is live in Week & Today tabs.
+              </span>
+            </div>
+          </div>
+          {onNavigateToWeek && (
+            <button
+              onClick={onNavigateToWeek}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '8px 12px',
+                borderRadius: 8,
+                background: 'var(--sage)',
+                color: '#FFFFFF',
+                border: 'none',
+                fontWeight: 600,
+                fontSize: 11,
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              View Schedule <ArrowRight size={12} />
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Paste Card */}
       <div
         style={{
@@ -62,9 +121,31 @@ export default function PlanInput({
           marginBottom: 12,
         }}
       >
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.5px', color: 'var(--slate)' }}>
-          PASTE YOUR PLAN
-        </span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.5px', color: 'var(--slate)' }}>
+            PASTE YOUR PLAN FOR {activeCatObj?.label?.toUpperCase() || activeCat.toUpperCase()}
+          </span>
+
+          {(rawText || activeTasks.length > 0) && (
+            <button
+              onClick={() => onClearCategorySchedule && onClearCategorySchedule(activeCat)}
+              title="Delete text & clear schedule for this category"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--rose)',
+                fontSize: 11,
+                cursor: 'pointer',
+                fontFamily: 'var(--font-mono)',
+              }}
+            >
+              <Trash2 size={12} /> Clear {activeCatObj?.label || 'Plan'}
+            </button>
+          )}
+        </div>
 
         <textarea
           placeholder="Monday 10am DSA Practice 60m&#10;Tuesday 7pm React Revision 90m..."
@@ -105,10 +186,103 @@ export default function PlanInput({
           cursor: loading ? 'wait' : 'pointer',
           transition: 'opacity 0.2s ease',
           opacity: loading ? 0.7 : 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          marginBottom: 20,
         }}
       >
-        {loading ? 'Parsing Plan...' : 'Parse Plan with AI'}
+        <Sparkles size={16} />
+        {loading ? 'Parsing Plan with AI...' : `Parse ${activeCatObj?.label || ''} Plan with AI`}
       </button>
+
+      {/* Active Parsed Tasks Preview & Management Card */}
+      <div
+        style={{
+          background: 'var(--paper-raised)',
+          border: '1px solid var(--hairline)',
+          borderRadius: 14,
+          padding: '14px 16px',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Calendar size={14} style={{ color: activeCatObj?.color || 'var(--indigo)' }} />
+            <strong style={{ fontSize: 13, color: 'var(--ink)' }}>
+              Active {activeCatObj?.label} Tasks ({activeTasks.length})
+            </strong>
+          </div>
+
+          {activeTasks.length > 0 && (
+            <button
+              onClick={() => onClearCategorySchedule && onClearCategorySchedule(activeCat)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--rose)',
+                fontSize: 11,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
+            >
+              <Trash2 size={12} /> Delete All
+            </button>
+          )}
+        </div>
+
+        {activeTasks.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {activeTasks.map((t, idx) => (
+              <div
+                key={t.id || idx}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  background: 'var(--paper)',
+                  border: '1px solid var(--hairline)',
+                  fontSize: 12,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--slate)', minWidth: 60 }}>
+                    {t.day || 'Mon'} {t.time || t.start || ''}
+                  </span>
+                  <strong style={{ color: 'var(--ink)' }}>{t.title}</strong>
+                  {t.duration && (
+                    <span style={{ fontSize: 10, color: 'var(--slate)', fontFamily: 'var(--font-mono)' }}>
+                      ({t.duration}m)
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  onClick={() => onDeleteTask && onDeleteTask(activeCat, idx)}
+                  title="Delete this task"
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'var(--slate)',
+                    cursor: 'pointer',
+                    padding: 2,
+                  }}
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ fontSize: 12, color: 'var(--slate)', margin: 0, fontStyle: 'italic' }}>
+            No active tasks scheduled for this category yet. Paste your text above and click Parse!
+          </p>
+        )}
+      </div>
     </div>
   );
 }
