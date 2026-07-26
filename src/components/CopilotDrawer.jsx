@@ -42,24 +42,22 @@ export default function CopilotDrawer({
     setInputQuery('');
     setIsProcessing(true);
 
-    // 1. If dedicated user API key is configured (Groq/Gemini), call direct LLM endpoint
-    if (apiKey.trim()) {
-      const llmResult = await queryCopilotWithAPIKey(textToSend, apiKey, schedule, notesArchive);
-      if (llmResult) {
-        if (llmResult.type === 'proposal') {
-          setMessages((prev) => [
-            ...prev,
-            { id: Date.now() + 1, sender: 'ai', text: 'Here is a proposed schedule adjustment:', proposal: llmResult.proposal },
-          ]);
-        } else {
-          setMessages((prev) => [
-            ...prev,
-            { id: Date.now() + 1, sender: 'ai', text: llmResult.content },
-          ]);
-        }
-        setIsProcessing(false);
-        return;
+    // 1. Try Environment API Key (VITE_GROQ_API_KEY / VITE_GEMINI_API_KEY) or user key
+    const llmResult = await queryCopilotWithAPIKey(textToSend, apiKey, schedule, notesArchive);
+    if (llmResult) {
+      if (llmResult.type === 'proposal') {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, sender: 'ai', text: 'Here is a proposed schedule adjustment:', proposal: llmResult.proposal },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, sender: 'ai', text: llmResult.content },
+        ]);
       }
+      setIsProcessing(false);
+      return;
     }
 
     // 2. Instant Local Smart Heuristic fallback (0ms delay)

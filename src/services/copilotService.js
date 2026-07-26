@@ -105,9 +105,10 @@ export function queryNotesVault(query, notesArchive = []) {
 }
 
 /**
- * Queries AI model directly using dedicated user-provided API key (Groq or Gemini) for lightning fast responses.
+ * Queries AI model directly using dedicated API key from Environment variables (VITE_GROQ_API_KEY / VITE_GEMINI_API_KEY) or user input for lightning fast responses.
  */
-export async function queryCopilotWithAPIKey(query, apiKey, schedule = {}, notesArchive = []) {
+export async function queryCopilotWithAPIKey(query, userApiKey = '', schedule = {}, notesArchive = []) {
+  const apiKey = (userApiKey || import.meta.env.VITE_GROQ_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || '').trim();
   if (!apiKey) return null;
 
   const keyTrimmed = apiKey.trim();
