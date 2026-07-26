@@ -465,7 +465,7 @@ export default function TodayView({
 
             let timeGreeting = '';
             if (isPastBedtime) {
-              timeGreeting = `Good night, ${savedName}! 🌙 Itni der kyun jaag rahe ho?`;
+              timeGreeting = `Good night, ${savedName}! 🌙 Up late, everything okay?`;
             } else if (currentHour >= 5 && currentHour < 12) {
               timeGreeting = `Good morning, ${savedName}! ☀️`;
             } else if (currentHour >= 12 && currentHour < 17) {
