@@ -150,8 +150,11 @@ export default function App() {
     setRawText(emptyRaw);
     setMeals([]);
     setTaskStatuses({});
+    setFocusLogs({});
+    setMultiWeekPlan({});
+    setCurrentWeekIndex({});
     setParseSuccess(null);
-  }, [categories, setSchedule, setRawText, setMeals, setTaskStatuses]);
+  }, [categories, setSchedule, setRawText, setMeals, setTaskStatuses, setFocusLogs, setMultiWeekPlan, setCurrentWeekIndex]);
 
   const handleDeleteTask = useCallback((catId, index) => {
     setSchedule((prev) => {
