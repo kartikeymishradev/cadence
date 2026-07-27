@@ -97,7 +97,7 @@ export default function App() {
   }, [theme]);
 
   // Client-side task reminder notification scheduler
-  useTaskNotifications(schedule, categories);
+  const { requestNotificationPermission } = useTaskNotifications(schedule, categories);
 
   const handleSaveOnboarding = useCallback((data) => {
     if (data.selectedTheme) setTheme(data.selectedTheme);
@@ -632,13 +632,14 @@ export default function App() {
 
         <InfoFooter viewMode={viewMode} />
 
-        {hasParsed && (
-          <NotificationBanner
-            isSupported={pushSupported}
-            isSubscribed={pushSubscribed}
-            onSubscribe={pushSubscribe}
-          />
-        )}
+        <NotificationBanner
+          isSupported={pushSupported || (typeof window !== 'undefined' && 'Notification' in window)}
+          isSubscribed={pushSubscribed}
+          onSubscribe={async () => {
+            if (requestNotificationPermission) await requestNotificationPermission();
+            if (pushSubscribe) await pushSubscribe();
+          }}
+        />
 
         {/* Interactive Spotlight Tour */}
         <GuidedTour
