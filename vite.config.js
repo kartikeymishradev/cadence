@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/*.png'],
       manifest: {
-        name: 'Cadence — Weekly Planner',
-        short_name: 'Cadence',
+        name: 'Dintaal — Weekly Planner',
+        short_name: 'Dintaal',
         description: 'Paste a plan, get a schedule you can actually keep.',
         theme_color: '#1F3A34',
         background_color: '#EDEFEA',

@@ -4,7 +4,7 @@ const AUTHORIZED_EMAILS = [
 ];
 
 /**
- * Checks whether the current user is authorized for Cadence AI Copilot Beta.
+ * Checks whether the current user is authorized for Dintaal AI Copilot Beta.
  * Uses strict Supabase OAuth verified email authentication to prevent impersonation.
  */
 export function checkCopilotAccess(user) {

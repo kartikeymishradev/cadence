@@ -38,7 +38,7 @@ export default function TimetablePromptModal({ isOpen, onClose }) {
           </div>
 
           <p className="modal-subtext">
-            Then copy the clean text response from the AI and paste it directly into Cadence's plan box to generate your schedule!
+            Then copy the clean text response from the AI and paste it directly into Dintaal's plan box to generate your schedule!
           </p>
         </div>
 

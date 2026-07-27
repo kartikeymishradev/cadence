@@ -4,7 +4,7 @@ import { signInWithGoogle, signOut, cloudDeleteAll } from '../services/cloudSync
 
 export default function AuthBar({ user }) {
   const handleClearData = async () => {
-    const confirmation = window.prompt('Are you sure you want to completely delete ALL your Cadence data (schedule, tasks, etc)? This cannot be undone.\\n\\nType "delete" (without quotes) to confirm:');
+    const confirmation = window.prompt('Are you sure you want to completely delete ALL your Dintaal data (schedule, tasks, etc)? This cannot be undone.\\n\\nType "delete" (without quotes) to confirm:');
     if (confirmation === 'delete') {
       try {
         await cloudDeleteAll();

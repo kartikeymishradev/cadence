@@ -19,8 +19,8 @@ export function useTaskNotifications(schedule = {}, categories = []) {
 
       if (res === 'granted') {
         // Send instant test notification as requested by user
-        new Notification('🔔 Cadence Task Reminders Enabled!', {
-          body: 'You are all set! Cadence will alert you when your scheduled tasks begin.',
+        new Notification('🔔 Dintaal Task Reminders Enabled!', {
+          body: 'You are all set! Dintaal will alert you when your scheduled tasks begin.',
           icon: '/favicon.ico',
         });
       }

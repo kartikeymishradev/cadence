@@ -47,7 +47,7 @@ module.exports = async function handler(arg1, arg2) {
       .map((n) => `[${n.title}]: ${n.content.substring(0, 150)}...`)
       .join('\n');
 
-    const systemPrompt = `You are Cadence AI Copilot, a fast productivity assistant for schedule rescheduling and notes Q&A.
+    const systemPrompt = `You are Dintaal AI Copilot, a fast productivity assistant for schedule rescheduling and notes Q&A.
 User's Schedule Today:
 ${scheduleSummary || 'No tasks scheduled yet'}
 

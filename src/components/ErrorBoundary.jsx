@@ -12,7 +12,7 @@ export class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("Cadence App Error Boundary Caught:", error, errorInfo);
+    console.error("Dintaal App Error Boundary Caught:", error, errorInfo);
   }
 
   handleReset = () => {
@@ -35,7 +35,7 @@ export class ErrorBoundary extends React.Component {
           color: '#33414A'
         }}>
           <AlertTriangle size={48} color="#EF4444" style={{ marginBottom: '1rem' }} />
-          <h2>Something went wrong loading Cadence</h2>
+          <h2>Something went wrong loading Dintaal</h2>
           <p style={{ color: '#64748B', maxWidth: '500px', marginBottom: '1rem', fontSize: '14px' }}>
             A display error occurred. Details:
           </p>
@@ -68,7 +68,7 @@ export class ErrorBoundary extends React.Component {
             }}
           >
             <RefreshCw size={16} />
-            Reload Cadence App
+            Reload Dintaal App
           </button>
         </div>
       );

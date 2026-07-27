@@ -113,7 +113,7 @@ module.exports = async function (context) {
         const notifKey = `${sched.userId}_${task.day}_${task.start}_${task.title}`;
 
         const payload = JSON.stringify({
-          title: 'Cadence',
+          title: 'Dintaal',
           body: `${task.title} in 5 min ⏱`,
           icon: '/icons/icon-192.png',
           badge: '/icons/icon-192.png',

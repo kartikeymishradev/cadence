@@ -14,7 +14,7 @@ export default function CopilotDrawer({
     {
       id: 1,
       sender: 'ai',
-      text: 'Hi! I am Cadence AI Copilot. Ask me to reschedule missed classes or query your Notes Vault!',
+      text: 'Hi! I am Dintaal AI Copilot. Ask me to reschedule missed classes or query your Notes Vault!',
     },
   ]);
   const [inputQuery, setInputQuery] = useState('');
@@ -129,7 +129,7 @@ export default function CopilotDrawer({
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Sparkles size={18} style={{ color: 'var(--indigo)' }} />
           <h3 style={{ fontFamily: 'var(--font-voice)', fontSize: 16, margin: 0 }}>
-            Cadence AI Copilot <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>BETA</span>
+            Dintaal AI Copilot <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>BETA</span>
           </h3>
         </div>
         <button
@@ -258,7 +258,7 @@ export default function CopilotDrawer({
             ))}
             {isProcessing && (
               <div style={{ fontSize: 12, color: 'var(--slate)', fontStyle: 'italic' }}>
-                Cadence Copilot is thinking...
+                Dintaal Copilot is thinking...
               </div>
             )}
           </div>

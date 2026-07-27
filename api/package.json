@@ -1,8 +1,8 @@
 {
-  "name": "cadence-api",
+  "name": "dintaal-api",
   "version": "1.0.0",
   "private": true,
-  "description": "API for Cadence weekly planner",
+  "description": "API for Dintaal weekly planner",
   "dependencies": {
     "@azure/cosmos": "^4.2.0",
     "web-push": "^3.6.7"

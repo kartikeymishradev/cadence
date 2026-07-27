@@ -108,7 +108,7 @@ export default function OnboardingWizardModal({
         {step === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <h2 style={{ fontFamily: 'var(--font-voice)', fontSize: 22, margin: 0 }}>
-              Welcome to Cadence! 👋
+              Welcome to Dintaal! 👋
             </h2>
             <p style={{ fontSize: 13, color: 'var(--slate)', margin: 0, lineHeight: 1.45 }}>
               What should we call you? We'll personalize your daily rhythm dashboard.

@@ -14,7 +14,7 @@ export default function TutorialModal({ isOpen, onClose }) {
         <div className="tutorial-step-content">
           <p>Go to the <strong>⚙️ Setup</strong> tab to add your timetables in 2 easy ways:</p>
           <ul>
-            <li><strong>Option A (AI Mode):</strong> Copy our prompt template, paste it in ChatGPT/Gemini along with your timetable image, and paste the clean output into Cadence!</li>
+            <li><strong>Option A (AI Mode):</strong> Copy our prompt template, paste it in ChatGPT/Gemini along with your timetable image, and paste the clean output into Dintaal!</li>
             <li><strong>Option B (Manual Mode):</strong> Add classes and study slots directly with our simple form builder (Title, Day, Time, Duration).</li>
           </ul>
         </div>

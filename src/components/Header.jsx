@@ -46,7 +46,7 @@ export default function Header({
           {onOpenCopilot && (
             <button
               onClick={onOpenCopilot}
-              title="Open Cadence AI Copilot"
+              title="Open Dintaal AI Copilot"
               style={{
                 display: 'flex',
                 alignItems: 'center',

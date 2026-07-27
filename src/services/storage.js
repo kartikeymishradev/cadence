@@ -36,7 +36,7 @@ export function saveWeekData(weekStart, data) {
       }
     }
   } catch (e) {
-    console.warn('Cadence: localStorage save failed', e);
+    console.warn('Dintaal: localStorage save failed', e);
   }
 }
 
@@ -58,7 +58,7 @@ export function loadWeekData(weekStart) {
       }
     }
   } catch (e) {
-    console.warn('Cadence: localStorage load failed', e);
+    console.warn('Dintaal: localStorage load failed', e);
   }
   return result;
 }
