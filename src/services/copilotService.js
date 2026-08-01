@@ -24,12 +24,19 @@ export async function checkCopilotAccess(user) {
     if (!supabase) return false;
     const { data, error } = await supabase
       .from('copilot_allowlist')
-      .select('email');
+      .select('email')
+      .eq('email', email);
 
     if (!error && Array.isArray(data)) {
-      allowlistCache = new Set(data.map((r) => String(r.email).toLowerCase().trim()));
-      lastCacheFetch = now;
-      return allowlistCache.has(email);
+      const isAllowed = data.length > 0;
+      if (isAllowed) {
+        if (!allowlistCache) allowlistCache = new Set();
+        allowlistCache.add(email);
+        lastCacheFetch = now;
+      } else {
+        if (allowlistCache) allowlistCache.delete(email);
+      }
+      return isAllowed;
     }
   } catch (err) {
     console.warn('[Dintaal Copilot] Allowlist lookup failed:', err);
