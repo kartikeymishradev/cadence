@@ -138,11 +138,13 @@ export function generateRescheduleProposal(query, schedule = {}) {
 
   Object.entries(schedule).forEach(([catId, tasks]) => {
     (tasks || []).forEach((t, i) => {
+      const tTitle = String(t?.title || '').toLowerCase();
+      const tKind = String(t?.kind || '').toLowerCase();
       if (
-        qLower.includes(t.title.toLowerCase()) ||
-        qLower.includes(t.kind.toLowerCase()) ||
-        (qLower.includes('class') && t.kind.toLowerCase().includes('class')) ||
-        (qLower.includes('lab') && t.kind.toLowerCase().includes('lab'))
+        (tTitle && qLower.includes(tTitle)) ||
+        (tKind && qLower.includes(tKind)) ||
+        (qLower.includes('class') && tKind.includes('class')) ||
+        (qLower.includes('lab') && tKind.includes('lab'))
       ) {
         targetTask = t;
         targetCat = catId;
@@ -177,10 +179,10 @@ export function generateRescheduleProposal(query, schedule = {}) {
   return {
     type: 'proposal',
     proposal: {
-      taskId: `${targetCat}-${taskIndex}`,
+      taskId: targetTask.id || `${targetCat}-${targetTask.day || 'Monday'}-${taskIndex}`,
       catId: targetCat,
       taskIndex,
-      originalTitle: targetTask.title,
+      originalTitle: targetTask.title || 'Task',
       originalTime: targetTask.time || '10:00 AM',
       newTime,
       reason: 'Adjusted to fit your revised evening energy window.',

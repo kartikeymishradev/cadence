@@ -108,9 +108,20 @@ export default function TodayView({
   // Group tasks dynamically by custom categories
   const categorySections = categories.map((cat) => {
     const tasks = (schedule[cat.id] || [])
-      .filter((t) => !t.day || t.day === todayName || t.day.toLowerCase().startsWith(todayName.slice(0, 3).toLowerCase()))
-      .map((t, i) => ({ ...t, kind: cat.id, indexInCat: i, id: `${cat.id}-${i}` }))
-      .sort((a, b) => (a.start || '00:00').localeCompare(b.start || '00:00'));
+      .filter((t) => {
+        if (!t) return false;
+        if (!t.day) return true;
+        const dayStr = String(t.day).toLowerCase().trim();
+        const targetDayStr = String(todayName).toLowerCase().trim();
+        return dayStr === targetDayStr || dayStr.startsWith(targetDayStr.slice(0, 3));
+      })
+      .map((t, i) => ({
+        ...t,
+        kind: cat.id,
+        indexInCat: i,
+        id: t.id || `${cat.id}-${t.day || todayName}-${i}`,
+      }))
+      .sort((a, b) => String(a.start || '00:00').localeCompare(String(b.start || '00:00')));
 
     return {
       ...cat,
