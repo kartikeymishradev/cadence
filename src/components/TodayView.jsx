@@ -27,6 +27,7 @@ export default function TodayView({
   onUpdateTaskTime,
   onCycleStatus,
   onNavigateToWeek,
+  onViewChange,
 }) {
   // Live Clock State
   const [now, setNow] = useState(new Date());
@@ -149,6 +150,7 @@ export default function TodayView({
   ].sort((a, b) => (a.start || '00:00').localeCompare(b.start || '00:00'));
 
   const totalTasks = allToday.length;
+  const totalWeekTasks = Object.values(schedule || {}).reduce((acc, list) => acc + (Array.isArray(list) ? list.length : 0), 0);
 
   // ── Calculate Next / Active Task ──
   const nowMinutes = now.getHours() * 60 + now.getMinutes();
@@ -930,11 +932,24 @@ export default function TodayView({
       {totalTasks === 0 && !isRestDay && (
         <div className="today-view__empty">
           <Coffee size={40} className="today-view__empty-icon" />
-          <h3>No tasks scheduled for today</h3>
-          <p>Go to the Setup tab to add tasks manually or parse your timetable with AI.</p>
-          <button className="cadence-btn cadence-btn--primary" onClick={onNavigateToWeek}>
-            Go to Setup & Add Tasks
-          </button>
+          <h3>No tasks scheduled for today ({todayName})</h3>
+          {totalWeekTasks > 0 ? (
+            <p style={{ maxWidth: 460, margin: '0 auto 16px' }}>
+              You have <strong>{totalWeekTasks} tasks</strong> saved in your schedule for other days of the week! Tap below to view your full weekly schedule or add new tasks.
+            </p>
+          ) : (
+            <p>Go to the Setup tab to add tasks manually or parse your timetable with AI.</p>
+          )}
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {totalWeekTasks > 0 && onViewChange && (
+              <button className="cadence-btn cadence-btn--primary" onClick={() => onViewChange('week')}>
+                View Full Week Schedule
+              </button>
+            )}
+            <button className="cadence-btn" onClick={onNavigateToWeek} style={{ background: totalWeekTasks > 0 ? 'var(--paper-raised)' : undefined, border: totalWeekTasks > 0 ? '1px solid var(--hairline)' : undefined }}>
+              {totalWeekTasks > 0 ? '+ Add Tasks in Setup' : 'Go to Setup & Add Tasks'}
+            </button>
+          </div>
         </div>
       )}
 
@@ -978,8 +993,13 @@ export default function TodayView({
                 {sec.tasks.length > 0 ? (
                   sec.tasks.map((task, i) => renderTaskCard(task, sec.color, i))
                 ) : (
-                  <div className="empty-category-pill">
+                  <div className="empty-category-pill" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span>No {sec.label} items scheduled for {todayName}</span>
+                    {(schedule[sec.id] || []).length > 0 && (
+                      <span style={{ fontSize: 11, color: 'var(--slate)', fontStyle: 'normal' }}>
+                        ({(schedule[sec.id] || []).length} saved on other days)
+                      </span>
+                    )}
                   </div>
                 )}
               </div>

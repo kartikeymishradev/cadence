@@ -557,6 +557,7 @@ export default function App() {
             onUpdateTaskTime={handleUpdateTaskTime}
             onCycleStatus={cycleStatus}
             onNavigateToWeek={() => setViewMode('setup')}
+            onViewChange={setViewMode}
           />
         )}
 
