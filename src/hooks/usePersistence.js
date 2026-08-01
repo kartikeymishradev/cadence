@@ -162,6 +162,15 @@ export function usePersistence(weekStart, user) {
   const [multiWeekPlan, setMultiWeekPlan] = useState({});
   const [currentWeekIndex, setCurrentWeekIndex] = useState({});
 
+  // Stage B/C/D state — declared here so applyData + save effect can reference them
+  const [subjectRegistry, setSubjectRegistry] = useState(DEFAULT_SUBJECT_REGISTRY);
+  const [weeklyReflection, setWeeklyReflection] = useState({
+    wentWell: '',
+    biggestDistraction: '',
+    nextWeekFocus: '',
+  });
+  const [semesterConfig, setSemesterConfig] = useState(DEFAULT_SEMESTER_CONFIG);
+
   // ── Apply a saved data object to state ──
   const applyData = useCallback((savedData) => {
     if (!savedData || typeof savedData !== 'object' || Array.isArray(savedData)) return;
