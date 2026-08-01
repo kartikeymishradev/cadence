@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, CalendarOff, Coffee, Check, Minus, X, Hourglass, Zap, FileText, GraduationCap, LayoutGrid, CheckCircle2, Edit2, Eye, EyeOff, RotateCw, Moon, Sparkles, BedDouble } from 'lucide-react';
+import { Clock, CalendarOff, Coffee, Check, Minus, X, Hourglass, Zap, FileText, GraduationCap, LayoutGrid, CheckCircle2, Edit2, Eye, EyeOff, RotateCw, Moon, Sparkles, BedDouble, BookMarked } from 'lucide-react';
 import { WEEKDAYS, STATUS_STYLE } from '../utils/constants';
 import { dateKey } from '../utils/dateUtils';
 import CollegeOverviewModal from './CollegeOverviewModal';
@@ -254,6 +254,49 @@ export default function TodayView({
     };
   }
 
+  // ── Stage A: Less AI, More Awareness Metrics ──
+  const totalPlannedMins = allToday.reduce((acc, t) => acc + (Number(t.duration) || 30), 0);
+  const plannedHoursStr = (totalPlannedMins / 60).toFixed(1);
+
+  const totalActualMins = allToday.reduce((acc, t) => {
+    const statusInfo = taskStatuses[t.id];
+    if (!statusInfo) return acc;
+    if (statusInfo.actualMinutes && Number(statusInfo.actualMinutes) > 0) {
+      return acc + Number(statusInfo.actualMinutes);
+    }
+    if (statusInfo.status === 'done') {
+      return acc + (Number(t.duration) || 30);
+    }
+    if (statusInfo.status === 'partial') {
+      return acc + Math.round((Number(t.duration) || 30) * 0.5);
+    }
+    return acc;
+  }, 0);
+
+  const actualHoursStr = (totalActualMins / 60).toFixed(1);
+  const timeAlignmentPct = totalPlannedMins > 0 ? Math.round((totalActualMins / totalPlannedMins) * 100) : 0;
+
+  const touchedCategoriesSet = new Set();
+  allToday.forEach((t) => {
+    const status = taskStatuses[t.id]?.status;
+    const mins = taskStatuses[t.id]?.actualMinutes;
+    if (status === 'done' || status === 'partial' || (mins && Number(mins) > 0)) {
+      touchedCategoriesSet.add(t.catId || t.category || 'general');
+    }
+  });
+  const categoriesTouchedCount = touchedCategoriesSet.size;
+
+  let deadlineStripInfo = null;
+  if (closestDeadline) {
+    const diffMs = closestDeadline.deadline - now;
+    const daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    deadlineStripInfo = {
+      title: closestDeadline.note || 'Milestone / Exam',
+      daysRemaining,
+      formattedDays: daysRemaining === 0 ? 'Today!' : daysRemaining === 1 ? '1 day left' : `${daysRemaining} days left`
+    };
+  }
+
   // Calculate metrics
   const completedTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'done').length;
   const partialTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'partial').length;
@@ -487,6 +530,17 @@ export default function TodayView({
         </div>
       </div>
 
+      {/* 1. STAGE A: DEADLINE STRIP */}
+      {deadlineStripInfo && (
+        <div className="dintaal-deadline-strip">
+          <BookMarked size={16} style={{ color: 'var(--indigo)' }} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <span>📚 <strong>{deadlineStripInfo.title}</strong></span>
+            <span className="dintaal-deadline-strip__badge">{deadlineStripInfo.formattedDays}</span>
+          </div>
+        </div>
+      )}
+
       {/* Dintaal Rhythm Cycle Card */}
       {totalTasks > 0 && (
         <div className="dintaal-cycle-card">
@@ -495,6 +549,27 @@ export default function TodayView({
             <span className="dintaal-done-count">{completedTasks}/{totalTasks} beats ({progressPct}%)</span>
           </div>
           <BeatStrip beats={allToday.map((t) => (taskStatuses[t.id]?.status === 'done'))} size={14} gap={10} />
+        </div>
+      )}
+
+      {/* 2. STAGE A: TIME REALITY CARD */}
+      {totalTasks > 0 && (
+        <div className="time-reality-card">
+          <div className="time-reality-header">
+            <span className="dintaal-mono-label">TIME REALITY (TODAY)</span>
+            <span className="time-reality-pct">{timeAlignmentPct}% of planned time</span>
+          </div>
+          <div className="time-reality-metrics">
+            <div className="time-metric-box">
+              <span className="metric-label">PLANNED TIME</span>
+              <strong className="metric-val">{plannedHoursStr} hrs</strong>
+            </div>
+            <div className="time-metric-divider" />
+            <div className="time-metric-box">
+              <span className="metric-label">ACTUAL FOCUS</span>
+              <strong className="metric-val">{actualHoursStr} hrs</strong>
+            </div>
+          </div>
         </div>
       )}
 
@@ -844,15 +919,45 @@ export default function TodayView({
         </>
       )}
 
-      {/* End-of-day Quick Review Banner */}
+      {/* 3. STAGE A: END-OF-DAY SUMMARY CARD */}
       {totalTasks > 0 && (!isRestDay || showTasksOnRestDay) && (
-        <div className="today-view__review-bar">
-          <div className="today-view__review-stats">
-            <span className="stat-tag stat-tag--done"><Check size={12} /> {completedTasks} Done</span>
-            <span className="stat-tag stat-tag--partial"><Minus size={12} /> {partialTasks} Partial</span>
-            <span className="stat-tag stat-tag--skipped"><X size={12} /> {skippedTasks} Skipped</span>
+        <div className="end-of-day-card">
+          <div className="end-of-day-header">
+            <h3 className="end-of-day-title">
+              <CheckCircle2 size={16} style={{ color: 'var(--sage)' }} />
+              End-of-Day Summary
+            </h3>
+            <span className="dintaal-mono-label">DAY RHYTHM</span>
           </div>
-          <span className="today-view__review-hint">Tap status buttons to log your progress</span>
+
+          <div className="end-of-day-grid">
+            <div className="end-of-day-stat">
+              <span className="end-of-day-stat__label">FOCUS LOGGED</span>
+              <strong className="end-of-day-stat__val">{actualHoursStr} hrs</strong>
+            </div>
+
+            <div className="end-of-day-stat">
+              <span className="end-of-day-stat__label">COMPLETED</span>
+              <strong className="end-of-day-stat__val">{completedTasks} / {totalTasks}</strong>
+            </div>
+
+            <div className="end-of-day-stat">
+              <span className="end-of-day-stat__label">CATEGORIES TOUCHED</span>
+              <strong className="end-of-day-stat__val">{categoriesTouchedCount} active</strong>
+            </div>
+
+            <div className="end-of-day-stat">
+              <span className="end-of-day-stat__label">COMPLETION RATE</span>
+              <strong className="end-of-day-stat__val">{progressPct}%</strong>
+            </div>
+
+            <div className="end-of-day-stat">
+              <span className="end-of-day-stat__label">SLEEP TARGET</span>
+              <strong className="end-of-day-stat__val" style={{ fontSize: 13, color: 'var(--sage)' }}>
+                ✓ {sleepHours} hrs rest
+              </strong>
+            </div>
+          </div>
         </div>
       )}
 
