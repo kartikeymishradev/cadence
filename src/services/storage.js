@@ -22,6 +22,7 @@ const ALL_FIELDS = [
   'macros',
   'muscleFocus',
   'subjectRegistry',
+  'weeklyReflection',
 ];
 
 /**

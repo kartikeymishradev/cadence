@@ -246,20 +246,17 @@ export function usePersistence(weekStart, user) {
 
     cloudLoad(user.id).then((allCloudData) => {
       if (allCloudData && Object.keys(allCloudData).length > 0) {
-        // allCloudData is a flat map: { "2026-07-20": {...}, "settings": {...}, ... }
         if (allCloudData['settings']) {
           applyData(allCloudData['settings']);
         }
         if (allCloudData[weekKey]) {
           applyData(allCloudData[weekKey]);
         } else {
-          // Fallback: apply the first entry if weekKey is not found
           const firstKey = Object.keys(allCloudData).find((k) => k !== 'settings') || Object.keys(allCloudData)[0];
           if (firstKey) applyData(allCloudData[firstKey]);
         }
         cloudLoaded.current = true;
       } else if (allCloudData) {
-        // Cloud returned empty object (user has no data yet in cloud)
         cloudLoaded.current = true;
       }
     });
@@ -272,7 +269,6 @@ export function usePersistence(weekStart, user) {
     const payload = {
       theme,
       categories,
-      subjectRegistry,
       schedule,
       meals,
       dayStatus,
@@ -285,6 +281,9 @@ export function usePersistence(weekStart, user) {
       sleepSchedule,
       macros,
       muscleFocus,
+      focusLogs,
+      subjectRegistry,
+      weeklyReflection,
     };
 
     saveWeekData(weekKey, payload);
@@ -299,7 +298,6 @@ export function usePersistence(weekStart, user) {
     weekKey,
     theme,
     categories,
-    subjectRegistry,
     schedule,
     meals,
     dayStatus,
@@ -313,6 +311,8 @@ export function usePersistence(weekStart, user) {
     macros,
     muscleFocus,
     focusLogs,
+    subjectRegistry,
+    weeklyReflection,
     user,
   ]);
 
@@ -333,5 +333,6 @@ export function usePersistence(weekStart, user) {
     macros, setMacros,
     muscleFocus, setMuscleFocus,
     focusLogs, setFocusLogs,
+    weeklyReflection, setWeeklyReflection,
   };
 }

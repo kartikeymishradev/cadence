@@ -90,6 +90,7 @@ export default function App() {
     muscleFocus, setMuscleFocus,
     focusLogs, setFocusLogs,
     subjectRegistry, setSubjectRegistry,
+    weeklyReflection, setWeeklyReflection,
   } = usePersistence(weekStart, user);
 
   // Sync active theme with document body data-theme attribute
@@ -562,6 +563,8 @@ export default function App() {
                 taskStatuses={taskStatuses}
                 subjectRegistry={subjectRegistry}
                 categories={categories}
+                weeklyReflection={weeklyReflection}
+                onUpdateWeeklyReflection={setWeeklyReflection}
               />
               <button
                 className="cadence-btn cadence-btn--primary"

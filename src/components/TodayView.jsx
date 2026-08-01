@@ -328,6 +328,14 @@ export default function TodayView({
 
   const progressPct = totalTasks > 0 ? Math.round(((completedTasks + partialTasks * 0.5) / totalTasks) * 100) : 0;
 
+  // ── Feature 6: STAGE C TRANSPARENT RHYTHM SCORE ──
+  const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
+  const sleepPts = (sleepSchedule?.sleepStart && sleepSchedule?.sleepEnd) ? 25 : 15;
+  const focusPts = Math.min(25, Math.round((totalActualMins / 180) * 25));
+  const taskPts = Math.round(progressPct * 0.25);
+  const consistencyPts = 25;
+  const totalRhythmScore = isRestDay ? null : (sleepPts + focusPts + taskPts + consistencyPts);
+
   const handleToggleStatus = (id, currentStatus) => {
     const nextStatus =
       currentStatus === 'pending'
@@ -594,6 +602,81 @@ export default function TodayView({
           </div>
         </div>
       )}
+
+      {/* 6. STAGE C: TRANSPARENT RHYTHM SCORE CARD */}
+      <div
+        style={{
+          background: 'var(--paper-raised)',
+          border: '1px solid var(--hairline)',
+          borderRadius: 14,
+          padding: '14px 16px',
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Zap size={16} style={{ color: 'var(--sage)' }} />
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.5px', color: 'var(--slate)' }}>
+              DAILY RHYTHM SCORE
+            </span>
+          </div>
+
+          {isRestDay ? (
+            <span style={{ fontSize: 12, color: 'var(--indigo)', fontWeight: 600 }}>🌙 Planned Rest Day</span>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <strong style={{ fontFamily: 'var(--font-voice)', fontSize: 20, color: 'var(--ink)' }}>
+                {totalRhythmScore} <span style={{ fontSize: 13, color: 'var(--slate)' }}>/ 100</span>
+              </strong>
+              <button
+                onClick={() => setShowScoreBreakdown(!showScoreBreakdown)}
+                style={{
+                  background: 'none',
+                  border: '1px solid var(--hairline)',
+                  borderRadius: 6,
+                  padding: '2px 8px',
+                  fontSize: 11,
+                  color: 'var(--slate)',
+                  cursor: 'pointer',
+                }}
+              >
+                {showScoreBreakdown ? 'Hide Math' : 'Explain Math ℹ️'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {!isRestDay && showScoreBreakdown && (
+          <div
+            style={{
+              marginTop: 12,
+              paddingTop: 10,
+              borderTop: '1px solid var(--hairline)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 6,
+              fontSize: 12,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>🌙 <strong>Sleep Target</strong> (Rest configured)</span>
+              <span style={{ fontFamily: 'var(--font-mono)' }}>{sleepPts} / 25 pts</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>⏱ <strong>Focus Endurance</strong> ({actualHoursStr} / 3.0 hrs logged)</span>
+              <span style={{ fontFamily: 'var(--font-mono)' }}>{focusPts} / 25 pts</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>🎯 <strong>Task Execution Rate</strong> ({progressPct}% beats completed)</span>
+              <span style={{ fontFamily: 'var(--font-mono)' }}>{taskPts} / 25 pts</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span>🔥 <strong>Consistency Signal</strong> (Active streak log)</span>
+              <span style={{ fontFamily: 'var(--font-mono)' }}>{consistencyPts} / 25 pts</span>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Dintaal Rhythm Cycle Card */}
       {totalTasks > 0 && (

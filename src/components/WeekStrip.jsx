@@ -11,7 +11,19 @@ export default function WeekStrip({
   taskStatuses = {},
   subjectRegistry = {},
   categories = [],
+  weeklyReflection = {},
+  onUpdateWeeklyReflection,
 }) {
+  const reflectionData = weeklyReflection || {};
+
+  const handleChangeReflection = (field, val) => {
+    if (onUpdateWeeklyReflection) {
+      onUpdateWeeklyReflection({
+        ...reflectionData,
+        [field]: val,
+      });
+    }
+  };
   const statusColor = {
     study: 'var(--sage)',
     off: 'transparent',
@@ -194,6 +206,95 @@ export default function WeekStrip({
             </button>
           );
         })}
+      </div>
+
+      {/* Feature 7: STAGE C WEEKLY REFLECTION CARD */}
+      <div
+        style={{
+          background: 'var(--paper-raised)',
+          border: '1px solid var(--hairline)',
+          borderRadius: 14,
+          padding: '14px 16px',
+          marginTop: 16,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.5px', color: 'var(--slate)' }}>
+            WEEKLY REFLECTION JOURNAL
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--slate)' }}>3 Fixed Questions</span>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink)', marginBottom: 4 }}>
+              1. What went well this week?
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Completed all DAA assignments and stayed consistent with sleep..."
+              value={reflectionData.wentWell || ''}
+              onChange={(e) => handleChangeReflection('wentWell', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--hairline)',
+                background: 'var(--paper)',
+                color: 'var(--ink)',
+                fontSize: 12,
+                fontFamily: 'inherit',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink)', marginBottom: 4 }}>
+              2. What was your biggest distraction?
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Late night scrolling on Tuesday..."
+              value={reflectionData.biggestDistraction || ''}
+              onChange={(e) => handleChangeReflection('biggestDistraction', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--hairline)',
+                background: 'var(--paper)',
+                color: 'var(--ink)',
+                fontSize: 12,
+                fontFamily: 'inherit',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--ink)', marginBottom: 4 }}>
+              3. What is your primary focus for next week?
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. Finish Big Data project & study IoT Unit 2..."
+              value={reflectionData.nextWeekFocus || ''}
+              onChange={(e) => handleChangeReflection('nextWeekFocus', e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 10px',
+                borderRadius: 8,
+                border: '1px solid var(--hairline)',
+                background: 'var(--paper)',
+                color: 'var(--ink)',
+                fontSize: 12,
+                fontFamily: 'inherit',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
