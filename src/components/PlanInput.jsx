@@ -22,7 +22,7 @@ export default function PlanInput({
 }) {
   const [newSubjName, setNewSubjName] = React.useState('');
   const cats = (Array.isArray(categories) && categories.length > 0) ? categories : [
-    { id: 'skill', label: 'Skill Prep', dot: 'var(--sage)' },
+    { id: 'skill', label: 'Career & Skills', dot: 'var(--sage)' },
     { id: 'college', label: 'College', dot: 'var(--indigo)' },
     { id: 'gym', label: 'Gym & Diet', dot: 'var(--gold)' },
   ];

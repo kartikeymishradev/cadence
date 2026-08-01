@@ -16,7 +16,7 @@ export default function ExcelGoalsSheet({
   const [newGoalName, setNewGoalName] = useState('');
   const [newTarget, setNewTarget] = useState('20');
   const [newUnit, setNewUnit] = useState('hrs');
-  const [newCategory, setNewCategory] = useState('Skill Prep');
+  const [newCategory, setNewCategory] = useState('skill');
 
   const safeGoals = goals && goals.length > 0 ? goals : [];
 
@@ -32,7 +32,7 @@ export default function ExcelGoalsSheet({
           c.id.toLowerCase() === goalCatLower ||
           (c.label && c.label.toLowerCase().includes(goalCatLower)) ||
           goalCatLower.includes(c.id.toLowerCase())
-      ) || (categories && categories[0]) || { id: 'skill', label: 'Skill Prep' };
+      ) || (categories && categories[0]) || { id: 'skill', label: 'Career & Skills' };
 
       const catId = matchedCat.id;
 
@@ -53,7 +53,7 @@ export default function ExcelGoalsSheet({
 
         const tasks = schedule[cat.id] || [];
         tasks.forEach((t, idx) => {
-          const taskId = `${cat.id}-${idx}`;
+          const taskId = `${cat.id}-${t.day}-${idx}`;
           const st = taskStatuses[taskId] || {};
           const status = st.status || 'pending';
 

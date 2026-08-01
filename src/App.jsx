@@ -416,7 +416,7 @@ export default function App() {
     const result = [];
     categories.forEach((cat) => {
       (schedule[cat.id] || []).forEach((t, i) => {
-        result.push({ ...t, kind: cat.id, id: `${cat.id}-${i}` });
+        result.push({ ...t, kind: cat.id, id: `${cat.id}-${t.day}-${i}` });
       });
     });
     return result;
@@ -457,7 +457,7 @@ export default function App() {
   const activeTasks = (schedule[tab] || schedule['skill'] || schedule['gym'] || []).map((t, i) => ({
     ...t,
     kind: tab,
-    id: `${tab}-${i}`,
+    id: `${tab}-${t.day}-${i}`,
   }));
 
   const safeMeals = Array.isArray(meals) ? meals : [];

@@ -145,7 +145,7 @@ export default function OnboardingWizardModal({
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
               {[
-                { id: 'skill', label: 'Skill Prep (Coding, Projects, Reading)', icon: BookOpen },
+                { id: 'skill', label: 'Career & Skills (Coding, Projects, Reading)', icon: BookOpen },
                 { id: 'college', label: 'College & Classes (Lectures, Labs, Notes)', icon: GraduationCap },
                 { id: 'gym', label: 'Gym & Fitness (Workouts, Meals, Macros)', icon: Dumbbell },
               ].map((item) => {

@@ -41,7 +41,7 @@ export const DEFAULT_SEMESTER_CONFIG = {
  * Migration helper for taskStatuses, custom categories, subjectRegistry, and dynamic schedule maps.
  */
 export function migrateTaskStatuses(saved) {
-  if (!saved) return { taskStatuses: {}, goals: [], categories: DEFAULT_CATEGORIES, subjectRegistry: DEFAULT_SUBJECT_REGISTRY };
+  if (!saved) return { taskStatuses: {}, goals: [], categories: DEFAULT_CATEGORIES, subjectRegistry: {} };
 
   const taskStatuses = saved.taskStatuses ? { ...saved.taskStatuses } : {};
 
@@ -54,15 +54,24 @@ export function migrateTaskStatuses(saved) {
     });
   }
 
-  // Migrate legacy categories
-  const categories = saved.categories && saved.categories.length > 0
-    ? saved.categories
-    : DEFAULT_CATEGORIES;
+  // ── Issue 2: Migrate stale 'Skill Prep' category label → 'Career & Skills' ──
+  const categories = (() => {
+    const raw = saved.categories && saved.categories.length > 0
+      ? saved.categories
+      : DEFAULT_CATEGORIES;
+    return raw.map((c) =>
+      c.id === 'skill' && c.label === 'Skill Prep'
+        ? { ...c, label: 'Career & Skills' }
+        : c
+    );
+  })();
 
-  // Migrate subject registry
+  // ── Issue 1: Empty registry for genuinely new users ──
+  // Existing users who already saved a registry keep it (merged with DEFAULT to pick up new subjects).
+  // Brand-new users (no saved registry at all) start empty — no personal seed data imposed.
   const subjectRegistry = saved.subjectRegistry && Object.keys(saved.subjectRegistry).length > 0
     ? { ...DEFAULT_SUBJECT_REGISTRY, ...saved.subjectRegistry }
-    : DEFAULT_SUBJECT_REGISTRY;
+    : {};
 
   // Migrate schedule map & auto-match subjects
   const rawSchedule = saved.schedule || {};
@@ -98,6 +107,26 @@ export function migrateTaskStatuses(saved) {
         subjectId: matched ? matched.id : null,
       };
     });
+  });
+
+  // ── Issue 3: Migrate old task IDs (catId-idx) → new day-scoped IDs (catId-day-idx) ──
+  // Old format: 'college-3'  →  new format: 'college-Wednesday-3'
+  // Only keys matching /^[a-z]+-\d+$/ (no day segment) are migrated.
+  // If the task at that index no longer exists in the schedule (re-parse happened), the entry is dropped.
+  const oldIdPattern = /^([a-z]+)-([0-9]+)$/;
+  Object.keys(taskStatuses).forEach((oldKey) => {
+    if (!oldIdPattern.test(oldKey)) return; // already new format or unrecognised — skip
+    const [, catId, idxStr] = oldKey.match(oldIdPattern);
+    const idx = parseInt(idxStr, 10);
+    const task = schedule[catId]?.[idx];
+    if (task?.day) {
+      const newKey = `${catId}-${task.day}-${idx}`;
+      if (!taskStatuses[newKey]) {
+        taskStatuses[newKey] = taskStatuses[oldKey];
+      }
+    }
+    // Whether migrated or orphaned, remove old key
+    delete taskStatuses[oldKey];
   });
 
   // Migrate rawText map
@@ -163,7 +192,9 @@ export function usePersistence(weekStart, user) {
   const [currentWeekIndex, setCurrentWeekIndex] = useState({});
 
   // Stage B/C/D state — declared here so applyData + save effect can reference them
-  const [subjectRegistry, setSubjectRegistry] = useState(DEFAULT_SUBJECT_REGISTRY);
+  // Issue 1: New users start with an empty registry — no personal seed data imposed.
+  // Existing users load their saved registry via applyData() on mount.
+  const [subjectRegistry, setSubjectRegistry] = useState({});
   const [weeklyReflection, setWeeklyReflection] = useState({
     wentWell: '',
     biggestDistraction: '',

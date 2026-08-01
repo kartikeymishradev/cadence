@@ -44,7 +44,7 @@ export default function NotesVault({
 
   const cats = [
     { id: 'all', label: 'All Categories' },
-    { id: 'Skill Prep', label: 'Skill Prep', dot: 'var(--sage)' },
+    { id: 'skill', label: 'Career & Skills', dot: 'var(--sage)' },
     { id: 'College', label: 'College', dot: 'var(--indigo)' },
     { id: 'Gym & Diet', label: 'Gym & Diet', dot: 'var(--gold)' },
   ];
