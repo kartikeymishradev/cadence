@@ -9,11 +9,29 @@ export const DEFAULT_CATEGORIES = [
   { id: 'gym', label: 'Gym & Diet', icon: 'Dumbbell', color: '#C9922B' },
 ];
 
+export const DEFAULT_SUBJECT_REGISTRY = {
+  college: [
+    { id: 'subj-big-data', name: 'Big Data Technologies', color: '#5F8467' },
+    { id: 'subj-fintech-corel', name: 'Financial Co-relations', color: '#33414A' },
+    { id: 'subj-intro-fintech', name: 'Introduction to Fintech', color: '#4F46E5' },
+    { id: 'subj-intro-iot', name: 'Introduction to IoT', color: '#C9922B' },
+    { id: 'subj-daa', name: 'Design & Analysis of Algorithm', color: '#059669' },
+    { id: 'subj-constitution', name: 'Constitution of India', color: '#7C3AED' },
+  ],
+  skill: [
+    { id: 'subj-dsa', name: 'Data Structures & Algorithms', color: '#5F8467' },
+    { id: 'subj-system-design', name: 'System Design', color: '#33414A' },
+  ],
+  gym: [
+    { id: 'subj-workout', name: 'Workout & Fitness', color: '#C9922B' },
+  ],
+};
+
 /**
- * Migration helper for taskStatuses, custom categories, and dynamic schedule maps.
+ * Migration helper for taskStatuses, custom categories, subjectRegistry, and dynamic schedule maps.
  */
 export function migrateTaskStatuses(saved) {
-  if (!saved) return { taskStatuses: {}, goals: [], categories: DEFAULT_CATEGORIES };
+  if (!saved) return { taskStatuses: {}, goals: [], categories: DEFAULT_CATEGORIES, subjectRegistry: DEFAULT_SUBJECT_REGISTRY };
 
   const taskStatuses = saved.taskStatuses ? { ...saved.taskStatuses } : {};
 
@@ -31,7 +49,12 @@ export function migrateTaskStatuses(saved) {
     ? saved.categories
     : DEFAULT_CATEGORIES;
 
-  // Migrate schedule map
+  // Migrate subject registry
+  const subjectRegistry = saved.subjectRegistry && Object.keys(saved.subjectRegistry).length > 0
+    ? { ...DEFAULT_SUBJECT_REGISTRY, ...saved.subjectRegistry }
+    : DEFAULT_SUBJECT_REGISTRY;
+
+  // Migrate schedule map & auto-match subjects
   const rawSchedule = saved.schedule || {};
   const schedule = { ...rawSchedule };
   if (rawSchedule.study && !schedule.skill) {
@@ -40,6 +63,31 @@ export function migrateTaskStatuses(saved) {
 
   categories.forEach((cat) => {
     if (!schedule[cat.id]) schedule[cat.id] = [];
+  });
+
+  // Auto-matcher for existing tasks without a subjectId
+  Object.keys(schedule).forEach((catId) => {
+    const registryForCat = subjectRegistry[catId] || [];
+    schedule[catId] = (schedule[catId] || []).map((task) => {
+      if (task.subjectId) return task;
+
+      const titleLower = String(task.title || '').toLowerCase();
+      const matched = registryForCat.find((subj) => {
+        const nameLower = subj.name.toLowerCase();
+        if (titleLower.includes(nameLower)) return true;
+        if (subj.name === 'Design & Analysis of Algorithm' && (titleLower.includes('daa') || titleLower.includes('algorithm'))) return true;
+        if (subj.name === 'Big Data Technologies' && titleLower.includes('big data')) return true;
+        if (subj.name === 'Introduction to IoT' && titleLower.includes('iot')) return true;
+        if (subj.name === 'Constitution of India' && (titleLower.includes('constitution') || titleLower.includes('coi'))) return true;
+        if (subj.name === 'Financial Co-relations' && titleLower.includes('financial')) return true;
+        return false;
+      });
+
+      return {
+        ...task,
+        subjectId: matched ? matched.id : null,
+      };
+    });
   });
 
   // Migrate rawText map
@@ -57,6 +105,7 @@ export function migrateTaskStatuses(saved) {
     schedule,
     rawText,
     categories,
+    subjectRegistry,
     taskStatuses,
     theme: saved.theme || 'paper',
     goals: saved.goals || [],
@@ -223,6 +272,7 @@ export function usePersistence(weekStart, user) {
     const payload = {
       theme,
       categories,
+      subjectRegistry,
       schedule,
       meals,
       dayStatus,
@@ -249,6 +299,7 @@ export function usePersistence(weekStart, user) {
     weekKey,
     theme,
     categories,
+    subjectRegistry,
     schedule,
     meals,
     dayStatus,
@@ -268,6 +319,7 @@ export function usePersistence(weekStart, user) {
   return {
     theme, setTheme,
     categories, setCategories,
+    subjectRegistry, setSubjectRegistry,
     rawText, setRawText,
     schedule, setSchedule,
     meals, setMeals,

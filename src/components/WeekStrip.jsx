@@ -3,7 +3,15 @@ import { WEEKDAYS } from '../utils/constants';
 import { dateKey } from '../utils/dateUtils';
 import BeatStrip from './BeatStrip';
 
-export default function WeekStrip({ weekDates, dayStatus, onCycleStatus }) {
+export default function WeekStrip({
+  weekDates,
+  dayStatus,
+  onCycleStatus,
+  schedule = {},
+  taskStatuses = {},
+  subjectRegistry = {},
+  categories = [],
+}) {
   const statusColor = {
     study: 'var(--sage)',
     off: 'transparent',
@@ -25,6 +33,62 @@ export default function WeekStrip({ weekDates, dayStatus, onCycleStatus }) {
     ? safeWeekDates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     : 'Jul 20';
 
+  // ── Feature 4: Subject Heatmap Calculation ──
+  const subjectHoursMap = {};
+  let totalWeekMins = 0;
+
+  Object.entries(schedule).forEach(([catId, tasks]) => {
+    if (!Array.isArray(tasks)) return;
+    tasks.forEach((t) => {
+      const statusInfo = taskStatuses[t.id];
+      let mins = 0;
+      if (statusInfo?.actualMinutes && Number(statusInfo.actualMinutes) > 0) {
+        mins = Number(statusInfo.actualMinutes);
+      } else if (statusInfo?.status === 'done') {
+        mins = Number(t.duration) || 30;
+      } else if (statusInfo?.status === 'partial') {
+        mins = Math.round((Number(t.duration) || 30) * 0.5);
+      }
+
+      if (mins > 0) {
+        const subjId = t.subjectId || 'unassigned';
+        subjectHoursMap[subjId] = (subjectHoursMap[subjId] || 0) + mins;
+        totalWeekMins += mins;
+      }
+    });
+  });
+
+  // Build list of all subjects with hours logged or registered
+  const allRegisteredList = [];
+  Object.entries(subjectRegistry).forEach(([catId, subjs]) => {
+    (subjs || []).forEach((s) => {
+      const mins = subjectHoursMap[s.id] || 0;
+      allRegisteredList.push({
+        id: s.id,
+        name: s.name,
+        color: s.color || 'var(--indigo)',
+        hours: mins / 60,
+      });
+    });
+  });
+
+  if (subjectHoursMap['unassigned'] && subjectHoursMap['unassigned'] > 0) {
+    allRegisteredList.push({
+      id: 'unassigned',
+      name: 'Unassigned Tasks',
+      color: 'var(--slate)',
+      hours: subjectHoursMap['unassigned'] / 60,
+    });
+  }
+
+  // Filter & sort subjects by hours logged
+  const activeSubjectHeatmap = allRegisteredList
+    .filter((s) => s.hours > 0)
+    .sort((a, b) => b.hours - a.hours);
+
+  const maxHours = Math.max(...activeSubjectHeatmap.map((s) => s.hours), 1);
+  const totalWeekHours = totalWeekMins / 60;
+
   return (
     <div style={{ width: '100%' }}>
       {/* WEEK CYCLE Card */}
@@ -43,6 +107,54 @@ export default function WeekStrip({ weekDates, dayStatus, onCycleStatus }) {
           </span>
         </div>
         <BeatStrip beats={beats} size={14} gap={8} />
+      </div>
+
+      {/* Feature 4: STAGE B SUBJECT HEATMAP CARD */}
+      <div
+        style={{
+          background: 'var(--paper-raised)',
+          border: '1px solid var(--hairline)',
+          borderRadius: 14,
+          padding: '14px 16px',
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.5px', color: 'var(--slate)' }}>
+            SUBJECT HEATMAP (WEEK VIEW)
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--sage)', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+            {totalWeekHours.toFixed(1)} hrs total
+          </span>
+        </div>
+
+        {activeSubjectHeatmap.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {activeSubjectHeatmap.map((item) => {
+              const pct = Math.round((item.hours / maxHours) * 100);
+              return (
+                <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--ink)' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color }} />
+                      <strong>{item.name}</strong>
+                    </span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--slate)' }}>
+                      {item.hours.toFixed(1)} hrs
+                    </span>
+                  </div>
+                  <div style={{ width: '100%', height: 6, borderRadius: 3, background: 'var(--paper)', overflow: 'hidden' }}>
+                    <div style={{ width: `${pct}%`, height: '100%', background: item.color, borderRadius: 3, transition: 'width 0.3s ease' }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <span style={{ fontSize: 12, color: 'var(--slate)', fontStyle: 'italic' }}>
+            No subject hours logged yet this week. Mark tasks as done in Today view to log hours!
+          </span>
+        )}
       </div>
 
       <h2 style={{ fontFamily: 'var(--font-voice)', fontSize: 18, margin: '0 0 12px' }}>

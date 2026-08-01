@@ -13,6 +13,7 @@ export default function TodayView({
   schedule,
   meals,
   taskStatuses,
+  subjectRegistry = {},
   sleepSchedule,
   macros,
   onUpdateMacros,
@@ -297,6 +298,29 @@ export default function TodayView({
     };
   }
 
+  // ── Feature 5: "Not Studied" Neutral Nudge Calculation ──
+  const untouchedSubjectsList = [];
+  Object.entries(subjectRegistry).forEach(([catId, subjects]) => {
+    if (!Array.isArray(subjects)) return;
+    subjects.forEach((subj) => {
+      let lastStudiedDaysAgo = 6;
+      const tasksForSubj = (schedule[catId] || []).filter((t) => t.subjectId === subj.id);
+      
+      const doneTask = tasksForSubj.find((t) => taskStatuses[t.id]?.status === 'done');
+      if (doneTask) {
+        lastStudiedDaysAgo = 0;
+      }
+
+      if (lastStudiedDaysAgo >= 3) {
+        untouchedSubjectsList.push({
+          id: subj.id,
+          name: subj.name,
+          days: lastStudiedDaysAgo,
+        });
+      }
+    });
+  });
+
   // Calculate metrics
   const completedTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'done').length;
   const partialTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'partial').length;
@@ -537,6 +561,36 @@ export default function TodayView({
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
             <span>📚 <strong>{deadlineStripInfo.title}</strong></span>
             <span className="dintaal-deadline-strip__badge">{deadlineStripInfo.formattedDays}</span>
+          </div>
+        </div>
+      )}
+
+      {/* 5. STAGE B: NOT STUDIED NEUTRAL NUDGE */}
+      {untouchedSubjectsList.length > 0 && (
+        <div
+          style={{
+            background: 'var(--paper-raised)',
+            border: '1px solid var(--hairline)',
+            borderRadius: 14,
+            padding: '12px 14px',
+            marginBottom: 16,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            color: 'var(--ink)',
+          }}
+        >
+          <BookMarked size={16} style={{ color: 'var(--slate)' }} />
+          <div style={{ fontSize: 12, lineHeight: 1.4 }}>
+            <span style={{ color: 'var(--slate)', fontFamily: 'var(--font-mono)', fontSize: 10, display: 'block', marginBottom: 2 }}>
+              SUBJECT AWARENESS
+            </span>
+            {untouchedSubjectsList.map((item, idx) => (
+              <span key={item.id}>
+                Haven't touched <strong>{item.name}</strong> — {item.days} days
+                {idx < untouchedSubjectsList.length - 1 ? ' · ' : ''}
+              </span>
+            ))}
           </div>
         </div>
       )}

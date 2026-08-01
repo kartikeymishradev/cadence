@@ -21,6 +21,7 @@ const ALL_FIELDS = [
   'sleepSchedule',
   'macros',
   'muscleFocus',
+  'subjectRegistry',
 ];
 
 /**

@@ -15,7 +15,10 @@ export default function PlanInput({
   onNavigateToWeek,
   parseSuccess,
   loading,
+  subjectRegistry = {},
+  onUpdateSubjectRegistry,
 }) {
+  const [newSubjName, setNewSubjName] = React.useState('');
   const cats = (Array.isArray(categories) && categories.length > 0) ? categories : [
     { id: 'skill', label: 'Skill Prep', dot: 'var(--sage)' },
     { id: 'college', label: 'College', dot: 'var(--indigo)' },
@@ -25,6 +28,30 @@ export default function PlanInput({
   const activeCat = tab || cats[0]?.id || 'skill';
   const activeCatObj = cats.find((c) => c.id === activeCat) || cats[0];
   const activeTasks = (schedule && schedule[activeCat]) || [];
+  const registeredSubjects = subjectRegistry[activeCat] || [];
+
+  const handleAddSubject = () => {
+    if (!newSubjName.trim()) return;
+    const newSubj = {
+      id: `subj-${Date.now()}`,
+      name: newSubjName.trim(),
+      color: activeCatObj?.color || 'var(--indigo)',
+    };
+    const updated = {
+      ...subjectRegistry,
+      [activeCat]: [...registeredSubjects, newSubj],
+    };
+    if (onUpdateSubjectRegistry) onUpdateSubjectRegistry(updated);
+    setNewSubjName('');
+  };
+
+  const handleDeleteSubject = (subjId) => {
+    const updated = {
+      ...subjectRegistry,
+      [activeCat]: registeredSubjects.filter((s) => s.id !== subjId),
+    };
+    if (onUpdateSubjectRegistry) onUpdateSubjectRegistry(updated);
+  };
 
   return (
     <div style={{ padding: '4px 0 18px' }}>
@@ -59,6 +86,91 @@ export default function PlanInput({
             </button>
           );
         })}
+      </div>
+
+      {/* Subject Registry Manager Card */}
+      <div
+        style={{
+          background: 'var(--paper-raised)',
+          border: '1px solid var(--hairline)',
+          borderRadius: 14,
+          padding: '12px 14px',
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--slate)', letterSpacing: '0.5px' }}>
+            SUBJECT REGISTRY ({activeCatObj?.label?.toUpperCase()})
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--slate)' }}>{registeredSubjects.length} subjects registered</span>
+        </div>
+
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+          {registeredSubjects.map((subj) => (
+            <div
+              key={subj.id}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '4px 10px',
+                borderRadius: 6,
+                background: 'var(--paper)',
+                border: '1px solid var(--hairline)',
+                fontSize: 12,
+                color: 'var(--ink)',
+              }}
+            >
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: subj.color || 'var(--sage)' }} />
+              <span>{subj.name}</span>
+              <button
+                onClick={() => handleDeleteSubject(subj.id)}
+                title="Remove subject"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--slate)', padding: 0, marginLeft: 2 }}
+              >
+                <Trash2 size={11} />
+              </button>
+            </div>
+          ))}
+          {registeredSubjects.length === 0 && (
+            <span style={{ fontSize: 12, color: 'var(--slate)', fontStyle: 'italic' }}>No subjects registered yet. Add one below!</span>
+          )}
+        </div>
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            type="text"
+            placeholder={`Add new ${activeCatObj?.label || ''} subject (e.g. Operating Systems)...`}
+            value={newSubjName}
+            onChange={(e) => setNewSubjName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleAddSubject()}
+            style={{
+              flex: 1,
+              padding: '6px 10px',
+              borderRadius: 6,
+              border: '1px solid var(--hairline)',
+              background: 'var(--paper)',
+              color: 'var(--ink)',
+              fontSize: 12,
+              fontFamily: 'inherit',
+            }}
+          />
+          <button
+            onClick={handleAddSubject}
+            style={{
+              padding: '6px 12px',
+              borderRadius: 6,
+              border: 'none',
+              background: 'var(--ink)',
+              color: 'var(--paper)',
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            + Add
+          </button>
+        </div>
       </div>
 
       {/* Parsing Success Confirmation Banner */}

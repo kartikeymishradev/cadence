@@ -89,6 +89,7 @@ export default function App() {
     macros, setMacros,
     muscleFocus, setMuscleFocus,
     focusLogs, setFocusLogs,
+    subjectRegistry, setSubjectRegistry,
   } = usePersistence(weekStart, user);
 
   // Sync active theme with document body data-theme attribute
@@ -257,7 +258,25 @@ export default function App() {
         setMeals(parsed.meals || []);
         count = workouts.length;
       } else {
-        const tasks = parsed.tasks || [];
+        const rawTasks = parsed.tasks || [];
+        const registryForTab = subjectRegistry[tab] || [];
+        const tasks = rawTasks.map((t) => {
+          const titleLower = String(t.title || '').toLowerCase();
+          const matched = registryForTab.find((subj) => {
+            const nameLower = subj.name.toLowerCase();
+            if (titleLower.includes(nameLower)) return true;
+            if (subj.name === 'Design & Analysis of Algorithm' && (titleLower.includes('daa') || titleLower.includes('algorithm'))) return true;
+            if (subj.name === 'Big Data Technologies' && titleLower.includes('big data')) return true;
+            if (subj.name === 'Introduction to IoT' && titleLower.includes('iot')) return true;
+            if (subj.name === 'Constitution of India' && (titleLower.includes('constitution') || titleLower.includes('coi'))) return true;
+            if (subj.name === 'Financial Co-relations' && titleLower.includes('financial')) return true;
+            return false;
+          });
+          return {
+            ...t,
+            subjectId: matched ? matched.id : null,
+          };
+        });
         setSchedule((prev) => ({ ...prev, [tab]: tasks }));
         count = tasks.length;
       }
@@ -504,6 +523,7 @@ export default function App() {
             schedule={schedule}
             meals={meals}
             taskStatuses={taskStatuses}
+            subjectRegistry={subjectRegistry}
             sleepSchedule={sleepSchedule}
             macros={macros}
             onUpdateMacros={setMacros}
@@ -538,6 +558,10 @@ export default function App() {
                 weekDates={weekDates}
                 dayStatus={dayStatus}
                 onCycleStatus={cycleStatus}
+                schedule={schedule}
+                taskStatuses={taskStatuses}
+                subjectRegistry={subjectRegistry}
+                categories={categories}
               />
               <button
                 className="cadence-btn cadence-btn--primary"
@@ -618,6 +642,8 @@ export default function App() {
               onAddTaskManual={handleAddTaskManual}
               loading={loading}
               error={error}
+              subjectRegistry={subjectRegistry}
+              onUpdateSubjectRegistry={setSubjectRegistry}
             />
 
             <Clarifications
