@@ -264,7 +264,10 @@ export default function App() {
         const registryForTab = subjectRegistry[tab] || [];
         const tasks = rawTasks.map((t) => {
           const titleLower = String(t.title || '').toLowerCase();
-          const matched = registryForTab.find((subj) => {
+          
+          // ── STAGE E TIEBREAK PRIORITY RULE ──
+          // Priority 1: Registered Subject Match
+          let matched = registryForTab.find((subj) => {
             const nameLower = subj.name.toLowerCase();
             if (titleLower.includes(nameLower)) return true;
             if (subj.name === 'Design & Analysis of Algorithm' && (titleLower.includes('daa') || titleLower.includes('algorithm'))) return true;
@@ -274,6 +277,7 @@ export default function App() {
             if (subj.name === 'Financial Co-relations' && titleLower.includes('financial')) return true;
             return false;
           });
+
           return {
             ...t,
             subjectId: matched ? matched.id : null,

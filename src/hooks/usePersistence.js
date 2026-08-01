@@ -4,9 +4,10 @@ import { dateKey } from '../utils/dateUtils';
 import { cloudSave, cloudLoad } from '../services/cloudSync';
 
 export const DEFAULT_CATEGORIES = [
-  { id: 'skill', label: 'Skill Prep', icon: 'BookOpen', color: '#5F8467' },
-  { id: 'college', label: 'College', icon: 'GraduationCap', color: '#33414A' },
-  { id: 'gym', label: 'Gym & Diet', icon: 'Dumbbell', color: '#C9922B' },
+  { id: 'college', label: 'College / Academics', icon: 'GraduationCap', color: '#33414A' },
+  { id: 'skill', label: 'Career & Skills', icon: 'Briefcase', color: '#5F8467' },
+  { id: 'gym', label: 'Health & Body', icon: 'Activity', color: '#C9922B' },
+  { id: 'growth', label: 'Personal Growth', icon: 'Sparkles', color: '#8B5CF6' },
 ];
 
 export const DEFAULT_SUBJECT_REGISTRY = {
@@ -24,6 +25,10 @@ export const DEFAULT_SUBJECT_REGISTRY = {
   ],
   gym: [
     { id: 'subj-workout', name: 'Workout & Fitness', color: '#C9922B' },
+  ],
+  growth: [
+    { id: 'subj-reading', name: 'Reading & Learning', color: '#8B5CF6' },
+    { id: 'subj-habits', name: 'Daily Habits & Mindset', color: '#EC4899' },
   ],
 };
 
