@@ -37,6 +37,7 @@ export default function TodayView({
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
   const [showTasksOnRestDay, setShowTasksOnRestDay] = useState(false);
   const [isEditingSleep, setIsEditingSleep] = useState(false);
+  const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
 
   // Editing Macros State
   const [editingMacros, setEditingMacros] = useState(false);
@@ -329,7 +330,6 @@ export default function TodayView({
   const progressPct = totalTasks > 0 ? Math.round(((completedTasks + partialTasks * 0.5) / totalTasks) * 100) : 0;
 
   // ── Feature 6: STAGE C TRANSPARENT RHYTHM SCORE ──
-  const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const sleepPts = (sleepSchedule?.sleepStart && sleepSchedule?.sleepEnd) ? 25 : 15;
   const focusPts = Math.min(25, Math.round((totalActualMins / 180) * 25));
   const taskPts = Math.round(progressPct * 0.25);
