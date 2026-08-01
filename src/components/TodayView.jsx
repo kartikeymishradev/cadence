@@ -197,7 +197,7 @@ export default function TodayView({
       deadline: new Date(taskStatuses[id].deadline),
       note: taskStatuses[id].note
     }))
-    .filter(t => t.deadline > now)
+    .filter(t => !isNaN(t.deadline.getTime()) && t.deadline > now)
     .sort((a, b) => a.deadline - b.deadline);
 
   const closestDeadline = upcomingDeadlines[0];

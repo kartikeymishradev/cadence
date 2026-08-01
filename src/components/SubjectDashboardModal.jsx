@@ -49,7 +49,7 @@ export default function SubjectDashboardModal({
       deadline: new Date(taskStatuses[id].deadline),
       note: taskStatuses[id].note
     }))
-    .filter(t => t.deadline > new Date())
+    .filter(t => !isNaN(t.deadline.getTime()) && t.deadline > new Date())
     .sort((a, b) => a.deadline - b.deadline);
 
   const closestSubjectDeadline = upcomingDeadlines.find(
