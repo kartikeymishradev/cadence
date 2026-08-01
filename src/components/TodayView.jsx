@@ -100,6 +100,7 @@ export default function TodayView({
     'study';
 
   const statusStyle = STATUS_STYLE[statusType] || STATUS_STYLE.study;
+  const isRestDay = statusType === 'off' || statusType === 'holiday';
 
   // Group tasks dynamically by custom categories
   const categorySections = categories.map((cat) => {
@@ -503,7 +504,6 @@ export default function TodayView({
     );
   };
 
-  const isRestDay = statusType === 'off' || statusType === 'holiday';
 
   return (
     <div className="today-view">
