@@ -38,6 +38,7 @@ export default function TodayView({
   const [showTasksOnRestDay, setShowTasksOnRestDay] = useState(false);
   const [isEditingSleep, setIsEditingSleep] = useState(false);
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
+  const [showAllUntouched, setShowAllUntouched] = useState(false);
 
   // Editing Macros State
   const [editingMacros, setEditingMacros] = useState(false);
@@ -323,6 +324,9 @@ export default function TodayView({
     });
   });
 
+  // Sort untouched subjects by days descending (most neglected first)
+  untouchedSubjectsList.sort((a, b) => b.days - a.days);
+
   // Calculate metrics
   const completedTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'done').length;
   const partialTasks = allToday.filter((t) => taskStatuses[t.id]?.status === 'partial').length;
@@ -331,10 +335,11 @@ export default function TodayView({
   const progressPct = totalTasks > 0 ? Math.round(((completedTasks + partialTasks * 0.5) / totalTasks) * 100) : 0;
 
   // ── Feature 6: STAGE C TRANSPARENT RHYTHM SCORE ──
+  const hasActivityToday = completedTasks > 0 || partialTasks > 0 || totalActualMins > 0;
   const sleepPts = (sleepSchedule?.sleepStart && sleepSchedule?.sleepEnd) ? 25 : 15;
   const focusPts = Math.min(25, Math.round((totalActualMins / 180) * 25));
   const taskPts = Math.round(progressPct * 0.25);
-  const consistencyPts = 25;
+  const consistencyPts = hasActivityToday ? 25 : 0;
   const totalRhythmScore = isRestDay ? null : (sleepPts + focusPts + taskPts + consistencyPts);
 
   const handleToggleStatus = (id, currentStatus) => {
@@ -573,33 +578,71 @@ export default function TodayView({
         </div>
       )}
 
-      {/* 5. STAGE B: NOT STUDIED NEUTRAL NUDGE */}
-      {untouchedSubjectsList.length > 0 && (
+      {/* 5. STAGE B: NOT STUDIED NEUTRAL NUDGE (Hidden on Rest Days, Clean Row List, Top 3 Cap) */}
+      {!isRestDay && untouchedSubjectsList.length > 0 && (
         <div
           style={{
             background: 'var(--paper-raised)',
             border: '1px solid var(--hairline)',
             borderRadius: 14,
-            padding: '12px 14px',
+            padding: '12px 16px',
             marginBottom: 16,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            color: 'var(--ink)',
           }}
         >
-          <BookMarked size={16} style={{ color: 'var(--slate)' }} />
-          <div style={{ fontSize: 12, lineHeight: 1.4 }}>
-            <span style={{ color: 'var(--slate)', fontFamily: 'var(--font-mono)', fontSize: 10, display: 'block', marginBottom: 2 }}>
-              SUBJECT AWARENESS
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            <BookMarked size={16} style={{ color: 'var(--slate)' }} />
+            <span style={{ color: 'var(--slate)', fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.5px' }}>
+              SUBJECT AWARENESS (UNTOUCHED 3+ DAYS)
             </span>
-            {untouchedSubjectsList.map((item, idx) => (
-              <span key={item.id}>
-                Haven't touched <strong>{item.name}</strong> — {item.days} days
-                {idx < untouchedSubjectsList.length - 1 ? ' · ' : ''}
-              </span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {(showAllUntouched ? untouchedSubjectsList : untouchedSubjectsList.slice(0, 3)).map((item) => (
+              <div
+                key={item.id}
+                style={{
+                  display: 'flex',
+                  justify: 'space-between',
+                  alignItems: 'center',
+                  fontSize: 12,
+                  padding: '4px 0',
+                  borderBottom: '1px dashed var(--hairline)',
+                }}
+              >
+                <span style={{ fontWeight: 500, color: 'var(--ink)' }}>{item.name}</span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: 11,
+                    color: 'var(--rose)',
+                    background: 'rgba(184, 88, 63, 0.08)',
+                    padding: '2px 8px',
+                    borderRadius: 12,
+                  }}
+                >
+                  {item.days} days ago
+                </span>
+              </div>
             ))}
           </div>
+
+          {untouchedSubjectsList.length > 3 && (
+            <button
+              onClick={() => setShowAllUntouched(!showAllUntouched)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--sage)',
+                fontSize: 11,
+                fontWeight: 600,
+                cursor: 'pointer',
+                padding: '6px 0 0 0',
+                marginTop: 4,
+              }}
+            >
+              {showAllUntouched ? 'Show Top 3 Only' : `+${untouchedSubjectsList.length - 3} more untouched subjects`}
+            </button>
+          )}
         </div>
       )}
 
