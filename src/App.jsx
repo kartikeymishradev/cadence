@@ -133,6 +133,12 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [parseSuccess, setParseSuccess] = useState(null);
+  const parseSuccessTimer = useRef(null);
+
+  // Clear parseSuccess when switching category tabs
+  useEffect(() => {
+    setParseSuccess(null);
+  }, [tab]);
 
   const handleClearCategorySchedule = useCallback((catId) => {
     setSchedule((prev) => ({ ...prev, [catId]: [] }));
@@ -289,11 +295,18 @@ export default function App() {
       }
 
       const catObj = categories.find((c) => c.id === tab);
-      setParseSuccess({
+      const successObj = {
+        catId: tab,
         count,
-        category: catObj?.label || tab,
+        categoryLabel: catObj?.label || tab,
         timestamp: Date.now(),
-      });
+      };
+      setParseSuccess(successObj);
+
+      if (parseSuccessTimer.current) clearTimeout(parseSuccessTimer.current);
+      parseSuccessTimer.current = setTimeout(() => {
+        setParseSuccess(null);
+      }, 6000);
 
       setClarifications((prev) => ({
         ...prev,
@@ -651,6 +664,7 @@ export default function App() {
               onDeleteTask={handleDeleteTask}
               onNavigateToWeek={() => setViewMode('week')}
               parseSuccess={parseSuccess}
+              onDismissParseSuccess={() => setParseSuccess(null)}
               onAddTaskManual={handleAddTaskManual}
               loading={loading}
               error={error}

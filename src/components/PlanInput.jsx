@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, CheckCircle2, ArrowRight, Calendar, Sparkles } from 'lucide-react';
+import { Trash2, CheckCircle2, ArrowRight, Calendar, Sparkles, X } from 'lucide-react';
 
 export default function PlanInput({
   tab,
@@ -14,6 +14,7 @@ export default function PlanInput({
   onDeleteTask,
   onNavigateToWeek,
   parseSuccess,
+  onDismissParseSuccess,
   loading,
   subjectRegistry = {},
   onUpdateSubjectRegistry,
@@ -236,7 +237,7 @@ export default function PlanInput({
       </div>
 
       {/* Parsing Success Confirmation Banner */}
-      {parseSuccess && (
+      {parseSuccess && parseSuccess.catId === activeCat && (
         <div
           style={{
             background: 'rgba(16, 185, 129, 0.12)',
@@ -255,34 +256,53 @@ export default function PlanInput({
             <CheckCircle2 size={22} style={{ color: 'var(--sage)', flexShrink: 0 }} />
             <div>
               <strong style={{ fontSize: 13, color: 'var(--ink)', display: 'block' }}>
-                Parsing Done! Added {parseSuccess.count} task{parseSuccess.count === 1 ? '' : 's'} to {activeCatObj?.label || activeCat}
+                Parsing Done! Added {parseSuccess.count} task{parseSuccess.count === 1 ? '' : 's'} to {parseSuccess.categoryLabel}
               </strong>
               <span style={{ fontSize: 11, color: 'var(--slate)' }}>
                 Your updated schedule is live in Week & Today tabs.
               </span>
             </div>
           </div>
-          {onNavigateToWeek && (
-            <button
-              onClick={onNavigateToWeek}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-                padding: '8px 12px',
-                borderRadius: 8,
-                background: 'var(--sage)',
-                color: '#FFFFFF',
-                border: 'none',
-                fontWeight: 600,
-                fontSize: 11,
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              View Schedule <ArrowRight size={12} />
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {onNavigateToWeek && (
+              <button
+                onClick={onNavigateToWeek}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '8px 12px',
+                  borderRadius: 8,
+                  background: 'var(--sage)',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  fontWeight: 600,
+                  fontSize: 11,
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                View Schedule <ArrowRight size={12} />
+              </button>
+            )}
+            {onDismissParseSuccess && (
+              <button
+                onClick={onDismissParseSuccess}
+                title="Dismiss message"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--slate)',
+                  cursor: 'pointer',
+                  padding: 4,
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
         </div>
       )}
 
