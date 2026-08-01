@@ -468,27 +468,21 @@ export default function App() {
       ? Math.round((totalDoneMin / totalPlannedMin) * 100)
       : 0;
 
-  const activeTasks = (schedule[tab] || schedule['skill'] || schedule['gym'] || []).map((t, i) => ({
-    ...t,
-    kind: tab,
-    id: `${tab}-${t.day}-${i}`,
-  }));
-
   const safeMeals = Array.isArray(meals) ? meals : [];
-  const safeCategories = Array.isArray(categories) ? categories : [];
 
-  const tasksByDay = WEEKDAYS.map((day) => ({
-    day,
-    items: activeTasks.filter(
-      (t) => t.day === day || (t.day && t.day.toLowerCase().startsWith(day.slice(0, 3).toLowerCase()))
-    ),
-    meals:
-      tab === 'gym'
-        ? safeMeals.map((m, i) => ({ ...m, id: `meal-${i}` })).filter(
-            (m) => m.day === day || (m.day && m.day.toLowerCase().startsWith(day.slice(0, 3).toLowerCase()))
-          )
-        : [],
-  })).filter((g) => g.items.length > 0 || g.meals.length > 0);
+  const tasksByDay = useMemo(() => {
+    return WEEKDAYS.map((day) => ({
+      day,
+      items: allTasks.filter(
+        (t) => !t.day || t.day === day || (t.day && String(t.day).toLowerCase().startsWith(day.slice(0, 3).toLowerCase()))
+      ),
+      meals: safeMeals
+        .map((m, i) => ({ ...m, id: `meal-${i}` }))
+        .filter(
+          (m) => !m.day || m.day === day || (m.day && String(m.day).toLowerCase().startsWith(day.slice(0, 3).toLowerCase()))
+        ),
+    })).filter((g) => g.items.length > 0 || g.meals.length > 0);
+  }, [allTasks, safeMeals]);
 
   const hasParsed = allTasks.length > 0 || totalWeeks > 0;
 

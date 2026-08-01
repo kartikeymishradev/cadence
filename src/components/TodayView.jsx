@@ -42,6 +42,7 @@ export default function TodayView({
   const [isEditingSleep, setIsEditingSleep] = useState(false);
   const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
   const [showAllUntouched, setShowAllUntouched] = useState(false);
+  const [showAllWeekTasks, setShowAllWeekTasks] = useState(false);
 
   // Editing Macros State
   const [editingMacros, setEditingMacros] = useState(false);
@@ -111,7 +112,7 @@ export default function TodayView({
     const tasks = (schedule[cat.id] || [])
       .filter((t) => {
         if (!t) return false;
-        if (!t.day) return true;
+        if (showAllWeekTasks || !t.day) return true;
         const dayStr = String(t.day).toLowerCase().trim();
         const targetDayStr = String(todayName).toLowerCase().trim();
         return dayStr === targetDayStr || dayStr.startsWith(targetDayStr.slice(0, 3));
@@ -929,26 +930,34 @@ export default function TodayView({
       )}
 
       {/* Empty State */}
-      {totalTasks === 0 && !isRestDay && (
+      {totalTasks === 0 && !isRestDay && !showAllWeekTasks && (
         <div className="today-view__empty">
           <Coffee size={40} className="today-view__empty-icon" />
           <h3>No tasks scheduled for today ({todayName})</h3>
           {totalWeekTasks > 0 ? (
             <p style={{ maxWidth: 460, margin: '0 auto 16px' }}>
-              You have <strong>{totalWeekTasks} tasks</strong> saved in your schedule for other days of the week! Tap below to view your full weekly schedule or add new tasks.
+              You have <strong>{totalWeekTasks} tasks</strong> saved in your schedule for other days of the week! Tap below to view your saved tasks or open your full weekly schedule.
             </p>
           ) : (
             <p>Go to the Setup tab to add tasks manually or parse your timetable with AI.</p>
           )}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
+            {totalWeekTasks > 0 && (
+              <button className="cadence-btn cadence-btn--primary" onClick={() => setShowAllWeekTasks(true)}>
+                <Eye size={14} style={{ marginRight: 6 }} />
+                Show All {totalWeekTasks} Saved Tasks
+              </button>
+            )}
             {totalWeekTasks > 0 && onViewChange && (
-              <button className="cadence-btn cadence-btn--primary" onClick={() => onViewChange('week')}>
+              <button className="cadence-btn" onClick={() => onViewChange('week')} style={{ background: 'var(--paper-raised)', border: '1px solid var(--hairline)' }}>
                 View Full Week Schedule
               </button>
             )}
-            <button className="cadence-btn" onClick={onNavigateToWeek} style={{ background: totalWeekTasks > 0 ? 'var(--paper-raised)' : undefined, border: totalWeekTasks > 0 ? '1px solid var(--hairline)' : undefined }}>
-              {totalWeekTasks > 0 ? '+ Add Tasks in Setup' : 'Go to Setup & Add Tasks'}
-            </button>
+            {totalWeekTasks === 0 && (
+              <button className="cadence-btn cadence-btn--primary" onClick={onNavigateToWeek}>
+                Go to Setup & Add Tasks
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -956,6 +965,28 @@ export default function TodayView({
       {/* Render Tasks (Hidden on Rest Days unless user clicks 'View Tasks Anyway') */}
       {(!isRestDay || showTasksOnRestDay) && (
         <>
+          {showAllWeekTasks && (
+            <div style={{
+              background: 'rgba(95, 132, 103, 0.12)',
+              border: '1px solid var(--sage)',
+              borderRadius: 12,
+              padding: '10px 14px',
+              marginBottom: 16,
+              display: 'flex',
+              justify: 'space-between',
+              alignItems: 'center',
+              fontSize: 12,
+              color: 'var(--ink)'
+            }}>
+              <span>Showing all <strong>{totalWeekTasks} tasks</strong> saved across the week.</span>
+              <button
+                onClick={() => setShowAllWeekTasks(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--sage)', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}
+              >
+                Switch to Today Only ({todayName})
+              </button>
+            </div>
+          )}
           {/* Dynamic Sections by Category */}
           {categorySections.map((sec) => (
             <div key={sec.id} className="today-view__section">
