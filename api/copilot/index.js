@@ -22,7 +22,7 @@ module.exports = async function handler(arg1, arg2) {
 
   try {
     const body = req.body || {};
-    const { query, schedule, notesArchive } = typeof body === 'string' ? JSON.parse(body) : body;
+    const { query, schedule, notesArchive, userApiKey } = typeof body === 'string' ? JSON.parse(body) : body;
 
     if (!query) {
       return sendResponse(400, { error: 'Missing user query' });

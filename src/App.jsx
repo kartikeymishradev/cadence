@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import './App.css';
 import { WEEKDAYS } from './utils/constants';
