@@ -1,7 +1,10 @@
 const PREFIX = 'cadence_';
 
-function storageKey(weekStart, field) {
-  return `${PREFIX}${weekStart}_${field}`;
+function storageKey(weekStart, field, userId = null) {
+  if (userId) {
+    return `${PREFIX}${userId}_${weekStart}_${field}`;
+  }
+  return `${PREFIX}guest_${weekStart}_${field}`;
 }
 
 const ALL_FIELDS = [
@@ -27,15 +30,16 @@ const ALL_FIELDS = [
 ];
 
 /**
- * Save all schedule data for a given week to localStorage.
+ * Save all schedule data for a given week to localStorage, scoped by userId.
  * @param {string} weekStart – ISO date of Monday (e.g. "2026-07-20")
  * @param {Object} data – fields to persist (schedule, meals, dayStatus, etc.)
+ * @param {string|null} userId – Supabase authenticated user ID or null for guest
  */
-export function saveWeekData(weekStart, data) {
+export function saveWeekData(weekStart, data, userId = null) {
   try {
     for (const [field, value] of Object.entries(data)) {
       if (value !== undefined) {
-        localStorage.setItem(storageKey(weekStart, field), JSON.stringify(value));
+        localStorage.setItem(storageKey(weekStart, field, userId), JSON.stringify(value));
       }
     }
   } catch (e) {
@@ -44,14 +48,30 @@ export function saveWeekData(weekStart, data) {
 }
 
 /**
- * Load schedule data for a given week from localStorage.
- * Returns an object with whichever fields were found.
+ * Load schedule data for a given week from localStorage, scoped by userId.
+ * Includes smooth migration of legacy un-scoped keys if present.
+ * @param {string} weekStart – ISO date of Monday (e.g. "2026-07-20")
+ * @param {string|null} userId – Supabase authenticated user ID or null for guest
  */
-export function loadWeekData(weekStart) {
+export function loadWeekData(weekStart, userId = null) {
   const result = {};
   try {
     for (const field of ALL_FIELDS) {
-      const stored = localStorage.getItem(storageKey(weekStart, field));
+      const scopedKey = storageKey(weekStart, field, userId);
+      let stored = localStorage.getItem(scopedKey);
+
+      // Migration check: If scoped key is not found, check legacy un-scoped key
+      if (stored === null || stored === 'undefined') {
+        const legacyKey = `${PREFIX}${weekStart}_${field}`;
+        const legacyStored = localStorage.getItem(legacyKey);
+        if (legacyStored !== null && legacyStored !== 'undefined') {
+          stored = legacyStored;
+          // Auto-migrate legacy key to user-scoped key and clean up
+          localStorage.setItem(scopedKey, legacyStored);
+          localStorage.removeItem(legacyKey);
+        }
+      }
+
       if (stored !== null && stored !== 'undefined') {
         try {
           result[field] = JSON.parse(stored);
@@ -67,10 +87,14 @@ export function loadWeekData(weekStart) {
 }
 
 /**
- * Remove all saved data for a given week.
+ * Remove all saved data for a given week, scoped by userId.
+ * @param {string} weekStart – ISO date of Monday (e.g. "2026-07-20")
+ * @param {string|null} userId – Supabase authenticated user ID or null for guest
  */
-export function clearWeekData(weekStart) {
+export function clearWeekData(weekStart, userId = null) {
   for (const field of ALL_FIELDS) {
-    localStorage.removeItem(storageKey(weekStart, field));
+    localStorage.removeItem(storageKey(weekStart, field, userId));
+    // Also clean up legacy un-scoped key if present
+    localStorage.removeItem(`${PREFIX}${weekStart}_${field}`);
   }
 }

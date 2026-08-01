@@ -164,43 +164,34 @@ export function migrateTaskStatuses(saved) {
  * Hook that syncs schedule state & custom categories with localStorage + Supabase cloud.
  */
 export function usePersistence(weekStart, user) {
-  const weekKey = dateKey(weekStart);
-  const initialized = useRef(false);
-  const cloudLoaded = useRef(false);
-  const saveTimer = useRef(null);
+  const userId = user?.id || null;
+  const activeUserIdRef = useRef(userId);
 
-  const [theme, setTheme] = useState('paper');
-  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
-  const [rawText, setRawText] = useState({ skill: '', college: '', gym: '' });
-  const [schedule, setSchedule] = useState({ skill: [], college: [], gym: [] });
-  const [meals, setMeals] = useState([]);
-  const [dayStatus, setDayStatus] = useState({});
-  const [taskStatuses, setTaskStatuses] = useState({});
-  const [goals, setGoals] = useState([]);
-  const [streak, setStreak] = useState(1);
-  const [sleepSchedule, setSleepSchedule] = useState({ sleepStart: '23:30', sleepEnd: '07:00' });
-  const [macros, setMacros] = useState({
-    proteinTaken: 120, proteinTarget: 150,
-    carbsTaken: 180, carbsTarget: 220,
-    fatsTaken: 45, fatsTarget: 60,
-  });
-  const [muscleFocus, setMuscleFocus] = useState(['Chest', 'Arms']);
-  const [focusLogs, setFocusLogs] = useState({});
-
-  // Multi-week plan metadata
-  const [multiWeekPlan, setMultiWeekPlan] = useState({});
-  const [currentWeekIndex, setCurrentWeekIndex] = useState({});
-
-  // Stage B/C/D state — declared here so applyData + save effect can reference them
-  // Issue 1: New users start with an empty registry — no personal seed data imposed.
-  // Existing users load their saved registry via applyData() on mount.
-  const [subjectRegistry, setSubjectRegistry] = useState({});
-  const [weeklyReflection, setWeeklyReflection] = useState({
-    wentWell: '',
-    biggestDistraction: '',
-    nextWeekFocus: '',
-  });
-  const [semesterConfig, setSemesterConfig] = useState(DEFAULT_SEMESTER_CONFIG);
+  // Helper to reset state back to clean defaults
+  const resetStateToDefaults = useCallback(() => {
+    setTheme('paper');
+    setCategories(DEFAULT_CATEGORIES);
+    setRawText({ skill: '', college: '', gym: '' });
+    setSchedule({ skill: [], college: [], gym: [] });
+    setMeals([]);
+    setDayStatus({});
+    setTaskStatuses({});
+    setGoals([]);
+    setStreak(1);
+    setSleepSchedule({ sleepStart: '23:30', sleepEnd: '07:00' });
+    setMacros({
+      proteinTaken: 120, proteinTarget: 150,
+      carbsTaken: 180, carbsTarget: 220,
+      fatsTaken: 45, fatsTarget: 60,
+    });
+    setMuscleFocus(['Chest', 'Arms']);
+    setFocusLogs({});
+    setMultiWeekPlan({});
+    setCurrentWeekIndex({});
+    setSubjectRegistry({});
+    setWeeklyReflection({ wentWell: '', biggestDistraction: '', nextWeekFocus: '' });
+    setSemesterConfig(DEFAULT_SEMESTER_CONFIG);
+  }, []);
 
   // ── Apply a saved data object to state ──
   const applyData = useCallback((savedData) => {
@@ -250,12 +241,19 @@ export function usePersistence(weekStart, user) {
     if (migrated.semesterConfig) setSemesterConfig(migrated.semesterConfig);
   }, []);
 
-  // ── Load from localStorage on mount ──
+  // ── Load from user-scoped localStorage on mount & when user changes ──
   useEffect(() => {
-    const saved = loadWeekData(weekKey);
+    // If user changed (e.g. logout or switch account), reset state first
+    if (activeUserIdRef.current !== userId) {
+      activeUserIdRef.current = userId;
+      cloudLoaded.current = false;
+      resetStateToDefaults();
+    }
+
+    const saved = loadWeekData(weekKey, userId);
     applyData(saved);
     initialized.current = true;
-  }, [weekKey, applyData]);
+  }, [weekKey, userId, applyData, resetStateToDefaults]);
 
   // ── Auto-Calculate Streak based on consecutive daily visits ──
   useEffect(() => {
@@ -291,11 +289,11 @@ export function usePersistence(weekStart, user) {
     }
   }, []);
 
-  // ── Load from cloud when user signs in ──
+  // ── Load from cloud when user signs in (isolated to user.id) ──
   useEffect(() => {
-    if (!user || cloudLoaded.current) return;
+    if (!userId || cloudLoaded.current) return;
 
-    cloudLoad(user.id).then((allCloudData) => {
+    cloudLoad(userId).then((allCloudData) => {
       if (allCloudData && Object.keys(allCloudData).length > 0) {
         if (allCloudData['settings']) {
           applyData(allCloudData['settings']);
@@ -306,14 +304,13 @@ export function usePersistence(weekStart, user) {
           const firstKey = Object.keys(allCloudData).find((k) => k !== 'settings') || Object.keys(allCloudData)[0];
           if (firstKey) applyData(allCloudData[firstKey]);
         }
-        cloudLoaded.current = true;
-      } else if (allCloudData) {
-        cloudLoaded.current = true;
       }
+      // Always set cloudLoaded = true after attempt so local updates can sync
+      cloudLoaded.current = true;
     });
-  }, [user, weekKey, applyData]);
+  }, [userId, weekKey, applyData]);
 
-  // ── Auto-save to localStorage + Cloud ──
+  // ── Auto-save to user-scoped localStorage + Cloud ──
   useEffect(() => {
     if (!initialized.current) return;
 
@@ -338,16 +335,17 @@ export function usePersistence(weekStart, user) {
       semesterConfig,
     };
 
-    saveWeekData(weekKey, payload);
+    saveWeekData(weekKey, payload, userId);
 
-    if (user && cloudLoaded.current) {
+    if (userId && cloudLoaded.current) {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
-        cloudSave(weekKey, payload, user.id);
+        cloudSave(weekKey, payload, userId);
       }, 2000);
     }
   }, [
     weekKey,
+    userId,
     theme,
     categories,
     schedule,
@@ -366,7 +364,6 @@ export function usePersistence(weekStart, user) {
     subjectRegistry,
     weeklyReflection,
     semesterConfig,
-    user,
   ]);
 
   return {
