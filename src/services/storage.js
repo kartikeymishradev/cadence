@@ -23,6 +23,7 @@ const ALL_FIELDS = [
   'muscleFocus',
   'subjectRegistry',
   'weeklyReflection',
+  'semesterConfig',
 ];
 
 /**

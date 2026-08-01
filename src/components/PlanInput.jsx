@@ -17,6 +17,8 @@ export default function PlanInput({
   loading,
   subjectRegistry = {},
   onUpdateSubjectRegistry,
+  semesterConfig = {},
+  onUpdateSemesterConfig,
 }) {
   const [newSubjName, setNewSubjName] = React.useState('');
   const cats = (Array.isArray(categories) && categories.length > 0) ? categories : [
@@ -170,6 +172,66 @@ export default function PlanInput({
           >
             + Add
           </button>
+        </div>
+      </div>
+
+      {/* Semester Dates Config Card */}
+      <div
+        style={{
+          background: 'var(--paper-raised)',
+          border: '1px solid var(--hairline)',
+          borderRadius: 14,
+          padding: '12px 14px',
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--slate)', letterSpacing: '0.5px' }}>
+            SEMESTER TIMELINE DATES
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--slate)' }}>Journey Tracker</span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 11, color: 'var(--slate)', marginBottom: 2 }}>Semester Start Date</label>
+            <input
+              type="date"
+              value={semesterConfig?.semesterStart || '2026-07-15'}
+              onChange={(e) => onUpdateSemesterConfig && onUpdateSemesterConfig({ ...semesterConfig, semesterStart: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: 6,
+                border: '1px solid var(--hairline)',
+                background: 'var(--paper)',
+                color: 'var(--ink)',
+                fontSize: 12,
+                fontFamily: 'inherit',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 11, color: 'var(--slate)', marginBottom: 2 }}>Semester End Date</label>
+            <input
+              type="date"
+              value={semesterConfig?.semesterEnd || '2026-12-20'}
+              onChange={(e) => onUpdateSemesterConfig && onUpdateSemesterConfig({ ...semesterConfig, semesterEnd: e.target.value })}
+              style={{
+                width: '100%',
+                padding: '6px 8px',
+                borderRadius: 6,
+                border: '1px solid var(--hairline)',
+                background: 'var(--paper)',
+                color: 'var(--ink)',
+                fontSize: 12,
+                fontFamily: 'inherit',
+                boxSizing: 'border-box',
+              }}
+            />
+          </div>
         </div>
       </div>
 

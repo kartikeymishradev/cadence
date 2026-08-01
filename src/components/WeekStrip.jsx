@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { WEEKDAYS } from '../utils/constants';
 import { dateKey } from '../utils/dateUtils';
 import BeatStrip from './BeatStrip';
+import SubjectDashboardModal from './SubjectDashboardModal';
 
 export default function WeekStrip({
   weekDates,
@@ -13,7 +14,9 @@ export default function WeekStrip({
   categories = [],
   weeklyReflection = {},
   onUpdateWeeklyReflection,
+  semesterConfig = {},
 }) {
+  const [activeSubjectModal, setActiveSubjectModal] = React.useState(null);
   const reflectionData = weeklyReflection || {};
 
   const handleChangeReflection = (field, val) => {
@@ -24,6 +27,18 @@ export default function WeekStrip({
       });
     }
   };
+
+  // ── Feature 8: Semester Journey Calculation ──
+  const semStart = new Date(semesterConfig?.semesterStart || '2026-07-15');
+  const semEnd = new Date(semesterConfig?.semesterEnd || '2026-12-20');
+  const now = new Date();
+
+  const totalSemMs = Math.max(1, semEnd - semStart);
+  const elapsedSemMs = Math.max(0, now - semStart);
+  const semProgressPct = Math.min(100, Math.round((elapsedSemMs / totalSemMs) * 100));
+
+  const totalSemWeeks = Math.max(1, Math.ceil(totalSemMs / (7 * 24 * 60 * 60 * 1000)));
+  const currentSemWeek = Math.min(totalSemWeeks, Math.max(1, Math.ceil(elapsedSemMs / (7 * 24 * 60 * 60 * 1000))));
   const statusColor = {
     study: 'var(--sage)',
     off: 'transparent',
@@ -103,6 +118,33 @@ export default function WeekStrip({
 
   return (
     <div style={{ width: '100%' }}>
+      {/* Feature 8: STAGE D SEMESTER JOURNEY CARD */}
+      <div
+        style={{
+          background: 'var(--paper-raised)',
+          border: '1px solid var(--hairline)',
+          borderRadius: 14,
+          padding: '14px 16px',
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.5px', color: 'var(--slate)' }}>
+            SEMESTER JOURNEY
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--sage)', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
+            Week {currentSemWeek} of {totalSemWeeks} ({semProgressPct}%)
+          </span>
+        </div>
+        <div style={{ width: '100%', height: 8, borderRadius: 4, background: 'var(--paper)', overflow: 'hidden', marginBottom: 6 }}>
+          <div style={{ width: `${semProgressPct}%`, height: '100%', background: 'var(--indigo)', borderRadius: 4, transition: 'width 0.3s ease' }} />
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--slate)', fontFamily: 'var(--font-mono)' }}>
+          <span>Start: {semesterConfig?.semesterStart || 'Jul 15'}</span>
+          <span>End: {semesterConfig?.semesterEnd || 'Dec 20'}</span>
+        </div>
+      </div>
+
       {/* WEEK CYCLE Card */}
       <div
         style={{
@@ -121,7 +163,7 @@ export default function WeekStrip({
         <BeatStrip beats={beats} size={14} gap={8} />
       </div>
 
-      {/* Feature 4: STAGE B SUBJECT HEATMAP CARD */}
+      {/* Feature 4: STAGE B SUBJECT HEATMAP CARD (CLICKABLE) */}
       <div
         style={{
           background: 'var(--paper-raised)',
@@ -133,7 +175,7 @@ export default function WeekStrip({
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.5px', color: 'var(--slate)' }}>
-            SUBJECT HEATMAP (WEEK VIEW)
+            SUBJECT HEATMAP (CLICK TO OPEN DASHBOARD)
           </span>
           <span style={{ fontSize: 11, color: 'var(--sage)', fontWeight: 600, fontFamily: 'var(--font-mono)' }}>
             {totalWeekHours.toFixed(1)} hrs total
@@ -145,11 +187,16 @@ export default function WeekStrip({
             {activeSubjectHeatmap.map((item) => {
               const pct = Math.round((item.hours / maxHours) * 100);
               return (
-                <div key={item.id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <div
+                  key={item.id}
+                  onClick={() => setActiveSubjectModal(item)}
+                  title="Click to view subject dashboard"
+                  style={{ display: 'flex', flexDirection: 'column', gap: 4, cursor: 'pointer' }}
+                >
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--ink)' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <span style={{ width: 8, height: 8, borderRadius: '50%', background: item.color }} />
-                      <strong>{item.name}</strong>
+                      <strong>{item.name}</strong> ↗
                     </span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--slate)' }}>
                       {item.hours.toFixed(1)} hrs
@@ -296,6 +343,16 @@ export default function WeekStrip({
           </div>
         </div>
       </div>
+
+      {/* Feature 9: STAGE D SUBJECT DASHBOARD MODAL (REUSING STAGE A SINGLE-SOURCE DEADLINES) */}
+      <SubjectDashboardModal
+        isOpen={!!activeSubjectModal}
+        onClose={() => setActiveSubjectModal(null)}
+        subject={activeSubjectModal}
+        categoryLabel="COLLEGE"
+        schedule={schedule}
+        taskStatuses={taskStatuses}
+      />
     </div>
   );
 }

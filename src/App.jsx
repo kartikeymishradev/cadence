@@ -91,6 +91,7 @@ export default function App() {
     focusLogs, setFocusLogs,
     subjectRegistry, setSubjectRegistry,
     weeklyReflection, setWeeklyReflection,
+    semesterConfig, setSemesterConfig,
   } = usePersistence(weekStart, user);
 
   // Sync active theme with document body data-theme attribute
@@ -565,6 +566,7 @@ export default function App() {
                 categories={categories}
                 weeklyReflection={weeklyReflection}
                 onUpdateWeeklyReflection={setWeeklyReflection}
+                semesterConfig={semesterConfig}
               />
               <button
                 className="cadence-btn cadence-btn--primary"
@@ -647,6 +649,8 @@ export default function App() {
               error={error}
               subjectRegistry={subjectRegistry}
               onUpdateSubjectRegistry={setSubjectRegistry}
+              semesterConfig={semesterConfig}
+              onUpdateSemesterConfig={setSemesterConfig}
             />
 
             <Clarifications

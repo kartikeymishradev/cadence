@@ -27,6 +27,11 @@ export const DEFAULT_SUBJECT_REGISTRY = {
   ],
 };
 
+export const DEFAULT_SEMESTER_CONFIG = {
+  semesterStart: '2026-07-15',
+  semesterEnd: '2026-12-20',
+};
+
 /**
  * Migration helper for taskStatuses, custom categories, subjectRegistry, and dynamic schedule maps.
  */
@@ -195,6 +200,9 @@ export function usePersistence(weekStart, user) {
     if (migrated.macros) setMacros(migrated.macros);
     if (migrated.muscleFocus) setMuscleFocus(migrated.muscleFocus);
     if (migrated.focusLogs) setFocusLogs(migrated.focusLogs);
+    if (migrated.subjectRegistry) setSubjectRegistry(migrated.subjectRegistry);
+    if (migrated.weeklyReflection) setWeeklyReflection(migrated.weeklyReflection);
+    if (migrated.semesterConfig) setSemesterConfig(migrated.semesterConfig);
   }, []);
 
   // ── Load from localStorage on mount ──
@@ -221,13 +229,11 @@ export function usePersistence(weekStart, user) {
         const diffDays = Math.round((currDate - lastDate) / (1000 * 60 * 60 * 24));
 
         if (diffDays === 1) {
-          // Visited yesterday -> Increment Streak!
           const newStreak = savedStreak + 1;
           localStorage.setItem('cadence_last_visit_date', todayStr);
           localStorage.setItem('cadence_user_streak', String(newStreak));
           setStreak(newStreak);
         } else if (diffDays > 1) {
-          // Missed 1+ days -> Reset Streak to 1
           localStorage.setItem('cadence_last_visit_date', todayStr);
           localStorage.setItem('cadence_user_streak', '1');
           setStreak(1);
@@ -284,6 +290,7 @@ export function usePersistence(weekStart, user) {
       focusLogs,
       subjectRegistry,
       weeklyReflection,
+      semesterConfig,
     };
 
     saveWeekData(weekKey, payload);
@@ -313,6 +320,7 @@ export function usePersistence(weekStart, user) {
     focusLogs,
     subjectRegistry,
     weeklyReflection,
+    semesterConfig,
     user,
   ]);
 
@@ -334,5 +342,6 @@ export function usePersistence(weekStart, user) {
     muscleFocus, setMuscleFocus,
     focusLogs, setFocusLogs,
     weeklyReflection, setWeeklyReflection,
+    semesterConfig, setSemesterConfig,
   };
 }
