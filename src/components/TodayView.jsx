@@ -336,7 +336,7 @@ export default function TodayView({
 
   // ── Feature 6: STAGE C TRANSPARENT RHYTHM SCORE ──
   const hasActivityToday = completedTasks > 0 || partialTasks > 0 || totalActualMins > 0;
-  const sleepPts = (sleepSchedule?.sleepStart && sleepSchedule?.sleepEnd) ? 25 : 15;
+  const sleepPts = 0; // Option B: 0/25 pts until daily sleep check-in mechanism exists
   const focusPts = Math.min(25, Math.round((totalActualMins / 180) * 25));
   const taskPts = Math.round(progressPct * 0.25);
   const consistencyPts = hasActivityToday ? 25 : 0;
@@ -702,8 +702,8 @@ export default function TodayView({
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>🌙 <strong>Sleep Target</strong> (Rest configured)</span>
-              <span style={{ fontFamily: 'var(--font-mono)' }}>{sleepPts} / 25 pts</span>
+              <span>🌙 <strong>Sleep Target</strong> (Daily log unverified)</span>
+              <span style={{ fontFamily: 'var(--font-mono)' }}>0 / 25 pts</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>⏱ <strong>Focus Endurance</strong> ({actualHoursStr} / 3.0 hrs logged)</span>
