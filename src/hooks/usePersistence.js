@@ -164,8 +164,41 @@ export function migrateTaskStatuses(saved) {
  * Hook that syncs schedule state & custom categories with localStorage + Supabase cloud.
  */
 export function usePersistence(weekStart, user) {
+  const weekKey = dateKey(weekStart);
+  const initialized = useRef(false);
+  const cloudLoaded = useRef(false);
+  const saveTimer = useRef(null);
+
   const userId = user?.id || null;
   const activeUserIdRef = useRef(userId);
+
+  // ── State Declarations ──
+  const [theme, setTheme] = useState('paper');
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [rawText, setRawText] = useState({ skill: '', college: '', gym: '' });
+  const [schedule, setSchedule] = useState({ skill: [], college: [], gym: [] });
+  const [meals, setMeals] = useState([]);
+  const [dayStatus, setDayStatus] = useState({});
+  const [taskStatuses, setTaskStatuses] = useState({});
+  const [goals, setGoals] = useState([]);
+  const [streak, setStreak] = useState(1);
+  const [sleepSchedule, setSleepSchedule] = useState({ sleepStart: '23:30', sleepEnd: '07:00' });
+  const [macros, setMacros] = useState({
+    proteinTaken: 120, proteinTarget: 150,
+    carbsTaken: 180, carbsTarget: 220,
+    fatsTaken: 45, fatsTarget: 60,
+  });
+  const [muscleFocus, setMuscleFocus] = useState(['Chest', 'Arms']);
+  const [focusLogs, setFocusLogs] = useState({});
+  const [multiWeekPlan, setMultiWeekPlan] = useState({});
+  const [currentWeekIndex, setCurrentWeekIndex] = useState({});
+  const [subjectRegistry, setSubjectRegistry] = useState({});
+  const [weeklyReflection, setWeeklyReflection] = useState({
+    wentWell: '',
+    biggestDistraction: '',
+    nextWeekFocus: '',
+  });
+  const [semesterConfig, setSemesterConfig] = useState(DEFAULT_SEMESTER_CONFIG);
 
   // Helper to reset state back to clean defaults
   const resetStateToDefaults = useCallback(() => {
