@@ -71,7 +71,8 @@ export default function AuthBar({ user }) {
     );
   }
 
-  const name = user.user_metadata?.full_name || user.email || 'User';
+  const rawName = user.user_metadata?.full_name || (user.email ? user.email.split('@')[0] : 'User');
+  const name = rawName.charAt(0).toUpperCase() + rawName.slice(1);
   const initial = name.charAt(0).toUpperCase();
   const avatar = user.user_metadata?.avatar_url;
 
