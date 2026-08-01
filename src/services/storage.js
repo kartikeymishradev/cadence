@@ -27,6 +27,7 @@ const ALL_FIELDS = [
   'subjectRegistry',
   'weeklyReflection',
   'semesterConfig',
+  'sleepLogs',
 ];
 
 /**

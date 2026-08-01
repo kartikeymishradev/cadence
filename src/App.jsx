@@ -92,6 +92,7 @@ export default function App() {
     subjectRegistry, setSubjectRegistry,
     weeklyReflection, setWeeklyReflection,
     semesterConfig, setSemesterConfig,
+    sleepLogs, setSleepLogs,
   } = usePersistence(weekStart, user);
 
   // Sync active theme with document body data-theme attribute
@@ -531,6 +532,8 @@ export default function App() {
             taskStatuses={taskStatuses}
             subjectRegistry={subjectRegistry}
             sleepSchedule={sleepSchedule}
+            sleepLogs={sleepLogs}
+            onUpdateSleepLogs={setSleepLogs}
             macros={macros}
             onUpdateMacros={setMacros}
             muscleFocus={muscleFocus}
@@ -700,6 +703,12 @@ export default function App() {
           user={user}
           schedule={schedule}
           onUpdateSchedule={setSchedule}
+          subjectRegistry={subjectRegistry}
+          taskStatuses={taskStatuses}
+          focusLogs={focusLogs}
+          semesterConfig={semesterConfig}
+          sleepLogs={sleepLogs}
+          onUpdateSleepLogs={setSleepLogs}
         />
 
         {/* Dintaal Bottom Navigation Dock */}

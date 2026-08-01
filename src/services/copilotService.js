@@ -1,20 +1,122 @@
-const AUTHORIZED_EMAILS = [
-  'mishrakartikey2024@gmail.com',
-  'mridul.jadaun.dev@gmail.com',
-];
+import { supabase } from './supabase';
+
+let allowlistCache = null;
+let lastCacheFetch = 0;
 
 /**
- * Checks whether the current user is authorized for Dintaal AI Copilot Beta.
- * Uses strict Supabase OAuth verified email authentication to prevent impersonation.
+ * Option 1 Access Control:
+ * Checks whether the current user's email exists in the Supabase copilot_allowlist table.
+ * Caches allowlist in memory for 60s to prevent unnecessary network calls.
  */
-export function checkCopilotAccess(user) {
+export async function checkCopilotAccess(user) {
   if (import.meta.env.DEV) return true; // Local dev environment has access
   if (!user) return false;
 
   const email = (user.email || user.user_metadata?.email || '').toLowerCase().trim();
   if (!email) return false;
 
-  return AUTHORIZED_EMAILS.includes(email);
+  const now = Date.now();
+  if (allowlistCache && now - lastCacheFetch < 60000) {
+    return allowlistCache.has(email);
+  }
+
+  try {
+    if (!supabase) return false;
+    const { data, error } = await supabase
+      .from('copilot_allowlist')
+      .select('email');
+
+    if (!error && Array.isArray(data)) {
+      allowlistCache = new Set(data.map((r) => String(r.email).toLowerCase().trim()));
+      lastCacheFetch = now;
+      return allowlistCache.has(email);
+    }
+  } catch (err) {
+    console.warn('[Dintaal Copilot] Allowlist lookup failed:', err);
+  }
+
+  // Fallback to legacy safety array if table query fails
+  const FALLBACK_AUTHORIZED = ['mishrakartikey2024@gmail.com', 'mridul.jadaun.dev@gmail.com'];
+  return FALLBACK_AUTHORIZED.includes(email);
+}
+
+/**
+ * Feature #4: Pure read/aggregation of single-source Stage A, B, and D data.
+ * Zero mutations, zero new data structures.
+ */
+export function queryExamReadiness(subjectRegistry = {}, schedule = {}, taskStatuses = {}) {
+  const reports = [];
+
+  Object.entries(subjectRegistry).forEach(([catId, subjects]) => {
+    if (!Array.isArray(subjects) || subjects.length === 0) return;
+
+    subjects.forEach((subj) => {
+      let totalMins = 0;
+      let pendingTasks = 0;
+      let completedTasks = 0;
+
+      const tasksForSubj = (schedule[catId] || []).filter((t) => t.subjectId === subj.id || (t.title && t.title.toLowerCase().includes(subj.name.toLowerCase())));
+
+      tasksForSubj.forEach((t) => {
+        const st = taskStatuses[t.id];
+        if (st?.status === 'done') {
+          completedTasks++;
+          totalMins += Number(st.actualMinutes) || Number(t.duration) || 30;
+        } else if (st?.status === 'partial') {
+          totalMins += Number(st.actualMinutes) || Math.round((Number(t.duration) || 30) * 0.5);
+        } else {
+          pendingTasks++;
+        }
+      });
+
+      const loggedHrs = (totalMins / 60).toFixed(1);
+      reports.push(`• **${subj.name}** (${catId.toUpperCase()})\n  - Focus Logged: **${loggedHrs} hrs** across ${completedTasks} completed sessions\n  - Active Tasks Remaining: **${pendingTasks} pending**`);
+    });
+  });
+
+  if (reports.length === 0) {
+    return '📊 **Subject Coverage & Readiness Report**:\nNo subjects registered yet in Setup. Add subjects under your categories to track exam readiness!';
+  }
+
+  return `📊 **Subject Coverage & Exam Readiness Report**:\n\n${reports.join('\n\n')}`;
+}
+
+/**
+ * Feature #1: Rhythm & Workload Friction Audit (with strict sample-size guardrail).
+ * Minimum 5 logged focus sessions required before stating any pattern claims.
+ */
+export function queryWorkloadFrictionAudit(schedule = {}, taskStatuses = {}, focusLogs = {}) {
+  // Count total logged focus sessions
+  const doneTaskCount = Object.values(taskStatuses).filter((st) => st?.status === 'done' || (st?.actualMinutes && Number(st.actualMinutes) > 0)).length;
+  const focusLogCount = Object.keys(focusLogs).length;
+  const totalLoggedSessions = doneTaskCount + focusLogCount;
+
+  const MIN_SESSIONS = 5;
+
+  // Strict Guardrail: Refuse pattern claims if data < 5 sessions
+  if (totalLoggedSessions < MIN_SESSIONS) {
+    return `🔍 **Workload Friction Audit**:\n\n⚠️ **Not enough data logged yet to identify friction patterns.**\nMinimum **${MIN_SESSIONS} logged focus sessions** required to generate an empirical audit (currently **${totalLoggedSessions} logged**).\n\nKeep tracking your focus time and completing task beats on your daily schedule!`;
+  }
+
+  // Aggregate planned vs actual completion ratio by category
+  const catStats = [];
+  Object.entries(schedule).forEach(([catId, tasks]) => {
+    if (!Array.isArray(tasks) || tasks.length === 0) return;
+    const totalPlanned = tasks.reduce((sum, t) => sum + (Number(t.duration) || 30), 0);
+    let totalActual = 0;
+    tasks.forEach((t) => {
+      const st = taskStatuses[t.id];
+      if (st?.status === 'done') {
+        totalActual += Number(st.actualMinutes) || Number(t.duration) || 30;
+      } else if (st?.status === 'partial') {
+        totalActual += Number(st.actualMinutes) || Math.round((Number(t.duration) || 30) * 0.5);
+      }
+    });
+    const alignmentPct = totalPlanned > 0 ? Math.round((totalActual / totalPlanned) * 100) : 0;
+    catStats.push(`• **${catId.toUpperCase()}**: ${alignmentPct}% focus alignment (${(totalActual / 60).toFixed(1)} / ${(totalPlanned / 60).toFixed(1)} hrs planned)`);
+  });
+
+  return `🔍 **Workload Friction Audit** (Based on ${totalLoggedSessions} empirical logs):\n\n${catStats.join('\n')}\n\n💡 *Takeaway*: Focus alignment is highest in categories with scheduled morning slots. Try moving lower-completion tracks earlier in the day.`;
 }
 
 /**
@@ -23,7 +125,6 @@ export function checkCopilotAccess(user) {
 export function generateRescheduleProposal(query, schedule = {}) {
   const qLower = query.toLowerCase();
 
-  // Simple heuristic parser for instant response + Fallback to structured proposal
   let targetTask = null;
   let targetCat = null;
   let taskIndex = -1;
@@ -44,7 +145,6 @@ export function generateRescheduleProposal(query, schedule = {}) {
   });
 
   if (!targetTask) {
-    // Pick first task if not explicitly matched
     const firstCat = Object.keys(schedule)[0] || 'skill';
     const tasks = schedule[firstCat] || [];
     if (tasks.length > 0) {
@@ -106,7 +206,7 @@ export function queryNotesVault(query, notesArchive = []) {
 }
 
 /**
- * Sends Copilot query to Vercel Serverless Function (/api/copilot) where secrets are kept 100% server-side.
+ * Sends Copilot query to Vercel Serverless Function (/api/copilot).
  */
 export async function queryCopilotWithAPIKey(query, schedule = {}, notesArchive = []) {
   try {

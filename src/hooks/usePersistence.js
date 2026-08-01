@@ -199,6 +199,7 @@ export function usePersistence(weekStart, user) {
     nextWeekFocus: '',
   });
   const [semesterConfig, setSemesterConfig] = useState(DEFAULT_SEMESTER_CONFIG);
+  const [sleepLogs, setSleepLogs] = useState({});
 
   // Helper to reset state back to clean defaults
   const resetStateToDefaults = useCallback(() => {
@@ -224,6 +225,7 @@ export function usePersistence(weekStart, user) {
     setSubjectRegistry({});
     setWeeklyReflection({ wentWell: '', biggestDistraction: '', nextWeekFocus: '' });
     setSemesterConfig(DEFAULT_SEMESTER_CONFIG);
+    setSleepLogs({});
   }, []);
 
   // ── Apply a saved data object to state ──
@@ -272,6 +274,7 @@ export function usePersistence(weekStart, user) {
     if (migrated.subjectRegistry) setSubjectRegistry(migrated.subjectRegistry);
     if (migrated.weeklyReflection) setWeeklyReflection(migrated.weeklyReflection);
     if (migrated.semesterConfig) setSemesterConfig(migrated.semesterConfig);
+    if (migrated.sleepLogs) setSleepLogs(migrated.sleepLogs);
   }, []);
 
   // ── Load from user-scoped localStorage on mount & when user changes ──
@@ -366,6 +369,7 @@ export function usePersistence(weekStart, user) {
       subjectRegistry,
       weeklyReflection,
       semesterConfig,
+      sleepLogs,
     };
 
     saveWeekData(weekKey, payload, userId);
@@ -397,6 +401,7 @@ export function usePersistence(weekStart, user) {
     subjectRegistry,
     weeklyReflection,
     semesterConfig,
+    sleepLogs,
   ]);
 
   return {
@@ -418,5 +423,6 @@ export function usePersistence(weekStart, user) {
     focusLogs, setFocusLogs,
     weeklyReflection, setWeeklyReflection,
     semesterConfig, setSemesterConfig,
+    sleepLogs, setSleepLogs,
   };
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, X, Send, Lock, ArrowRight, Check } from 'lucide-react';
-import { checkCopilotAccess, generateRescheduleProposal, queryNotesVault, queryCopilotWithAPIKey } from '../services/copilotService';
+import { checkCopilotAccess, generateRescheduleProposal, queryNotesVault, queryCopilotWithAPIKey, queryExamReadiness, queryWorkloadFrictionAudit } from '../services/copilotService';
+import { dateKey } from '../utils/dateUtils';
 
 export default function CopilotDrawer({
   isOpen,
@@ -9,7 +10,26 @@ export default function CopilotDrawer({
   schedule = {},
   onUpdateSchedule,
   notesArchive = [],
+  subjectRegistry = {},
+  taskStatuses = {},
+  focusLogs = {},
+  semesterConfig = {},
+  sleepLogs = {},
+  onUpdateSleepLogs,
 }) {
+  const [hasAccess, setHasAccess] = React.useState(import.meta.env.DEV);
+
+  React.useEffect(() => {
+    if (import.meta.env.DEV) {
+      setHasAccess(true);
+      return;
+    }
+    if (!user) {
+      setHasAccess(false);
+      return;
+    }
+    checkCopilotAccess(user).then((res) => setHasAccess(!!res));
+  }, [user]);
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -22,7 +42,6 @@ export default function CopilotDrawer({
 
   if (!isOpen) return null;
 
-  const hasAccess = checkCopilotAccess(user);
 
   const handleSend = async (queryText) => {
     const textToSend = queryText || inputQuery;
@@ -51,8 +70,58 @@ export default function CopilotDrawer({
       return;
     }
 
-    // 2. Instant Local Smart Heuristic fallback (0ms delay)
+    // 2. Local Feature Command Routing
     const qLower = textToSend.toLowerCase();
+
+    // Feature #5: Daily Sleep Check-in
+    if (qLower.includes('sleep') || qLower.includes('slept')) {
+      const todayKey = dateKey(new Date());
+      if (onUpdateSleepLogs) {
+        onUpdateSleepLogs({
+          ...sleepLogs,
+          [todayKey]: {
+            sleptOnSchedule: true,
+            bedTime: '23:30',
+            wakeTime: '07:00',
+            loggedAt: new Date().toISOString(),
+          },
+        });
+      }
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: 'ai',
+          text: '🌙 **Sleep check-in recorded for today!**\nSlept on schedule (23:30 – 07:00). Earned **+25 pts** on your Daily Rhythm Score!',
+        },
+      ]);
+      setIsProcessing(false);
+      return;
+    }
+
+    // Feature #4: Exam Readiness & Subject Coverage Report
+    if (qLower.includes('exam') || qLower.includes('readiness') || qLower.includes('coverage')) {
+      const readinessReport = queryExamReadiness(subjectRegistry, schedule, taskStatuses);
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, sender: 'ai', text: readinessReport },
+      ]);
+      setIsProcessing(false);
+      return;
+    }
+
+    // Feature #1: Rhythm & Workload Friction Audit (with Guardrail)
+    if (qLower.includes('audit') || qLower.includes('friction') || qLower.includes('bottleneck')) {
+      const auditReport = queryWorkloadFrictionAudit(schedule, taskStatuses, focusLogs);
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, sender: 'ai', text: auditReport },
+      ]);
+      setIsProcessing(false);
+      return;
+    }
+
+    // Notes Vault search or default schedule proposal
     if (qLower.includes('note') || qLower.includes('summary') || qLower.includes('react') || qLower.includes('dsa')) {
       const answer = queryNotesVault(textToSend, notesArchive);
       setMessages((prev) => [

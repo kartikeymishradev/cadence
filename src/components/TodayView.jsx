@@ -15,6 +15,8 @@ export default function TodayView({
   taskStatuses,
   subjectRegistry = {},
   sleepSchedule,
+  sleepLogs = {},
+  onUpdateSleepLogs,
   macros,
   onUpdateMacros,
   muscleFocus,
@@ -335,8 +337,10 @@ export default function TodayView({
   const progressPct = totalTasks > 0 ? Math.round(((completedTasks + partialTasks * 0.5) / totalTasks) * 100) : 0;
 
   // ── Feature 6: STAGE C TRANSPARENT RHYTHM SCORE ──
+  const todayKey = dateKey(now);
+  const todaySleepLog = sleepLogs[todayKey];
   const hasActivityToday = completedTasks > 0 || partialTasks > 0 || totalActualMins > 0;
-  const sleepPts = 0; // Option B: 0/25 pts until daily sleep check-in mechanism exists
+  const sleepPts = todaySleepLog?.sleptOnSchedule ? 25 : 0; // Genuine daily sleep log check
   const focusPts = Math.min(25, Math.round((totalActualMins / 180) * 25));
   const taskPts = Math.round(progressPct * 0.25);
   const consistencyPts = hasActivityToday ? 25 : 0;
@@ -702,8 +706,8 @@ export default function TodayView({
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>🌙 <strong>Sleep Target</strong> (Daily log unverified)</span>
-              <span style={{ fontFamily: 'var(--font-mono)' }}>0 / 25 pts</span>
+              <span>🌙 <strong>Sleep Target</strong> ({todaySleepLog?.sleptOnSchedule ? 'Daily log verified' : 'Daily log unverified'})</span>
+              <span style={{ fontFamily: 'var(--font-mono)' }}>{sleepPts} / 25 pts</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
               <span>⏱ <strong>Focus Endurance</strong> ({actualHoursStr} / 3.0 hrs logged)</span>
@@ -786,6 +790,40 @@ export default function TodayView({
             )}
           </div>
         </div>
+
+        <button
+          onClick={() => {
+            if (onUpdateSleepLogs) {
+              const nextVal = !todaySleepLog?.sleptOnSchedule;
+              onUpdateSleepLogs({
+                ...sleepLogs,
+                [todayKey]: {
+                  sleptOnSchedule: nextVal,
+                  bedTime: sleepSchedule?.sleepStart || '23:30',
+                  wakeTime: sleepSchedule?.sleepEnd || '07:00',
+                  loggedAt: new Date().toISOString(),
+                },
+              });
+            }
+          }}
+          style={{
+            background: todaySleepLog?.sleptOnSchedule ? 'rgba(95, 132, 103, 0.12)' : 'transparent',
+            border: todaySleepLog?.sleptOnSchedule ? '1px solid var(--sage)' : '1px solid var(--hairline)',
+            color: todaySleepLog?.sleptOnSchedule ? 'var(--sage)' : 'var(--slate)',
+            borderRadius: 20,
+            padding: '4px 12px',
+            fontSize: 11,
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            marginLeft: 'auto',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {todaySleepLog?.sleptOnSchedule ? '✓ Slept on Schedule (25 pts)' : '+ Log Sleep Today (0 pts)'}
+        </button>
       </div>
 
       {/* 🌙 LATE NIGHT AWAKE POPUP */}
