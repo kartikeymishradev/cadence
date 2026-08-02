@@ -331,14 +331,18 @@ export function usePersistence(weekStart, user) {
 
     cloudLoad(userId).then((allCloudData) => {
       if (allCloudData && Object.keys(allCloudData).length > 0) {
-        if (allCloudData['settings']) {
-          applyData(allCloudData['settings']);
-        }
-        if (allCloudData[weekKey]) {
-          applyData(allCloudData[weekKey]);
-        } else {
-          const firstKey = Object.keys(allCloudData).find((k) => k !== 'settings') || Object.keys(allCloudData)[0];
-          if (firstKey) applyData(allCloudData[firstKey]);
+        const localData = loadWeekData(weekKey, userId);
+        const cloudData = allCloudData[weekKey] || (allCloudData['settings'] ? allCloudData['settings'] : null);
+
+        const localTs = Number(localData?._lastUpdated) || 0;
+        const cloudTs = Number(cloudData?._lastUpdated) || 0;
+
+        if (localTs > cloudTs && localData) {
+          // Local storage has newer user edits (e.g. recent task deletions)
+          // Preserve local state & immediately push to cloud
+          cloudSave(weekKey, localData, userId);
+        } else if (cloudData) {
+          applyData(cloudData);
         }
       }
       // Always set cloudLoaded = true after attempt so local updates can sync
@@ -351,6 +355,7 @@ export function usePersistence(weekStart, user) {
     if (!initialized.current) return;
 
     const payload = {
+      _lastUpdated: Date.now(),
       theme,
       categories,
       schedule,
@@ -378,7 +383,7 @@ export function usePersistence(weekStart, user) {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => {
         cloudSave(weekKey, payload, userId);
-      }, 2000);
+      }, 300);
     }
   }, [
     weekKey,

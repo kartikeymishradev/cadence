@@ -28,12 +28,48 @@ export async function cloudSave(key, data, explicitUserId = null) {
   const userId = await getAuthenticatedUserId(explicitUserId);
   if (!userId) return;
 
+  const nowIso = new Date().toISOString();
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+    if (supabaseUrl && supabaseAnonKey && token) {
+      const url = `${supabaseUrl}/rest/v1/schedules?on_conflict=user_id,key`;
+      const body = JSON.stringify({
+        user_id: userId,
+        key,
+        data,
+        updated_at: nowIso,
+      });
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${token}`,
+          'Prefer': 'resolution=merge-duplicates',
+        },
+        body,
+        keepalive: true, // Guarantees execution post-unload across modern browsers
+      });
+
+      if (res.ok) return;
+    }
+  } catch {
+    // Fallback to standard Supabase client upsert
+  }
+
   const { error } = await supabase.from('schedules').upsert(
-    { user_id: userId, key, data, updated_at: new Date().toISOString() },
+    { user_id: userId, key, data, updated_at: nowIso },
     { onConflict: 'user_id,key' }
   );
   if (error) {
-    console.error('Supabase cloudSave error:', error);
+    console.error('Supabase cloudSave fallback error:', error);
   }
 }
 
