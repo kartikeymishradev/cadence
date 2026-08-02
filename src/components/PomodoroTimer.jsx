@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Volume2, VolumeX, Target, Copy, CheckCircle2, Download, Music, Upload } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, VolumeX, Target, Copy, CheckCircle2, Download, Music } from 'lucide-react';
 import BeatStrip from './BeatStrip';
 
 const DEFAULT_MUSIC_URL = '/audio/brown_noise.mp3';
@@ -22,33 +22,11 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
   const [timeLeft, setTimeLeft] = useState(focusMins * 60);
   
   const [bgMuted, setBgMuted] = useState(false);
-  const [customAudioUrl, setCustomAudioUrl] = useState(null);
-  const [customAudioName, setCustomAudioName] = useState('');
   const [linkedTask, setLinkedTask] = useState('');
   
   const timerRef = useRef(null);
   const audioRef = useRef(new Audio(ALARM_URL));
   const ambientAudioRef = useRef(null);
-  const fileInputRef = useRef(null);
-
-  const activeAudioSrc = customAudioUrl || DEFAULT_MUSIC_URL;
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (ambientAudioRef.current) {
-        ambientAudioRef.current.pause();
-      }
-      const url = URL.createObjectURL(file);
-      setCustomAudioUrl(url);
-      setCustomAudioName(file.name);
-      ambientAudioRef.current = new Audio(url);
-      ambientAudioRef.current.loop = true;
-      if (running && !bgMuted) {
-        ambientAudioRef.current.play().catch((err) => console.log('Audio play failed:', err));
-      }
-    }
-  };
 
   const playTick = () => {
     try {
@@ -71,11 +49,8 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
 
   // Auto-play background music when timer is running (unless muted)
   useEffect(() => {
-    if (!ambientAudioRef.current || ambientAudioRef.current.src !== activeAudioSrc) {
-      if (ambientAudioRef.current) {
-        ambientAudioRef.current.pause();
-      }
-      ambientAudioRef.current = new Audio(activeAudioSrc);
+    if (!ambientAudioRef.current) {
+      ambientAudioRef.current = new Audio(DEFAULT_MUSIC_URL);
       ambientAudioRef.current.loop = true;
     }
 
@@ -84,7 +59,7 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
     } else {
       ambientAudioRef.current.pause();
     }
-  }, [running, bgMuted, activeAudioSrc]);
+  }, [running, bgMuted]);
 
   // Clean up ambient audio on unmount
   useEffect(() => {
@@ -306,15 +281,6 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
         </div>
       </div>
 
-      {/* Hidden File Input for Custom MP3 */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileUpload}
-        accept="audio/*,.mp3"
-        style={{ display: 'none' }}
-      />
-
       {/* Ambient Noise Section */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -323,25 +289,6 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
             AMBIENT SOUNDSCAPES
           </span>
         </div>
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            fontSize: 11,
-            padding: '4px 8px',
-            borderRadius: 6,
-            border: '1px solid var(--hairline)',
-            background: 'var(--paper-raised)',
-            color: 'var(--ink)',
-            cursor: 'pointer',
-          }}
-          title="Upload your own custom MP3 audio file"
-        >
-          <Upload size={12} />
-          Upload MP3
-        </button>
       </div>
 
       <div
@@ -378,20 +325,17 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
           </button>
           <div>
             <div style={{ fontSize: 13, fontWeight: 600, color: running && !bgMuted ? 'var(--indigo)' : 'var(--ink)' }}>
-              {customAudioName ? `Custom Track: ${customAudioName}` : 'Focus Ambient Music'}{' '}
-              {bgMuted ? '(Muted)' : running ? '(Playing)' : '(Auto-plays on Start)'}
+              Focus Ambient Music {bgMuted ? '(Muted)' : running ? '(Playing)' : '(Auto-plays on Start)'}
             </div>
             <div style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.85 }}>
-              {customAudioName
-                ? 'Playing your custom uploaded MP3 audio during active timer sessions'
-                : 'Automatically plays low-frequency focus background audio during active timer sessions'}
+              Automatically plays low-frequency focus background audio during active timer sessions
             </div>
           </div>
         </div>
 
         <a
-          href={activeAudioSrc}
-          download={customAudioName || 'focus_ambient.mp3'}
+          href={DEFAULT_MUSIC_URL}
+          download="focus_ambient.mp3"
           onClick={(e) => e.stopPropagation()}
           title="Download Background Music MP3"
           style={{

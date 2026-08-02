@@ -179,6 +179,7 @@ export default function App() {
       newWeeks[curWeekIdx] = {
         ...targetWeek,
         tasks: updatedTasks,
+        workouts: updatedTasks,
       };
 
       return {
@@ -264,10 +265,12 @@ export default function App() {
     const weekData = parsedPlan.weeks[targetWeekIdx] || parsedPlan.weeks[0];
 
     if (activeTab === 'gym') {
-      setSchedule((prev) => ({ ...prev, gym: weekData.workouts || [] }));
+      const items = weekData.workouts || weekData.tasks || [];
+      setSchedule((prev) => ({ ...prev, gym: items }));
       setMeals(weekData.meals || []);
     } else {
-      setSchedule((prev) => ({ ...prev, [activeTab]: weekData.tasks || [] }));
+      const items = weekData.tasks || weekData.workouts || [];
+      setSchedule((prev) => ({ ...prev, [activeTab]: items }));
     }
   }, [setSchedule, setMeals]);
 
@@ -288,14 +291,15 @@ export default function App() {
         setMultiWeekPlan((prev) => ({ ...prev, [tab]: parsed }));
         setCurrentWeekIndex((prev) => ({ ...prev, [tab]: 0 }));
         applyMultiWeekData(parsed, 0, tab);
-        count = (parsed.weeks[0]?.tasks || []).length;
+        const firstWeek = parsed.weeks[0] || {};
+        count = (firstWeek.workouts || firstWeek.tasks || []).length;
       } else if (tab === 'gym') {
-        const workouts = parsed.workouts || [];
+        const workouts = parsed.workouts || parsed.tasks || [];
         setSchedule((prev) => ({ ...prev, gym: workouts }));
         setMeals(parsed.meals || []);
         count = workouts.length;
       } else {
-        const rawTasks = parsed.tasks || [];
+        const rawTasks = parsed.tasks || parsed.workouts || [];
         const registryForTab = subjectRegistry[tab] || [];
         const tasks = rawTasks.map((t) => {
           const titleLower = String(t.title || '').toLowerCase();
