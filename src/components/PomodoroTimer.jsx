@@ -4,9 +4,9 @@ import BeatStrip from './BeatStrip';
 
 const NOISE_OPTIONS = [
   { id: 'off', label: 'Off / Mute', use: 'No background audio', file: null },
-  { id: 'brown', label: 'Brown Noise', use: 'Deep low-frequency focus & calm', file: '/audio/brown_noise.mp3' },
-  { id: 'white', label: 'White Noise', use: 'Crisp static for noise masking', file: '/audio/white_noise.mp3' },
-  { id: 'gamma', label: 'Gamma 40Hz', use: '40Hz binaural & pulse entrainment', file: '/audio/gamma_wave.mp3' },
+  { id: 'brown', label: 'Brown Noise', use: 'Low-frequency ambient mask', file: '/audio/brown_noise.mp3' },
+  { id: 'white', label: 'White Noise', use: 'Static spectrum noise mask', file: '/audio/white_noise.mp3' },
+  { id: 'gamma', label: '40Hz Pulsed Tone', use: 'Steady 40Hz acoustic pulse', file: '/audio/gamma_wave.mp3' },
 ];
 
 const ALARM_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
@@ -27,9 +27,8 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
   const [activeBeat, setActiveBeat] = useState(0);
   const [timeLeft, setTimeLeft] = useState(focusMins * 60);
   
-  const [noise, setNoise] = useState('brown');
+  const [noise, setNoise] = useState('off');
   const [isPlayingNoise, setIsPlayingNoise] = useState(false);
-  const [volume, setVolume] = useState(0.5);
   const [linkedTask, setLinkedTask] = useState('');
   
   const timerRef = useRef(null);
@@ -55,7 +54,7 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
     }
   };
 
-  // Ambient Audio Playback Logic
+  // Ambient Audio Playback Logic (Manual control only; independent of timer start/stop)
   useEffect(() => {
     const activeOpt = NOISE_OPTIONS.find((n) => n.id === noise);
     
@@ -76,15 +75,12 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
       ambientAudioRef.current.loop = true;
     }
 
-    ambientAudioRef.current.volume = volume;
-
-    if (running || isPlayingNoise) {
-      ambientAudioRef.current.play().then(() => setIsPlayingNoise(true)).catch((e) => console.log('Ambient audio play blocked:', e));
+    if (isPlayingNoise) {
+      ambientAudioRef.current.play().catch((e) => console.log('Ambient audio play blocked:', e));
     } else {
       ambientAudioRef.current.pause();
-      setIsPlayingNoise(false);
     }
-  }, [noise, running, isPlayingNoise, volume]);
+  }, [noise, isPlayingNoise]);
 
   // Clean up ambient audio on unmount
   useEffect(() => {
@@ -311,45 +307,26 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <Music size={14} color="var(--indigo)" />
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.5px', color: 'var(--slate)' }}>
-            FOCUS SOUNDSCAPES & BINAURAL AUDIO
+            AMBIENT SOUNDSCAPES
           </span>
         </div>
-        {noise !== 'off' && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <button
-              onClick={() => setIsPlayingNoise(!isPlayingNoise)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: isPlayingNoise ? 'var(--indigo)' : 'var(--slate)',
-                display: 'flex',
-                alignItems: 'center',
-                padding: 2,
-              }}
-              title={isPlayingNoise ? 'Pause soundscape' : 'Play soundscape'}
-            >
-              {isPlayingNoise ? <Volume2 size={16} /> : <VolumeX size={16} />}
-            </button>
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.05"
-              value={volume}
-              onChange={(e) => setVolume(Number(e.target.value))}
-              style={{ width: 60, accentColor: 'var(--indigo)', cursor: 'pointer' }}
-              title={`Volume: ${Math.round(volume * 100)}%`}
-            />
-          </div>
-        )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {NOISE_OPTIONS.map((n) => (
           <div
             key={n.id}
-            onClick={() => setNoise(n.id)}
+            onClick={() => {
+              if (n.id === 'off') {
+                setNoise('off');
+                setIsPlayingNoise(false);
+              } else if (noise === n.id) {
+                setIsPlayingNoise(!isPlayingNoise);
+              } else {
+                setNoise(n.id);
+                setIsPlayingNoise(true);
+              }
+            }}
             style={{
               display: 'flex',
               justify: 'space-between',
@@ -362,11 +339,37 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
               transition: 'all 0.2s ease'
             }}
           >
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: noise === n.id ? 'var(--indigo)' : 'var(--ink)' }}>
-                {n.label}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              {n.file && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (noise === n.id) {
+                      setIsPlayingNoise(!isPlayingNoise);
+                    } else {
+                      setNoise(n.id);
+                      setIsPlayingNoise(true);
+                    }
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: noise === n.id && isPlayingNoise ? 'var(--indigo)' : 'var(--slate)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: 0,
+                  }}
+                >
+                  {noise === n.id && isPlayingNoise ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                </button>
+              )}
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: noise === n.id ? 'var(--indigo)' : 'var(--ink)' }}>
+                  {n.label}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.85 }}>{n.use}</div>
               </div>
-              <div style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.85 }}>{n.use}</div>
             </div>
 
             {n.file && (
