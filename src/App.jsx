@@ -166,13 +166,39 @@ export default function App() {
     setParseSuccess(null);
   }, [categories, setSchedule, setRawText, setMeals, setTaskStatuses, setFocusLogs, setMultiWeekPlan, setCurrentWeekIndex]);
 
+  const syncMultiWeekTasks = useCallback((catId, updatedTasks) => {
+    setMultiWeekPlan((prevPlan) => {
+      const plan = prevPlan[catId];
+      if (!plan || !plan.weeks || plan.weeks.length === 0) return prevPlan;
+
+      const curWeekIdx = currentWeekIndex[catId] || 0;
+      const newWeeks = [...plan.weeks];
+      const targetWeek = newWeeks[curWeekIdx] || newWeeks[0];
+      if (!targetWeek) return prevPlan;
+
+      newWeeks[curWeekIdx] = {
+        ...targetWeek,
+        tasks: updatedTasks,
+      };
+
+      return {
+        ...prevPlan,
+        [catId]: {
+          ...plan,
+          weeks: newWeeks,
+        },
+      };
+    });
+  }, [setMultiWeekPlan, currentWeekIndex]);
+
   const handleDeleteTask = useCallback((catId, index) => {
     setSchedule((prev) => {
       const catTasks = [...(prev[catId] || [])];
       catTasks.splice(index, 1);
+      syncMultiWeekTasks(catId, catTasks);
       return { ...prev, [catId]: catTasks };
     });
-  }, [setSchedule]);
+  }, [setSchedule, syncMultiWeekTasks]);
 
   // Auto-increment streak when user marks tasks done
   const handleUpdateTaskStatus = useCallback((id, status) => {
@@ -217,17 +243,19 @@ export default function App() {
           duration: newDuration,
         };
       }
+      syncMultiWeekTasks(categoryKey, list);
       return { ...prev, [categoryKey]: list };
     });
-  }, [setSchedule]);
+  }, [setSchedule, syncMultiWeekTasks]);
 
   // Manual Task Adder Handler
   const handleAddTaskManual = useCallback((categoryKey, newTask) => {
-    setSchedule((prev) => ({
-      ...prev,
-      [categoryKey]: [...(prev[categoryKey] || []), newTask],
-    }));
-  }, [setSchedule]);
+    setSchedule((prev) => {
+      const list = [...(prev[categoryKey] || []), newTask];
+      syncMultiWeekTasks(categoryKey, list);
+      return { ...prev, [categoryKey]: list };
+    });
+  }, [setSchedule, syncMultiWeekTasks]);
 
   // Apply a specific week from a multi-week plan object to active state
   const applyMultiWeekData = useCallback((parsedPlan, targetWeekIdx, activeTab) => {
