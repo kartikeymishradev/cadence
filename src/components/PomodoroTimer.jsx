@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Volume2, Target, Copy, CheckCircle2 } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, VolumeX, Target, Copy, CheckCircle2, Download, Music } from 'lucide-react';
 import BeatStrip from './BeatStrip';
 
 const NOISE_OPTIONS = [
-  { id: 'white', label: 'White Noise', use: 'Loud, chatty coworkers' },
-  { id: 'brown', label: 'Brown Noise', use: 'An overactive, racing mind' },
-  { id: 'gamma', label: 'Gamma 40Hz', use: 'Deep cognitive focus' },
+  { id: 'off', label: 'Off / Mute', use: 'No background audio', file: null },
+  { id: 'brown', label: 'Brown Noise', use: 'Deep low-frequency focus & calm', file: '/audio/brown_noise.mp3' },
+  { id: 'white', label: 'White Noise', use: 'Crisp static for noise masking', file: '/audio/white_noise.mp3' },
+  { id: 'gamma', label: 'Gamma 40Hz', use: '40Hz binaural & pulse entrainment', file: '/audio/gamma_wave.mp3' },
 ];
 
 const ALARM_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
@@ -27,10 +28,13 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
   const [timeLeft, setTimeLeft] = useState(focusMins * 60);
   
   const [noise, setNoise] = useState('brown');
+  const [isPlayingNoise, setIsPlayingNoise] = useState(false);
+  const [volume, setVolume] = useState(0.5);
   const [linkedTask, setLinkedTask] = useState('');
   
   const timerRef = useRef(null);
   const audioRef = useRef(new Audio(ALARM_URL));
+  const ambientAudioRef = useRef(null);
 
   const playTick = () => {
     try {
@@ -50,6 +54,46 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
       console.log('Audio tick failed:', e);
     }
   };
+
+  // Ambient Audio Playback Logic
+  useEffect(() => {
+    const activeOpt = NOISE_OPTIONS.find((n) => n.id === noise);
+    
+    if (!activeOpt || !activeOpt.file) {
+      if (ambientAudioRef.current) {
+        ambientAudioRef.current.pause();
+      }
+      setIsPlayingNoise(false);
+      return;
+    }
+
+    if (!ambientAudioRef.current) {
+      ambientAudioRef.current = new Audio(activeOpt.file);
+      ambientAudioRef.current.loop = true;
+    } else if (!ambientAudioRef.current.src.endsWith(activeOpt.file)) {
+      ambientAudioRef.current.pause();
+      ambientAudioRef.current = new Audio(activeOpt.file);
+      ambientAudioRef.current.loop = true;
+    }
+
+    ambientAudioRef.current.volume = volume;
+
+    if (running || isPlayingNoise) {
+      ambientAudioRef.current.play().then(() => setIsPlayingNoise(true)).catch((e) => console.log('Ambient audio play blocked:', e));
+    } else {
+      ambientAudioRef.current.pause();
+      setIsPlayingNoise(false);
+    }
+  }, [noise, running, isPlayingNoise, volume]);
+
+  // Clean up ambient audio on unmount
+  useEffect(() => {
+    return () => {
+      if (ambientAudioRef.current) {
+        ambientAudioRef.current.pause();
+      }
+    };
+  }, []);
 
   // Initialize time when switching beats or changing config while stopped
   useEffect(() => {
@@ -79,7 +123,7 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
             }
 
             setActiveBeat((b) => (b + 1) % cycle.length);
-            return 0; // The dependency effect above will reset it to next beat's time
+            return 0;
           }
           return prev - 1;
         });
@@ -263,36 +307,87 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
       </div>
 
       {/* Ambient Noise Section */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.5px', color: 'var(--slate)' }}>
-          AMBIENT NOISE
-        </span>
-        <Volume2 size={12} color="var(--slate)" />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Music size={14} color="var(--indigo)" />
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '0.5px', color: 'var(--slate)' }}>
+            FOCUS SOUNDSCAPES & BINAURAL AUDIO
+          </span>
+        </div>
+        {noise !== 'off' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <button
+              onClick={() => setIsPlayingNoise(!isPlayingNoise)}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: isPlayingNoise ? 'var(--indigo)' : 'var(--slate)',
+                display: 'flex',
+                alignItems: 'center',
+                padding: 2,
+              }}
+              title={isPlayingNoise ? 'Pause soundscape' : 'Play soundscape'}
+            >
+              {isPlayingNoise ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            </button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={volume}
+              onChange={(e) => setVolume(Number(e.target.value))}
+              style={{ width: 60, accentColor: 'var(--indigo)', cursor: 'pointer' }}
+              title={`Volume: ${Math.round(volume * 100)}%`}
+            />
+          </div>
+        )}
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         {NOISE_OPTIONS.map((n) => (
-          <button
+          <div
             key={n.id}
             onClick={() => setNoise(n.id)}
             style={{
               display: 'flex',
-              justifyContent: 'space-between',
+              justify: 'space-between',
               alignItems: 'center',
-              padding: '10px 12px',
-              borderRadius: 10,
+              padding: '10px 14px',
+              borderRadius: 12,
               border: `1px solid ${noise === n.id ? 'var(--indigo)' : 'var(--hairline)'}`,
-              background: 'var(--paper-raised)',
+              background: noise === n.id ? 'rgba(43, 58, 103, 0.05)' : 'var(--paper-raised)',
               cursor: 'pointer',
-              fontFamily: 'inherit',
-              textAlign: 'left',
               transition: 'all 0.2s ease'
             }}
           >
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: noise === n.id ? 'var(--ink)' : 'var(--slate)' }}>{n.label}</div>
-              <div style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.8 }}>{n.use}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: noise === n.id ? 'var(--indigo)' : 'var(--ink)' }}>
+                {n.label}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.85 }}>{n.use}</div>
             </div>
-          </button>
+
+            {n.file && (
+              <a
+                href={n.file}
+                download
+                onClick={(e) => e.stopPropagation()}
+                title={`Download ${n.label} MP3`}
+                style={{
+                  color: 'var(--slate)',
+                  padding: 6,
+                  borderRadius: 6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  textDecoration: 'none',
+                }}
+              >
+                <Download size={14} />
+              </a>
+            )}
+          </div>
         ))}
       </div>
     </div>
