@@ -1029,12 +1029,19 @@ export default function TodayView({
                 {sec.tasks.length > 0 ? (
                   sec.tasks.map((task, i) => renderTaskCard(task, sec.color, i))
                 ) : (
-                  <div className="empty-category-pill" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>No {sec.label} items scheduled for {todayName}</span>
+                  <div className="empty-category-pill" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>No {sec.label} items scheduled for {todayName}</span>
+                      {(schedule[sec.id] || []).length > 0 && (
+                        <span style={{ fontSize: 11, color: 'var(--slate)', fontStyle: 'normal' }}>
+                          ({(schedule[sec.id] || []).length} saved on other days)
+                        </span>
+                      )}
+                    </div>
                     {(schedule[sec.id] || []).length > 0 && (
-                      <span style={{ fontSize: 11, color: 'var(--slate)', fontStyle: 'normal' }}>
-                        ({(schedule[sec.id] || []).length} saved on other days)
-                      </span>
+                      <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--sage)', wordBreak: 'break-all', marginTop: 2 }}>
+                        Task Days Saved: {(schedule[sec.id] || []).map(t => `"${t.day || 'undefined'}"`).slice(0, 6).join(', ')}
+                      </div>
                     )}
                   </div>
                 )}
