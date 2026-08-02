@@ -1,3 +1,19 @@
+export const WEEKDAYS = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+
+export const STATUS_STYLE = {
+  study: { label: 'STUDY MODE', badgeClass: 'badge--study' },
+  off: { label: 'PLANNED REST DAY', badgeClass: 'badge--off' },
+  holiday: { label: 'HOLIDAY', badgeClass: 'badge--holiday' },
+};
+
 // ─── Enhanced Multi-Week LLM System Prompts ───
 export const STUDY_SYS =
   'You are an intelligent study scheduler. Parse the user\'s study plan (single-week OR multi-week/semester roadmap). ' +
