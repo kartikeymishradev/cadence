@@ -1,14 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Volume2, VolumeX, Target, Copy, CheckCircle2, Download, Music } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, VolumeX, Target, Copy, CheckCircle2, Download, Music, Upload } from 'lucide-react';
 import BeatStrip from './BeatStrip';
 
-const NOISE_OPTIONS = [
-  { id: 'off', label: 'Off / Mute', use: 'No background audio', file: null },
-  { id: 'brown', label: 'Brown Noise', use: 'Low-frequency ambient mask', file: '/audio/brown_noise.mp3' },
-  { id: 'white', label: 'White Noise', use: 'Static spectrum noise mask', file: '/audio/white_noise.mp3' },
-  { id: 'gamma', label: '40Hz Pulsed Tone', use: 'Steady 40Hz acoustic pulse', file: '/audio/gamma_wave.mp3' },
-];
-
+const DEFAULT_MUSIC_URL = '/audio/brown_noise.mp3';
 const ALARM_URL = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
 
 export default function PomodoroTimer({ onFocusSessionComplete }) {
@@ -27,13 +21,34 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
   const [activeBeat, setActiveBeat] = useState(0);
   const [timeLeft, setTimeLeft] = useState(focusMins * 60);
   
-  const [noise, setNoise] = useState('off');
-  const [isPlayingNoise, setIsPlayingNoise] = useState(false);
+  const [bgMuted, setBgMuted] = useState(false);
+  const [customAudioUrl, setCustomAudioUrl] = useState(null);
+  const [customAudioName, setCustomAudioName] = useState('');
   const [linkedTask, setLinkedTask] = useState('');
   
   const timerRef = useRef(null);
   const audioRef = useRef(new Audio(ALARM_URL));
   const ambientAudioRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  const activeAudioSrc = customAudioUrl || DEFAULT_MUSIC_URL;
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (ambientAudioRef.current) {
+        ambientAudioRef.current.pause();
+      }
+      const url = URL.createObjectURL(file);
+      setCustomAudioUrl(url);
+      setCustomAudioName(file.name);
+      ambientAudioRef.current = new Audio(url);
+      ambientAudioRef.current.loop = true;
+      if (running && !bgMuted) {
+        ambientAudioRef.current.play().catch((err) => console.log('Audio play failed:', err));
+      }
+    }
+  };
 
   const playTick = () => {
     try {
@@ -54,33 +69,22 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
     }
   };
 
-  // Ambient Audio Playback Logic (Manual control only; independent of timer start/stop)
+  // Auto-play background music when timer is running (unless muted)
   useEffect(() => {
-    const activeOpt = NOISE_OPTIONS.find((n) => n.id === noise);
-    
-    if (!activeOpt || !activeOpt.file) {
+    if (!ambientAudioRef.current || ambientAudioRef.current.src !== activeAudioSrc) {
       if (ambientAudioRef.current) {
         ambientAudioRef.current.pause();
       }
-      setIsPlayingNoise(false);
-      return;
-    }
-
-    if (!ambientAudioRef.current) {
-      ambientAudioRef.current = new Audio(activeOpt.file);
-      ambientAudioRef.current.loop = true;
-    } else if (!ambientAudioRef.current.src.endsWith(activeOpt.file)) {
-      ambientAudioRef.current.pause();
-      ambientAudioRef.current = new Audio(activeOpt.file);
+      ambientAudioRef.current = new Audio(activeAudioSrc);
       ambientAudioRef.current.loop = true;
     }
 
-    if (isPlayingNoise) {
-      ambientAudioRef.current.play().catch((e) => console.log('Ambient audio play blocked:', e));
+    if (running && !bgMuted) {
+      ambientAudioRef.current.play().catch((e) => console.log('Background music play blocked:', e));
     } else {
       ambientAudioRef.current.pause();
     }
-  }, [noise, isPlayingNoise]);
+  }, [running, bgMuted, activeAudioSrc]);
 
   // Clean up ambient audio on unmount
   useEffect(() => {
@@ -302,6 +306,15 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
         </div>
       </div>
 
+      {/* Hidden File Input for Custom MP3 */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileUpload}
+        accept="audio/*,.mp3"
+        style={{ display: 'none' }}
+      />
+
       {/* Ambient Noise Section */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -310,88 +323,88 @@ export default function PomodoroTimer({ onFocusSessionComplete }) {
             AMBIENT SOUNDSCAPES
           </span>
         </div>
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            fontSize: 11,
+            padding: '4px 8px',
+            borderRadius: 6,
+            border: '1px solid var(--hairline)',
+            background: 'var(--paper-raised)',
+            color: 'var(--ink)',
+            cursor: 'pointer',
+          }}
+          title="Upload your own custom MP3 audio file"
+        >
+          <Upload size={12} />
+          Upload MP3
+        </button>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {NOISE_OPTIONS.map((n) => (
-          <div
-            key={n.id}
-            onClick={() => {
-              if (n.id === 'off') {
-                setNoise('off');
-                setIsPlayingNoise(false);
-              } else if (noise === n.id) {
-                setIsPlayingNoise(!isPlayingNoise);
-              } else {
-                setNoise(n.id);
-                setIsPlayingNoise(true);
-              }
+      <div
+        onClick={() => setBgMuted(!bgMuted)}
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '10px 14px',
+          borderRadius: 12,
+          border: `1px solid ${running && !bgMuted ? 'var(--indigo)' : 'var(--hairline)'}`,
+          background: running && !bgMuted ? 'rgba(43, 58, 103, 0.05)' : 'var(--paper-raised)',
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setBgMuted(!bgMuted);
             }}
             style={{
-              display: 'flex',
-              justify: 'space-between',
-              alignItems: 'center',
-              padding: '10px 14px',
-              borderRadius: 12,
-              border: `1px solid ${noise === n.id ? 'var(--indigo)' : 'var(--hairline)'}`,
-              background: noise === n.id ? 'rgba(43, 58, 103, 0.05)' : 'var(--paper-raised)',
+              background: 'none',
+              border: 'none',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              color: running && !bgMuted ? 'var(--indigo)' : 'var(--slate)',
+              display: 'flex',
+              alignItems: 'center',
+              padding: 0,
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {n.file && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (noise === n.id) {
-                      setIsPlayingNoise(!isPlayingNoise);
-                    } else {
-                      setNoise(n.id);
-                      setIsPlayingNoise(true);
-                    }
-                  }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: noise === n.id && isPlayingNoise ? 'var(--indigo)' : 'var(--slate)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: 0,
-                  }}
-                >
-                  {noise === n.id && isPlayingNoise ? <Volume2 size={16} /> : <VolumeX size={16} />}
-                </button>
-              )}
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: noise === n.id ? 'var(--indigo)' : 'var(--ink)' }}>
-                  {n.label}
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.85 }}>{n.use}</div>
-              </div>
+            {running && !bgMuted ? <Volume2 size={16} /> : <VolumeX size={16} />}
+          </button>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: running && !bgMuted ? 'var(--indigo)' : 'var(--ink)' }}>
+              {customAudioName ? `Custom Track: ${customAudioName}` : 'Focus Ambient Music'}{' '}
+              {bgMuted ? '(Muted)' : running ? '(Playing)' : '(Auto-plays on Start)'}
             </div>
-
-            {n.file && (
-              <a
-                href={n.file}
-                download
-                onClick={(e) => e.stopPropagation()}
-                title={`Download ${n.label} MP3`}
-                style={{
-                  color: 'var(--slate)',
-                  padding: 6,
-                  borderRadius: 6,
-                  display: 'flex',
-                  alignItems: 'center',
-                  textDecoration: 'none',
-                }}
-              >
-                <Download size={14} />
-              </a>
-            )}
+            <div style={{ fontSize: 11, color: 'var(--slate)', opacity: 0.85 }}>
+              {customAudioName
+                ? 'Playing your custom uploaded MP3 audio during active timer sessions'
+                : 'Automatically plays low-frequency focus background audio during active timer sessions'}
+            </div>
           </div>
-        ))}
+        </div>
+
+        <a
+          href={activeAudioSrc}
+          download={customAudioName || 'focus_ambient.mp3'}
+          onClick={(e) => e.stopPropagation()}
+          title="Download Background Music MP3"
+          style={{
+            color: 'var(--slate)',
+            padding: 6,
+            borderRadius: 6,
+            display: 'flex',
+            alignItems: 'center',
+            textDecoration: 'none',
+          }}
+        >
+          <Download size={14} />
+        </a>
       </div>
     </div>
   );
