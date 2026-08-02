@@ -49,10 +49,21 @@ export default function WeekStrip({
 
   const safeWeekDates = Array.isArray(weekDates) ? weekDates : [];
 
-  const beats = safeWeekDates.map((d, i) => {
+  const getDayStatus = (d, i) => {
     const dk = dateKey(d);
     const dayName = WEEKDAYS[i];
-    const status = dayStatus[dk] || dayStatus[dayName] || 'study';
+    return (
+      dayStatus[dk] ||
+      dayStatus[dayName] ||
+      dayStatus[`study-${dayName}`] ||
+      dayStatus[`skill-${dayName}`] ||
+      dayStatus[`college-${dayName}`] ||
+      'study'
+    );
+  };
+
+  const beats = safeWeekDates.map((d, i) => {
+    const status = getDayStatus(d, i);
     return status === 'study' || status === 'done' ? 1 : status === 'holiday' ? 2 : 0;
   });
 
@@ -227,7 +238,7 @@ export default function WeekStrip({
         {safeWeekDates.map((d, i) => {
           const dk = dateKey(d);
           const dayName = WEEKDAYS[i] ? WEEKDAYS[i].slice(0, 3) : 'Day';
-          const status = dayStatus[dk] || dayStatus[WEEKDAYS[i]] || 'study';
+          const status = getDayStatus(d, i);
 
           return (
             <button
@@ -238,7 +249,7 @@ export default function WeekStrip({
                 minWidth: 44,
                 padding: '10px 4px',
                 borderRadius: 10,
-                border: `1px solid ${status === 'holiday' ? 'var(--indigo)' : 'var(--hairline)'}`,
+                border: `1px solid ${status === 'holiday' ? 'var(--gold)' : status === 'off' ? 'var(--hairline)' : 'rgba(95,132,103,0.3)'}`,
                 background: 'var(--paper-raised)',
                 cursor: 'pointer',
                 textAlign: 'center',
@@ -247,8 +258,8 @@ export default function WeekStrip({
             >
               <div style={{ fontSize: 11, color: 'var(--slate)' }}>{dayName}</div>
               <div style={{ fontSize: 15, fontWeight: 600, margin: '2px 0 6px' }}>{d.getDate()}</div>
-              <div style={{ fontSize: 10, color: status === 'holiday' ? 'var(--indigo)' : status === 'off' ? 'var(--slate)' : 'var(--sage)', fontWeight: 'bold' }}>
-                {status === 'holiday' ? 'HOL' : status === 'off' ? 'OFF' : '•'}
+              <div style={{ fontSize: 10, color: status === 'holiday' ? 'var(--gold)' : status === 'off' ? 'var(--slate)' : 'var(--sage)', fontWeight: 'bold' }}>
+                {status === 'study' ? 'STUDY' : status === 'off' ? 'OFF' : 'HOL'}
               </div>
             </button>
           );

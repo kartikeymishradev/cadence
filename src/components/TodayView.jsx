@@ -107,6 +107,11 @@ export default function TodayView({
   const statusStyle = STATUS_STYLE[statusType] || STATUS_STYLE.study;
   const isRestDay = statusType === 'off' || statusType === 'holiday';
 
+  // Issue 3 Diagnostic Log (prints exact saved task.day format in browser console)
+  if (schedule?.skill && schedule.skill.length > 0) {
+    console.log('[Dintaal Diagnostics] Raw Career & Skills tasks in schedule.skill:', schedule.skill.map(t => ({ title: t.title, day: t.day, id: t.id })));
+  }
+
   // Group tasks dynamically by custom categories
   const categorySections = categories.map((cat) => {
     const tasks = (schedule[cat.id] || [])
@@ -658,7 +663,7 @@ export default function TodayView({
                 marginTop: 4,
               }}
             >
-              {showAllUntouched ? 'Show Top 3 Only' : `+${untouchedSubjectsList.length - 3} more untouched subjects`}
+              {showAllUntouched ? 'Show Top 3 Only (Collapse)' : `+${untouchedSubjectsList.length - 3} more untouched subjects`}
             </button>
           )}
         </div>
