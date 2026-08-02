@@ -107,11 +107,6 @@ export default function TodayView({
   const statusStyle = STATUS_STYLE[statusType] || STATUS_STYLE.study;
   const isRestDay = statusType === 'off' || statusType === 'holiday';
 
-  // Issue 3 Diagnostic Log (prints exact saved task.day format in browser console)
-  if (schedule?.skill && schedule.skill.length > 0) {
-    console.log('[Dintaal Diagnostics] Raw Career & Skills tasks in schedule.skill:', schedule.skill.map(t => ({ title: t.title, day: t.day, id: t.id })));
-  }
-
   // Group tasks dynamically by custom categories
   const categorySections = categories.map((cat) => {
     const tasks = (schedule[cat.id] || [])
@@ -1029,19 +1024,12 @@ export default function TodayView({
                 {sec.tasks.length > 0 ? (
                   sec.tasks.map((task, i) => renderTaskCard(task, sec.color, i))
                 ) : (
-                  <div className="empty-category-pill" style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span>No {sec.label} items scheduled for {todayName}</span>
-                      {(schedule[sec.id] || []).length > 0 && (
-                        <span style={{ fontSize: 11, color: 'var(--slate)', fontStyle: 'normal' }}>
-                          ({(schedule[sec.id] || []).length} saved on other days)
-                        </span>
-                      )}
-                    </div>
+                  <div className="empty-category-pill" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>No {sec.label} items scheduled for {todayName}</span>
                     {(schedule[sec.id] || []).length > 0 && (
-                      <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--sage)', wordBreak: 'break-all', marginTop: 2 }}>
-                        Task Days Saved: {(schedule[sec.id] || []).map(t => `"${t.day || 'undefined'}"`).slice(0, 6).join(', ')}
-                      </div>
+                      <span style={{ fontSize: 11, color: 'var(--slate)', fontStyle: 'normal' }}>
+                        ({(schedule[sec.id] || []).length} saved on other days)
+                      </span>
                     )}
                   </div>
                 )}
