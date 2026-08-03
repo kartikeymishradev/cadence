@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Copy, Check, LayoutGrid, Plus, Trash2, FileText, X } from 'lucide-react';
+import { Search, Copy, Check, LayoutGrid, Plus, Trash2, FileText, X, Calendar } from 'lucide-react';
 import CollegeOverviewModal from './CollegeOverviewModal';
 
 export default function NotesVault({
@@ -9,12 +9,23 @@ export default function NotesVault({
   userNotes = [],
   onAddUserNote,
   onDeleteUserNote,
+  onAddTask,
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCat, setActiveCat] = useState('all');
   const [copiedAll, setCopiedAll] = useState(false);
   const [isOverviewOpen, setIsOverviewOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Convert Note to Event Modal State
+  const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
+  const [selectedNote, setSelectedNote] = useState(null);
+  const [evtTitle, setEvtTitle] = useState('');
+  const [evtCat, setEvtCat] = useState('skill');
+  const [evtDay, setEvtDay] = useState('Monday');
+  const [evtTime, setEvtTime] = useState('05:00 PM');
+  const [evtDuration, setEvtDuration] = useState('45');
+  const [toastMsg, setToastMsg] = useState('');
 
   // Form State for Add Note Modal
   const [noteTitle, setNoteTitle] = useState('');
@@ -117,6 +128,38 @@ export default function NotesVault({
     setNoteContent('');
     setNoteTags('');
     setIsAddModalOpen(false);
+  };
+
+  const handleOpenConvertModal = (note) => {
+    setSelectedNote(note);
+    setEvtTitle(note.title || '');
+    setEvtCat(note.catId || categories[0]?.id || 'skill');
+    setEvtDay('Monday');
+    setEvtTime('05:00 PM');
+    setEvtDuration('45');
+    setIsConvertModalOpen(true);
+  };
+
+  const handleConfirmConvertEvent = (e) => {
+    e.preventDefault();
+    if (!evtTitle.trim()) return;
+
+    const newTask = {
+      id: `evt_${Date.now()}`,
+      title: evtTitle.trim(),
+      time: evtTime,
+      duration: Number(evtDuration) || 45,
+      day: evtDay,
+      kind: evtCat,
+    };
+
+    if (onAddTask) {
+      onAddTask(evtCat, newTask);
+    }
+
+    setToastMsg(`✓ Added "${evtTitle.trim()}" to your ${evtDay} schedule!`);
+    setTimeout(() => setToastMsg(''), 3500);
+    setIsConvertModalOpen(false);
   };
 
   return (
@@ -339,6 +382,28 @@ export default function NotesVault({
                   ))}
                 </div>
               )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+                <button
+                  onClick={() => handleOpenConvertModal(n)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    padding: '5px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--indigo)',
+                    background: 'rgba(99, 102, 241, 0.08)',
+                    color: 'var(--indigo)',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  <Calendar size={12} /> Convert to Event
+                </button>
+              </div>
             </div>
           ))
         )}
@@ -504,6 +569,237 @@ export default function NotesVault({
                   }}
                 >
                   Save Note
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMsg && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            background: 'var(--indigo)',
+            color: '#FFFFFF',
+            padding: '10px 18px',
+            borderRadius: 10,
+            fontWeight: 600,
+            fontSize: 13,
+            boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
+            zIndex: 10008,
+          }}
+        >
+          {toastMsg}
+        </div>
+      )}
+
+      {/* Convert Note to Event Modal */}
+      {isConvertModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 10007,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 16,
+          }}
+        >
+          <div
+            style={{
+              background: 'var(--paper-raised)',
+              borderRadius: 16,
+              padding: 20,
+              width: '100%',
+              maxWidth: 460,
+              border: '1px solid var(--hairline)',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Calendar size={18} style={{ color: 'var(--indigo)' }} />
+                <h3 style={{ fontFamily: 'var(--font-voice)', fontSize: 18, margin: 0 }}>Convert Note to Event</h3>
+              </div>
+              <button
+                onClick={() => setIsConvertModalOpen(false)}
+                style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--slate)' }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmConvertEvent} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--slate)', display: 'block', marginBottom: 4 }}>
+                  Event / Task Title *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={evtTitle}
+                  onChange={(e) => setEvtTitle(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    borderRadius: 8,
+                    border: '1px solid var(--hairline)',
+                    background: 'var(--paper)',
+                    color: 'var(--ink)',
+                    fontSize: 13,
+                    fontFamily: 'inherit',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--slate)', display: 'block', marginBottom: 4 }}>
+                    Category
+                  </label>
+                  <select
+                    value={evtCat}
+                    onChange={(e) => setEvtCat(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--hairline)',
+                      background: 'var(--paper)',
+                      color: 'var(--ink)',
+                      fontSize: 13,
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    {(categories || []).map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--slate)', display: 'block', marginBottom: 4 }}>
+                    Target Day
+                  </label>
+                  <select
+                    value={evtDay}
+                    onChange={(e) => setEvtDay(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--hairline)',
+                      background: 'var(--paper)',
+                      color: 'var(--ink)',
+                      fontSize: 13,
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--slate)', display: 'block', marginBottom: 4 }}>
+                    Start Time
+                  </label>
+                  <input
+                    type="text"
+                    value={evtTime}
+                    onChange={(e) => setEvtTime(e.target.value)}
+                    placeholder="e.g. 05:00 PM"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--hairline)',
+                      background: 'var(--paper)',
+                      color: 'var(--ink)',
+                      fontSize: 13,
+                      fontFamily: 'inherit',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--slate)', display: 'block', marginBottom: 4 }}>
+                    Duration (mins)
+                  </label>
+                  <select
+                    value={evtDuration}
+                    onChange={(e) => setEvtDuration(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      borderRadius: 8,
+                      border: '1px solid var(--hairline)',
+                      background: 'var(--paper)',
+                      color: 'var(--ink)',
+                      fontSize: 13,
+                      fontFamily: 'inherit',
+                    }}
+                  >
+                    <option value="30">30 mins</option>
+                    <option value="45">45 mins</option>
+                    <option value="60">60 mins</option>
+                    <option value="90">90 mins</option>
+                  </select>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setIsConvertModalOpen(false)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: '1px solid var(--hairline)',
+                    background: 'var(--paper-raised)',
+                    color: 'var(--ink)',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 8,
+                    border: 'none',
+                    background: 'var(--indigo)',
+                    color: '#FFFFFF',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                  }}
+                >
+                  <Check size={14} /> Add to Schedule
                 </button>
               </div>
             </form>

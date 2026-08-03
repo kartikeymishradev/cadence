@@ -669,6 +669,7 @@ export default function App() {
             userNotes={userNotes}
             onAddUserNote={(newNote) => setUserNotes((prev) => [newNote, ...(prev || [])])}
             onDeleteUserNote={(noteId) => setUserNotes((prev) => (prev || []).filter((n) => n.id !== noteId))}
+            onAddTask={handleAddTaskManual}
             onUpdateTaskNote={handleUpdateTaskNote}
           />
         )}
