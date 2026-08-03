@@ -513,7 +513,11 @@ export default function CopilotDrawer({
             }}
           >
             {[
-              'Missed 10am class, shift to evening',
+              'Shift 10am class to evening',
+              'Mark task done',
+              'Set exam date to Oct 15',
+              'Show exam readiness report',
+              'Run workload friction audit',
               'Summarize React Hooks note',
             ].map((prompt, i) => (
               <button
@@ -547,7 +551,7 @@ export default function CopilotDrawer({
           >
             <input
               type="text"
-              placeholder="Ask Copilot to reschedule or search notes..."
+              placeholder="Reschedule class, mark task done, set exam date, or ask notes..."
               value={inputQuery}
               onChange={(e) => setInputQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
