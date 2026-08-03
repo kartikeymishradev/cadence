@@ -19,9 +19,9 @@ export default function Header({
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <img
-            src="/icons/icon-192.png"
+            src="/icons/dintaal_logo.jpg"
             alt="Dintaal Logo"
-            style={{ width: 30, height: 30, borderRadius: 8, objectFit: 'contain' }}
+            style={{ width: 30, height: 30, borderRadius: 8, objectFit: 'cover' }}
           />
           <h1 style={{ fontFamily: 'var(--font-voice)', fontSize: 26, fontWeight: 700, margin: 0, letterSpacing: '-0.5px' }}>
             Din<span style={{ fontWeight: 400, color: 'var(--indigo)' }}>taal</span>
