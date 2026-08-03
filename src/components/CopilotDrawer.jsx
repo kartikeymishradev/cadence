@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { Sparkles, X, Send, Lock, ArrowRight, Check, Calendar, CheckSquare } from 'lucide-react';
+import { Sparkles, X, Send, Lock, ArrowRight, Check, Calendar, CheckSquare, Bell } from 'lucide-react';
 import {
   checkCopilotAccess,
   generateRescheduleProposal,
   generateMarkTaskProposal,
   generateExamDateProposal,
+  generateAddNoteProposal,
   queryNotesVault,
   queryCopilotWithAPIKey,
   queryExamReadiness,
   queryWorkloadFrictionAudit,
 } from '../services/copilotService';
+import { sendBrowserNotification } from '../hooks/useTaskNotifications';
 import { dateKey } from '../utils/dateUtils';
 
 export default function CopilotDrawer({
@@ -24,6 +26,7 @@ export default function CopilotDrawer({
   taskStatuses = {},
   onUpdateTaskStatus,
   categories = [],
+  onAddUserNote,
   focusLogs = {},
   semesterConfig = {},
   sleepLogs = {},
@@ -47,7 +50,7 @@ export default function CopilotDrawer({
     {
       id: 1,
       sender: 'ai',
-      text: 'Hi! I am Dintaal AI Copilot. Ask me to reschedule classes, mark tasks done, update exam dates, or query your Notes Vault!',
+      text: 'Hi! I am Dintaal AI Copilot. Ask me to reschedule classes, mark tasks done, update exam dates, add notes/reminders, or query your Notes Vault!',
     },
   ]);
   const [inputQuery, setInputQuery] = useState('');
@@ -84,6 +87,30 @@ export default function CopilotDrawer({
 
     // 2. Local Feature Command Routing
     const qLower = textToSend.toLowerCase();
+
+    // Feature: Add Note / Event via Chat
+    if (
+      qLower.includes('add note') ||
+      qLower.includes('create note') ||
+      qLower.includes('add event') ||
+      qLower.includes('schedule note') ||
+      (qLower.includes('note') && (qLower.includes('at') || qLower.includes('remind')))
+    ) {
+      const result = generateAddNoteProposal(textToSend, categories);
+      if (result.type === 'proposal') {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, sender: 'ai', text: 'Here is a proposed Note & Event reminder:', proposal: result.proposal },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, sender: 'ai', text: result.content },
+        ]);
+      }
+      setIsProcessing(false);
+      return;
+    }
 
     // Feature: Mark Task Done / Partial via Chat
     if (
@@ -210,7 +237,38 @@ export default function CopilotDrawer({
   };
 
   const handleApplyProposal = (proposal) => {
-    if (proposal.proposalKind === 'taskStatus') {
+    if (proposal.proposalKind === 'addNoteEvent') {
+      const { noteTitle, catId, catLabel, eventTime, eventDate, hasReminder, content } = proposal;
+      const newNote = {
+        id: `note_${Date.now()}`,
+        title: noteTitle,
+        catId,
+        catLabel,
+        content: content || `Scheduled event: ${noteTitle} at ${eventTime}`,
+        eventTime,
+        eventDate,
+        hasReminder,
+        createdAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        isCustom: true,
+      };
+
+      if (onAddUserNote) onAddUserNote(newNote);
+
+      if (hasReminder) {
+        sendBrowserNotification(`🔔 Event Reminder: ${noteTitle}`, {
+          body: `Scheduled for ${eventTime} today. Note saved to Notes Vault!`,
+        });
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          sender: 'ai',
+          text: `✓ Applied! Saved note "${noteTitle}" (${eventTime})${hasReminder ? ' with notification reminder active 🔔' : ''}.`,
+        },
+      ]);
+    } else if (proposal.proposalKind === 'taskStatus') {
       const { taskId, newStatus, taskTitle } = proposal;
       if (onUpdateTaskStatus) {
         onUpdateTaskStatus(taskId, newStatus);
@@ -388,6 +446,22 @@ export default function CopilotDrawer({
                       color: 'var(--ink)',
                     }}
                   >
+                    {m.proposal.proposalKind === 'addNoteEvent' && (
+                      <>
+                        <div style={{ fontSize: 12, fontWeight: 600 }}>{m.proposal.noteTitle}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+                          <strong style={{ color: 'var(--indigo)' }}>{m.proposal.eventTime}</strong>
+                          <span>({m.proposal.catLabel})</span>
+                          {m.proposal.hasReminder && (
+                            <span style={{ fontSize: 10, color: 'var(--gold)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}>
+                              <Bell size={10} /> Reminder Active
+                            </span>
+                          )}
+                        </div>
+                        <span style={{ fontSize: 10, color: 'var(--slate)' }}>{m.proposal.reason}</span>
+                      </>
+                    )}
+
                     {m.proposal.proposalKind === 'taskStatus' && (
                       <>
                         <div style={{ fontSize: 12, fontWeight: 600 }}>{m.proposal.taskTitle} ({m.proposal.categoryLabel})</div>

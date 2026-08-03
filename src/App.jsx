@@ -753,6 +753,7 @@ export default function App() {
           taskStatuses={taskStatuses}
           onUpdateTaskStatus={handleUpdateTaskStatus}
           categories={categories}
+          onAddUserNote={(newNote) => setUserNotes((prev) => [newNote, ...(prev || [])])}
           focusLogs={focusLogs}
           semesterConfig={semesterConfig}
           sleepLogs={sleepLogs}

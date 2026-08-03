@@ -268,6 +268,53 @@ export function generateExamDateProposal(query, subjectRegistry = {}) {
 }
 
 /**
+ * Generates an Add Note / Event Proposal Card with scheduled time & notification reminder.
+ */
+export function generateAddNoteProposal(query, categories = []) {
+  const qClean = query.replace(/^(add|create|schedule)\s+(note|event|reminder):?/i, '').trim();
+
+  if (!qClean || qClean.length < 2) {
+    return {
+      type: 'text',
+      content: 'Please provide a title for your note or event! Example: *"Add note System Design mock interview at 5pm with reminder"*',
+    };
+  }
+
+  // Parse time from query (e.g. "at 5pm", "at 17:00", "5:30 pm")
+  const timeMatch = query.match(/\b(\d{1,2}(?::\d{2})?\s*(?:am|pm))\b/i) || query.match(/\b(\d{1,2}:\d{2})\b/);
+  const eventTime = timeMatch ? timeMatch[1].toUpperCase() : '05:00 PM';
+
+  // Check if reminder is requested
+  const hasReminder = /remind|reminder|notify|alert|notification/i.test(query);
+
+  // Match category
+  let matchedCat = (categories || []).find((c) =>
+    query.toLowerCase().includes(c.id.toLowerCase()) || query.toLowerCase().includes((c.label || '').toLowerCase())
+  ) || categories[0] || { id: 'skill', label: 'Career & Skills' };
+
+  // Clean note title
+  const noteTitle = qClean
+    .replace(/\b(at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\b/gi, '')
+    .replace(/\b(with\s+reminder|remind\s+me|reminder|notify\s+me)\b/gi, '')
+    .trim() || 'New Note Event';
+
+  return {
+    type: 'proposal',
+    proposal: {
+      proposalKind: 'addNoteEvent',
+      noteTitle,
+      catId: matchedCat.id,
+      catLabel: matchedCat.label || 'Career & Skills',
+      eventTime,
+      eventDate: 'Today',
+      hasReminder,
+      content: `Scheduled event: ${noteTitle} at ${eventTime}`,
+      reason: `Save note to Notes Vault ${hasReminder ? '& set browser notification reminder' : ''}`,
+    },
+  };
+}
+
+/**
  * Generates a Smart Rescheduling Proposal from natural language user query.
  */
 export function generateRescheduleProposal(query, schedule = {}) {
