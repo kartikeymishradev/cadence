@@ -17,9 +17,16 @@ export default function Header({
   return (
     <header style={{ padding: '16px 18px 14px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-        <h1 style={{ fontFamily: 'var(--font-voice)', fontSize: 26, fontWeight: 700, margin: 0, letterSpacing: '-0.5px' }}>
-          Din<span style={{ fontWeight: 400, color: 'var(--indigo)' }}>taal</span>
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <img
+            src="/icons/icon-192.png"
+            alt="Dintaal Logo"
+            style={{ width: 30, height: 30, borderRadius: 8, objectFit: 'contain' }}
+          />
+          <h1 style={{ fontFamily: 'var(--font-voice)', fontSize: 26, fontWeight: 700, margin: 0, letterSpacing: '-0.5px' }}>
+            Din<span style={{ fontWeight: 400, color: 'var(--indigo)' }}>taal</span>
+          </h1>
+        </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           <div
