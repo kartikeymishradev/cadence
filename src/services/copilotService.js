@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from './supabase.js';
 
 let allowlistCache = null;
 let lastCacheFetch = 0;
@@ -127,6 +127,147 @@ export function queryWorkloadFrictionAudit(schedule = {}, taskStatuses = {}, foc
 }
 
 /**
+ * Generates a Task Status Change Proposal (Done / Partial) from user query.
+ * Ambiguity handling: if query matches multiple tasks, returns a clarifying multi-proposal array.
+ */
+export function generateMarkTaskProposal(query, schedule = {}, taskStatuses = {}, categories = []) {
+  const qLower = query.toLowerCase().trim();
+  const targetStatus = (qLower.includes('partial') || qLower.includes('half')) ? 'partial' : 'done';
+
+  const matches = [];
+
+  Object.entries(schedule).forEach(([catId, tasks]) => {
+    (tasks || []).forEach((t, i) => {
+      if (!t || !t.title) return;
+      const tTitleLower = t.title.toLowerCase();
+      
+      const words = tTitleLower.split(/\s+/);
+      const isMatch = words.some((w) => w.length > 2 && qLower.includes(w)) || qLower.includes(tTitleLower);
+
+      if (isMatch) {
+        const catObj = (categories || []).find((c) => c.id === catId);
+        const taskId = t.id || `${catId}-${t.day || 'Monday'}-${i}`;
+        const curStatus = taskStatuses[taskId]?.status || 'pending';
+        
+        matches.push({
+          proposalKind: 'taskStatus',
+          taskId,
+          catId,
+          taskIndex: i,
+          taskTitle: t.title,
+          day: t.day || 'Today',
+          categoryLabel: catObj?.label || catId,
+          currentStatus: curStatus,
+          newStatus: targetStatus,
+          reason: `Mark status as ${targetStatus.toUpperCase()} on schedule`,
+        });
+      }
+    });
+  });
+
+  if (matches.length === 0) {
+    return {
+      type: 'text',
+      content: `I couldn't find any task matching your request in your schedule. Please specify the exact task name!`,
+    };
+  }
+
+  // Ambiguity check: If multiple tasks match, return all proposals so user can explicitly pick
+  if (matches.length > 1) {
+    return {
+      type: 'multiProposals',
+      message: `I found ${matches.length} tasks matching "${query}". Which one would you like to update?`,
+      proposals: matches,
+    };
+  }
+
+  // Exact 1 match found
+  return {
+    type: 'proposal',
+    proposal: matches[0],
+  };
+}
+
+/**
+ * Generates an Exam Date Change Proposal for a registered subject.
+ * Ambiguity handling: asks for clarification if subject or date is unparseable.
+ */
+export function generateExamDateProposal(query, subjectRegistry = {}) {
+  const qLower = query.toLowerCase().trim();
+
+  const allSubjects = [];
+  Object.entries(subjectRegistry).forEach(([catId, subjects]) => {
+    (subjects || []).forEach((subj) => {
+      allSubjects.push({ ...subj, catId });
+    });
+  });
+
+  if (allSubjects.length === 0) {
+    return {
+      type: 'text',
+      content: 'You do not have any registered subjects yet in Setup. Add a subject under College or Academics first!',
+    };
+  }
+
+  // Match subject by name
+  const matchedSubj = allSubjects.find((s) => {
+    const sNameLower = (s.name || '').toLowerCase();
+    if (!sNameLower) return false;
+    return qLower.includes(sNameLower) || sNameLower.split(/\s+/).some((w) => w.length > 3 && qLower.includes(w));
+  });
+
+  if (!matchedSubj) {
+    const names = allSubjects.map((s) => `• ${s.name}`).join('\n');
+    return {
+      type: 'text',
+      content: `I couldn't determine which subject's exam date to update. Please specify one of your registered subjects:\n${names}`,
+    };
+  }
+
+  // Parse target date from query (YYYY-MM-DD, or Month DD, or DD Month)
+  const isoMatch = query.match(/\b(\d{4}-\d{2}-\d{2})\b/);
+  const textDateMatch = query.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}(?:\s+\d{4})?\b/i) ||
+                        query.match(/\b\d{1,2}\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*(?:\s+\d{4})?\b/i);
+
+  let targetIsoDate = null;
+  let formattedDisplayDate = null;
+
+  if (isoMatch) {
+    targetIsoDate = isoMatch[1];
+    const d = new Date(targetIsoDate);
+    formattedDisplayDate = isNaN(d.getTime()) ? targetIsoDate : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } else if (textDateMatch) {
+    const rawDateStr = textDateMatch[0];
+    const d = new Date(rawDateStr.includes('202') ? rawDateStr : `${rawDateStr} ${new Date().getFullYear()}`);
+    if (!isNaN(d.getTime())) {
+      targetIsoDate = d.toISOString().split('T')[0];
+      formattedDisplayDate = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+  }
+
+  if (!targetIsoDate) {
+    return {
+      type: 'text',
+      content: `I found the subject **"${matchedSubj.name}"**, but I couldn't understand the exam date. Please specify a clear date format like **2026-10-15** or **Oct 15, 2026**.`,
+    };
+  }
+
+  return {
+    type: 'proposal',
+    proposal: {
+      proposalKind: 'examDate',
+      catId: matchedSubj.catId,
+      subjectId: matchedSubj.id,
+      subjectName: matchedSubj.name,
+      oldExamDate: matchedSubj.examDate || 'Not Set',
+      newExamDate: targetIsoDate,
+      formattedNewDate: formattedDisplayDate,
+      reason: `Update Stage A exam date for ${matchedSubj.name}`,
+    },
+  };
+}
+
+/**
  * Generates a Smart Rescheduling Proposal from natural language user query.
  */
 export function generateRescheduleProposal(query, schedule = {}) {
@@ -179,6 +320,7 @@ export function generateRescheduleProposal(query, schedule = {}) {
   return {
     type: 'proposal',
     proposal: {
+      proposalKind: 'reschedule',
       taskId: targetTask.id || `${targetCat}-${targetTask.day || 'Monday'}-${taskIndex}`,
       catId: targetCat,
       taskIndex,

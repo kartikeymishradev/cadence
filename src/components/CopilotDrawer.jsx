@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
-import { Sparkles, X, Send, Lock, ArrowRight, Check } from 'lucide-react';
-import { checkCopilotAccess, generateRescheduleProposal, queryNotesVault, queryCopilotWithAPIKey, queryExamReadiness, queryWorkloadFrictionAudit } from '../services/copilotService';
+import { Sparkles, X, Send, Lock, ArrowRight, Check, Calendar, CheckSquare } from 'lucide-react';
+import {
+  checkCopilotAccess,
+  generateRescheduleProposal,
+  generateMarkTaskProposal,
+  generateExamDateProposal,
+  queryNotesVault,
+  queryCopilotWithAPIKey,
+  queryExamReadiness,
+  queryWorkloadFrictionAudit,
+} from '../services/copilotService';
 import { dateKey } from '../utils/dateUtils';
 
 export default function CopilotDrawer({
@@ -11,7 +20,10 @@ export default function CopilotDrawer({
   onUpdateSchedule,
   notesArchive = [],
   subjectRegistry = {},
+  onUpdateSubjectRegistry,
   taskStatuses = {},
+  onUpdateTaskStatus,
+  categories = [],
   focusLogs = {},
   semesterConfig = {},
   sleepLogs = {},
@@ -30,18 +42,18 @@ export default function CopilotDrawer({
     }
     checkCopilotAccess(user).then((res) => setHasAccess(!!res));
   }, [user]);
+
   const [messages, setMessages] = useState([
     {
       id: 1,
       sender: 'ai',
-      text: 'Hi! I am Dintaal AI Copilot. Ask me to reschedule missed classes or query your Notes Vault!',
+      text: 'Hi! I am Dintaal AI Copilot. Ask me to reschedule classes, mark tasks done, update exam dates, or query your Notes Vault!',
     },
   ]);
   const [inputQuery, setInputQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   if (!isOpen) return null;
-
 
   const handleSend = async (queryText) => {
     const textToSend = queryText || inputQuery;
@@ -72,6 +84,53 @@ export default function CopilotDrawer({
 
     // 2. Local Feature Command Routing
     const qLower = textToSend.toLowerCase();
+
+    // Feature: Mark Task Done / Partial via Chat
+    if (
+      qLower.includes('mark') ||
+      qLower.includes('finished') ||
+      qLower.includes('done') ||
+      qLower.includes('partial') ||
+      qLower.includes('complete')
+    ) {
+      const result = generateMarkTaskProposal(textToSend, schedule, taskStatuses, categories);
+      if (result.type === 'multiProposals') {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, sender: 'ai', text: result.message, proposals: result.proposals },
+        ]);
+      } else if (result.type === 'proposal') {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, sender: 'ai', text: 'Here is a proposed status change for your task:', proposal: result.proposal },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, sender: 'ai', text: result.content },
+        ]);
+      }
+      setIsProcessing(false);
+      return;
+    }
+
+    // Feature: Set / Edit Exam Date via Chat
+    if (qLower.includes('exam') && (qLower.includes('set') || qLower.includes('change') || qLower.includes('date') || qLower.includes('to'))) {
+      const result = generateExamDateProposal(textToSend, subjectRegistry);
+      if (result.type === 'proposal') {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, sender: 'ai', text: 'Here is a proposed exam date update:', proposal: result.proposal },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, sender: 'ai', text: result.content },
+        ]);
+      }
+      setIsProcessing(false);
+      return;
+    }
 
     // Feature #5: Daily Sleep Check-in
     if (qLower.includes('sleep') || qLower.includes('slept')) {
@@ -151,19 +210,55 @@ export default function CopilotDrawer({
   };
 
   const handleApplyProposal = (proposal) => {
-    const { catId, taskIndex, newTime } = proposal;
-    const catTasks = [...(schedule[catId] || [])];
-    if (catTasks[taskIndex]) {
-      catTasks[taskIndex] = { ...catTasks[taskIndex], time: newTime };
-      onUpdateSchedule({ ...schedule, [catId]: catTasks });
+    if (proposal.proposalKind === 'taskStatus') {
+      const { taskId, newStatus, taskTitle } = proposal;
+      if (onUpdateTaskStatus) {
+        onUpdateTaskStatus(taskId, newStatus);
+      }
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now(),
           sender: 'ai',
-          text: `✓ Applied! Rescheduled "${proposal.originalTitle}" to ${newTime}.`,
+          text: `✓ Applied! Marked "${taskTitle}" as ${newStatus.toUpperCase()}.`,
         },
       ]);
+    } else if (proposal.proposalKind === 'examDate') {
+      const { catId, subjectId, subjectName, newExamDate, formattedNewDate } = proposal;
+      if (onUpdateSubjectRegistry) {
+        const catSubjects = [...(subjectRegistry[catId] || [])];
+        const updatedSubjects = catSubjects.map((s) =>
+          s.id === subjectId ? { ...s, examDate: newExamDate } : s
+        );
+        onUpdateSubjectRegistry({
+          ...subjectRegistry,
+          [catId]: updatedSubjects,
+        });
+      }
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          sender: 'ai',
+          text: `✓ Applied! Set exam date for "${subjectName}" to ${formattedNewDate || newExamDate}.`,
+        },
+      ]);
+    } else {
+      // Reschedule proposal
+      const { catId, taskIndex, newTime } = proposal;
+      const catTasks = [...(schedule[catId] || [])];
+      if (catTasks[taskIndex]) {
+        catTasks[taskIndex] = { ...catTasks[taskIndex], time: newTime };
+        onUpdateSchedule({ ...schedule, [catId]: catTasks });
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now(),
+            sender: 'ai',
+            text: `✓ Applied! Rescheduled "${proposal.originalTitle}" to ${newTime}.`,
+          },
+        ]);
+      }
     }
   };
 
@@ -278,7 +373,7 @@ export default function CopilotDrawer({
                   </span>
                 )}
 
-                {/* Proposal Card */}
+                {/* Single Proposal Card */}
                 {m.proposal && (
                   <div
                     style={{
@@ -293,13 +388,41 @@ export default function CopilotDrawer({
                       color: 'var(--ink)',
                     }}
                   >
-                    <div style={{ fontSize: 12, fontWeight: 600 }}>{m.proposal.originalTitle}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontFamily: 'var(--font-mono)' }}>
-                      <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>{m.proposal.originalTime}</span>
-                      <ArrowRight size={12} style={{ color: 'var(--indigo)' }} />
-                      <strong style={{ color: 'var(--indigo)' }}>{m.proposal.newTime}</strong>
-                    </div>
-                    <span style={{ fontSize: 10, color: 'var(--slate)' }}>{m.proposal.reason}</span>
+                    {m.proposal.proposalKind === 'taskStatus' && (
+                      <>
+                        <div style={{ fontSize: 12, fontWeight: 600 }}>{m.proposal.taskTitle} ({m.proposal.categoryLabel})</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+                          <span style={{ textTransform: 'uppercase', opacity: 0.6 }}>{m.proposal.currentStatus}</span>
+                          <ArrowRight size={12} style={{ color: 'var(--indigo)' }} />
+                          <strong style={{ color: 'var(--indigo)', textTransform: 'uppercase' }}>{m.proposal.newStatus}</strong>
+                        </div>
+                        <span style={{ fontSize: 10, color: 'var(--slate)' }}>{m.proposal.reason}</span>
+                      </>
+                    )}
+
+                    {m.proposal.proposalKind === 'examDate' && (
+                      <>
+                        <div style={{ fontSize: 12, fontWeight: 600 }}>{m.proposal.subjectName}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+                          <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>{m.proposal.oldExamDate}</span>
+                          <ArrowRight size={12} style={{ color: 'var(--indigo)' }} />
+                          <strong style={{ color: 'var(--indigo)' }}>{m.proposal.formattedNewDate || m.proposal.newExamDate}</strong>
+                        </div>
+                        <span style={{ fontSize: 10, color: 'var(--slate)' }}>{m.proposal.reason}</span>
+                      </>
+                    )}
+
+                    {(!m.proposal.proposalKind || m.proposal.proposalKind === 'reschedule') && (
+                      <>
+                        <div style={{ fontSize: 12, fontWeight: 600 }}>{m.proposal.originalTitle}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontFamily: 'var(--font-mono)' }}>
+                          <span style={{ textDecoration: 'line-through', opacity: 0.6 }}>{m.proposal.originalTime}</span>
+                          <ArrowRight size={12} style={{ color: 'var(--indigo)' }} />
+                          <strong style={{ color: 'var(--indigo)' }}>{m.proposal.newTime}</strong>
+                        </div>
+                        <span style={{ fontSize: 10, color: 'var(--slate)' }}>{m.proposal.reason}</span>
+                      </>
+                    )}
 
                     <button
                       onClick={() => handleApplyProposal(m.proposal)}
@@ -321,6 +444,53 @@ export default function CopilotDrawer({
                     >
                       <Check size={12} /> Confirm & Apply Change
                     </button>
+                  </div>
+                )}
+
+                {/* Multiple Proposals Card (Ambiguity Resolution) */}
+                {m.proposals && Array.isArray(m.proposals) && (
+                  <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {m.proposals.map((p, pIdx) => (
+                      <div
+                        key={pIdx}
+                        style={{
+                          background: 'var(--paper-raised)',
+                          border: '1px solid var(--hairline)',
+                          borderRadius: 10,
+                          padding: 10,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 8,
+                          color: 'var(--ink)',
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 600 }}>{p.taskTitle} ({p.day})</div>
+                          <div style={{ fontSize: 10, color: 'var(--slate)' }}>
+                            Status: <span style={{ textTransform: 'uppercase' }}>{p.currentStatus}</span> → <strong style={{ color: 'var(--indigo)', textTransform: 'uppercase' }}>{p.newStatus}</strong>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleApplyProposal(p)}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: 6,
+                            border: 'none',
+                            background: 'var(--indigo)',
+                            color: '#FFFFFF',
+                            fontSize: 11,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                          }}
+                        >
+                          <Check size={11} /> Apply
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

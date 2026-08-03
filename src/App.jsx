@@ -745,7 +745,10 @@ export default function App() {
           schedule={schedule}
           onUpdateSchedule={setSchedule}
           subjectRegistry={subjectRegistry}
+          onUpdateSubjectRegistry={setSubjectRegistry}
           taskStatuses={taskStatuses}
+          onUpdateTaskStatus={handleUpdateTaskStatus}
+          categories={categories}
           focusLogs={focusLogs}
           semesterConfig={semesterConfig}
           sleepLogs={sleepLogs}
