@@ -67,25 +67,6 @@ export default function CopilotDrawer({
     setInputQuery('');
     setIsProcessing(true);
 
-    // 1. Try Serverless Function (/api/copilot)
-    const llmResult = await queryCopilotWithAPIKey(textToSend, schedule, notesArchive);
-    if (llmResult) {
-      if (llmResult.type === 'proposal') {
-        setMessages((prev) => [
-          ...prev,
-          { id: Date.now() + 1, sender: 'ai', text: 'Here is a proposed schedule adjustment:', proposal: llmResult.proposal, modelUsed: llmResult.modelUsed },
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { id: Date.now() + 1, sender: 'ai', text: llmResult.content, modelUsed: llmResult.modelUsed },
-        ]);
-      }
-      setIsProcessing(false);
-      return;
-    }
-
-    // 2. Local Feature Command Routing
     const qLower = textToSend.toLowerCase();
 
     // Feature: Add Note / Event via Chat
@@ -159,6 +140,29 @@ export default function CopilotDrawer({
       return;
     }
 
+    // Feature: Smart Schedule Rescheduler (explicit keywords)
+    if (qLower.includes('reschedule') || qLower.includes('shift') || qLower.includes('move')) {
+      const result = generateRescheduleProposal(textToSend, schedule);
+      if (result.type === 'proposal') {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now() + 1,
+            sender: 'ai',
+            text: `Here is a proposed schedule adjustment for your class:`,
+            proposal: result.proposal,
+          },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { id: Date.now() + 1, sender: 'ai', text: result.content },
+        ]);
+      }
+      setIsProcessing(false);
+      return;
+    }
+
     // Feature #5: Daily Sleep Check-in
     if (qLower.includes('sleep') || qLower.includes('slept')) {
       const todayKey = dateKey(new Date());
@@ -207,32 +211,54 @@ export default function CopilotDrawer({
       return;
     }
 
-    // Notes Vault search or default schedule proposal
-    if (qLower.includes('note') || qLower.includes('summary') || qLower.includes('react') || qLower.includes('dsa')) {
+    // Notes Vault search
+    if (qLower.includes('summary') || qLower.includes('react') || qLower.includes('dsa') || qLower.includes('search note')) {
       const answer = queryNotesVault(textToSend, notesArchive);
       setMessages((prev) => [
         ...prev,
         { id: Date.now() + 1, sender: 'ai', text: answer },
       ]);
-    } else {
-      const result = generateRescheduleProposal(textToSend, schedule);
-      if (result.type === 'proposal') {
+      setIsProcessing(false);
+      return;
+    }
+
+    // Fallback: Try External Serverless Function (/api/copilot) for Open-Ended Q&A
+    const llmResult = await queryCopilotWithAPIKey(textToSend, schedule, notesArchive);
+    if (llmResult) {
+      if (llmResult.type === 'proposal') {
         setMessages((prev) => [
           ...prev,
-          {
-            id: Date.now() + 1,
-            sender: 'ai',
-            text: `Here is a proposed schedule adjustment for your class:`,
-            proposal: result.proposal,
-          },
+          { id: Date.now() + 1, sender: 'ai', text: 'Here is a proposed schedule adjustment:', proposal: llmResult.proposal, modelUsed: llmResult.modelUsed },
         ]);
       } else {
         setMessages((prev) => [
           ...prev,
-          { id: Date.now() + 1, sender: 'ai', text: result.content },
+          { id: Date.now() + 1, sender: 'ai', text: llmResult.content, modelUsed: llmResult.modelUsed },
         ]);
       }
+      setIsProcessing(false);
+      return;
     }
+
+    // Default Rescheduler fallback if no LLM key
+    const result = generateRescheduleProposal(textToSend, schedule);
+    if (result.type === 'proposal') {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now() + 1,
+          sender: 'ai',
+          text: `Here is a proposed schedule adjustment for your class:`,
+          proposal: result.proposal,
+        },
+      ]);
+    } else {
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, sender: 'ai', text: result.content },
+      ]);
+    }
+    setIsProcessing(false);
     setIsProcessing(false);
   };
 
