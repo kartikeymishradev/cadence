@@ -157,6 +157,7 @@ export function migrateTaskStatuses(saved) {
     },
     muscleFocus: saved.muscleFocus || ['Chest', 'Arms'],
     focusLogs: saved.focusLogs || {},
+    userNotes: saved.userNotes || [],
   };
 }
 
@@ -190,6 +191,7 @@ export function usePersistence(weekStart, user) {
   });
   const [muscleFocus, setMuscleFocus] = useState(['Chest', 'Arms']);
   const [focusLogs, setFocusLogs] = useState({});
+  const [userNotes, setUserNotes] = useState([]);
   const [multiWeekPlan, setMultiWeekPlan] = useState({});
   const [currentWeekIndex, setCurrentWeekIndex] = useState({});
   const [subjectRegistry, setSubjectRegistry] = useState({});
@@ -426,6 +428,7 @@ export function usePersistence(weekStart, user) {
     macros, setMacros,
     muscleFocus, setMuscleFocus,
     focusLogs, setFocusLogs,
+    userNotes, setUserNotes,
     weeklyReflection, setWeeklyReflection,
     semesterConfig, setSemesterConfig,
     sleepLogs, setSleepLogs,

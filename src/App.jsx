@@ -90,6 +90,7 @@ export default function App() {
     muscleFocus, setMuscleFocus,
     focusLogs, setFocusLogs,
     subjectRegistry, setSubjectRegistry,
+    userNotes, setUserNotes,
     weeklyReflection, setWeeklyReflection,
     semesterConfig, setSemesterConfig,
     sleepLogs, setSleepLogs,
@@ -665,6 +666,9 @@ export default function App() {
             categories={categories}
             schedule={schedule}
             taskStatuses={taskStatuses}
+            userNotes={userNotes}
+            onAddUserNote={(newNote) => setUserNotes((prev) => [newNote, ...(prev || [])])}
+            onDeleteUserNote={(noteId) => setUserNotes((prev) => (prev || []).filter((n) => n.id !== noteId))}
             onUpdateTaskNote={handleUpdateTaskNote}
           />
         )}
